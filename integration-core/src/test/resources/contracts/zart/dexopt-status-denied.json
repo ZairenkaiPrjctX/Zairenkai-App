@@ -1,0 +1,5 @@
+{
+  "status": "permission_denied",
+  "source": "cmd package art dump",
+  "detail": "ART Service requires the root or shell uid"
+}

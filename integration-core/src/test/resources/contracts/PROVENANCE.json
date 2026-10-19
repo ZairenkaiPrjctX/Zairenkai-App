@@ -1,0 +1,7 @@
+{
+  "captured_by": "integration/scripts/capture-contracts.sh",
+  "host": "Linux container (no Android services: device inputs report unavailable)",
+  "zart": "fc72192cfceb7068ad71ddc8d461f1dba6238dd5",
+  "zcored": "ad0c1954eb340e51f194e7c2dd33ed9186ce95cb",
+  "zfasd": "0877452636a6ad960a7f90834e0a0228f322f3c1"
+}

@@ -1,0 +1,431 @@
+{
+  "schema": 1,
+  "organization": "ZairenkaiPrjctX",
+  "surveyed": "2026-10-19",
+  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit",
+  "discovered": 15,
+  "inaccessible": [],
+  "outside_organization_not_inspected": [
+    {
+      "full_name": "FebriCahyaa/Zairenkai",
+      "visibility": "public",
+      "reason": "personal account repository, outside the ZairenkaiPrjctX scope of this integration"
+    },
+    {
+      "full_name": "FebriCahyaa/Zairenkai-License-Server",
+      "visibility": "private",
+      "reason": "personal account repository, outside the organization scope; may contain a licence server that ZairenkaiPrjctX/Zairenkai-License-Server does not"
+    }
+  ],
+  "repositories": [
+    {
+      "name": "Zairenkai-Core",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Core",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev",
+        "ccr-63f8aa87-1b0paj"
+      ],
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "ad0c1954eb340e51f194e7c2dd33ed9186ce95cb",
+      "code_present": true,
+      "languages": [
+        "Rust",
+        "Shell"
+      ],
+      "categories": [
+        "system_service_or_privileged_daemon",
+        "root_module"
+      ],
+      "disposition": "integrated: privileged control plane reached through root (zcored ctl); not packaged in the APK",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "core.health",
+        "core.capabilities",
+        "core.context",
+        "core.actions (fas_set_profile, fas_set_enabled, set_low_power_mode, with dry-run preview)",
+        "modules.inventory",
+        "core.audit"
+      ],
+      "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_core/bin/zcored ctl (protocol v1 JSON)",
+      "runtime_requirements": "root (Magisk/KernelSU) and the zairenkai_core module installed and running; ADR-0005 limits the socket to root clients",
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged)"
+    },
+    {
+      "name": "Zairenkai-FAS",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-FAS",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev",
+        "ccr-63f8aa87-1b0paj"
+      ],
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "0877452636a6ad960a7f90834e0a0228f322f3c1",
+      "code_present": true,
+      "languages": [
+        "Rust",
+        "Shell",
+        "HTML"
+      ],
+      "categories": [
+        "system_service_or_privileged_daemon",
+        "root_module",
+        "thermal_and_performance_engine"
+      ],
+      "disposition": "integrated: frame-aware scheduling daemon reached through root (zfasd ctl); not packaged",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "fas.status (frame statistics, decision, thermal cap)",
+        "fas.actions (enable, disable, profile, reset) when Core is not running"
+      ],
+      "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_fas/bin/zfasd ctl (docs/INTEGRATION.md)",
+      "runtime_requirements": "root and the zairenkai_fas module; telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status"
+    },
+    {
+      "name": "Zairenkai-ART",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-ART",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ART",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev",
+        "ccr-63f8aa87-1b0paj"
+      ],
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "fc72192cfceb7068ad71ddc8d461f1dba6238dd5",
+      "code_present": true,
+      "languages": [
+        "Rust",
+        "Python"
+      ],
+      "categories": [
+        "art_runtime_integration",
+        "native_library",
+        "build_tooling"
+      ],
+      "disposition": "integrated: zart packaged as a native executable; upstream ART patch management stays build-time only",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "art.inspect (ART module, ART/dexopt properties, page size, arm64 ISA config vs AT_HWCAP)",
+        "art.dexopt_status (root or shell uid)"
+      ],
+      "integration_mechanism": "native executable lib/<abi>/libzart.so built by the repository's scripts/build-android.sh; JSON over stdout",
+      "runtime_requirements": "inspect: none (runs as the app uid; some inputs may be denied by SELinux); dexopt-status: root",
+      "license": "none chosen; Apache-2.0 data from AOSP ART in crates/zart/src/isa.rs",
+      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files"
+    },
+    {
+      "name": "Zairenkai-Database-Source",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Database-Source",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Database-Source",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev",
+        "ccr-63f8aa87-1b0paj",
+        "ccr-63f8aa87-1b0paj-snapshot-shards",
+        "afid/discovery-20261018-201940",
+        "afid/dumps-discovery-20261019-024916",
+        "afid/dumps-discovery-20261019-053037",
+        "afid/updates-20261019-090445"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "6e3db46b62bf6ac7fae484e379067d78b238ee68",
+      "code_present": true,
+      "languages": [
+        "Python",
+        "JSON"
+      ],
+      "categories": [
+        "database_and_device_profiles",
+        "build_tooling"
+      ],
+      "disposition": "integrated: unverified LineageOS-wiki device candidates as a compact offline asset",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "devicedb.lookup (this device's codename)",
+        "devicedb.search"
+      ],
+      "integration_mechanism": "build-time asset generated by integration/scripts/afid_asset.py from database/staging/unresolved/lineageos_wiki",
+      "runtime_requirements": "none (offline asset)",
+      "license": "code Apache-2.0 (LICENSE); packaged data CC BY-SA 3.0 (NOTICE)",
+      "evidence": "database/statistics.json: 0 verified devices; 353 unverified candidates in staging; schemas/candidate.schema.json"
+    },
+    {
+      "name": ".github",
+      "full_name": "ZairenkaiPrjctX/.github",
+      "url": "https://github.com/ZairenkaiPrjctX/.github",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev",
+        "ccr-63f8aa87-1b0paj"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "4cdab7f75dc27cf007aca8e7131f865dd6072aa2",
+      "code_present": true,
+      "languages": [
+        "Python",
+        "Markdown"
+      ],
+      "categories": [
+        "build_infrastructure",
+        "documentation"
+      ],
+      "disposition": "not_applicable at runtime: agent-foundation templates and validator for development",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": "development only: the foundation validator checks this repository",
+      "runtime_requirements": "none",
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "agent-foundation/ (templates, scripts, inventory) on dev"
+    },
+    {
+      "name": "Zairenkai-App",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-App",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-App",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "8aad1f6d88675f8be52fe5589394d9116f5be421",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): application architecture, UI, build system (this repository)"
+    },
+    {
+      "name": "Zairenkai-ThermalTools",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-ThermalTools",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ThermalTools",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "6ff95424dcf48c7b1b2b260ec92042375cf70523",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): thermal tooling"
+    },
+    {
+      "name": "Zairenkai-Sdk",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Sdk",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Sdk",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "d482afebb6d3f88c3fee86677da8cec59634e50c",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): public APIs and SDK"
+    },
+    {
+      "name": "Zairenkai-Modules",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Modules",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Modules",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "f226502613e6452af503a31ee30edecfbd6d227a",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): modules"
+    },
+    {
+      "name": "Zairenkai-Intelligence-Engine",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Intelligence-Engine",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Intelligence-Engine",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "0191e36365b88c966b7cf6f062154a506db9fffe",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): AI / inference"
+    },
+    {
+      "name": "Zairenkai-License-Server",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-License-Server",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-License-Server",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "d563033d4e0666bfb490a995dffe978c1c90acd6",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): licensing backend"
+    },
+    {
+      "name": "Zairenkai-Graphics-Platform",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Graphics-Platform",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Graphics-Platform",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "b3dcca4457f392cfcc9d75e442523d6de7883825",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): GPU tweaks"
+    },
+    {
+      "name": "Zairenkai-Release",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Release",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Release",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "0d804278b742c521918f49a15ce970e5460ef8fa",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): release automation"
+    },
+    {
+      "name": "Zairenkai-Docs",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Docs",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Docs",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "068bf87d02d06fc86c3af0ab44a56f42ff9a99c3",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): documentation"
+    },
+    {
+      "name": "ZairenkaiPrjctX.github.io",
+      "full_name": "ZairenkaiPrjctX/ZairenkaiPrjctX.github.io",
+      "url": "https://github.com/ZairenkaiPrjctX/ZairenkaiPrjctX.github.io",
+      "visibility": "private",
+      "default_branch": "dev",
+      "branches": [
+        "dev"
+      ],
+      "audited_branch": "dev",
+      "audited_commit": "27362a46141c4b571b51f3f2a6c26b9f96a43b5c",
+      "code_present": false,
+      "languages": [],
+      "categories": [
+        "documentation_only"
+      ],
+      "disposition": "not_applicable: no implementation exists yet",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "none chosen (no LICENSE file)",
+      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): organization website"
+    }
+  ]
+}

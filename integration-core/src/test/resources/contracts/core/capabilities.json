@@ -1,0 +1,97 @@
+{
+  "id": "cli-8185-2603694",
+  "ok": true,
+  "result": [
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "Android API level unknown; battery saver control not assumed"
+      ],
+      "id": "android.low_power_mode",
+      "owner": "android_power",
+      "status": "unknown",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "service check failed: spawn failed: No such file or directory (os error 2)"
+      ],
+      "id": "android.power_hal",
+      "owner": "discovery",
+      "status": "unknown",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "module zairenkai_fas not installed"
+      ],
+      "id": "fas.enabled",
+      "owner": "fas",
+      "status": "unsupported",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "module zairenkai_fas not installed"
+      ],
+      "id": "fas.profile",
+      "owner": "fas",
+      "status": "unsupported",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "/sys/class/power_supply/battery/capacity"
+      ],
+      "id": "telemetry.battery_level",
+      "owner": "telemetry",
+      "status": "unsupported",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "/sys/class/power_supply/battery/temp"
+      ],
+      "id": "telemetry.battery_temp",
+      "owner": "telemetry",
+      "status": "unsupported",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "/sys/class/power_supply/battery/status"
+      ],
+      "id": "telemetry.charging",
+      "owner": "telemetry",
+      "status": "unsupported",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "/proc/meminfo"
+      ],
+      "id": "telemetry.mem_available",
+      "owner": "telemetry",
+      "status": "read_only",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 2603486,
+      "evidence": [
+        "dumpsys thermalservice"
+      ],
+      "id": "telemetry.thermal_status",
+      "owner": "telemetry",
+      "status": "temporarily_unavailable",
+      "verified_on_device": false
+    }
+  ],
+  "v": 1
+}

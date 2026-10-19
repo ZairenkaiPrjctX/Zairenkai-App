@@ -8,21 +8,42 @@ put detail in `AGENT/`.
 
 ## Current state (read first)
 
-As of 2026-10-18 this repository contained **no source code** (GitHub API 2026-10-18: repository size 0, no branches, no commits; ls-remote returned no refs.).
-Until that changes:
+This repository is the **Zairenkai App** (Android, Kotlin + Java, Jetpack Compose with
+Material 3 Expressive, Google Sans Flex). Architecture: `docs/architecture/overview.md`.
+- `:integration-core`: pure JVM. Registry, typed clients (Core, FAS, zart, AFID), root shell,
+  and `ProcessCommandRunner` (Java).
+- `:app`: Compose UI and design system (`design/`), Android adapters in Java (`platform/`).
+- `integration/`: organization inventory, revision lock, component build and contract-capture
+  scripts.
 
-- Do not describe an architecture, language, or toolchain as fact. Record discoveries in
-  `AGENT/PROJECT_CONTEXT.md` with evidence (file paths, manifests, command output).
-- When the first real code lands, update this file's **Commands** table and
-  `AGENT/ARCHITECTURE.md` in the same pull request.
+Nothing has run on a device yet (`docs/testing/verification-report.md`).
+
+Non-negotiables in this repo:
+- **Never mock an integration in production code.** Availability comes from probes; an
+  unprobed capability is NOT_VERIFIED, never AVAILABLE.
+- **Root commands are `ShellScript`s of validated `ShellWord`s, never strings.** No `su` call
+  before the user enables root.
+- **Actions go through Core while it answers.** Direct `zfasd ctl` only when Core is down, and
+  only after confirmation.
+- **Contract fixtures come from the real binaries** (`capture-contracts.sh`), never hand-written
+  JSON claiming to be real.
+- **New UI uses the design system** (`design/`): no hard-coded colours or fonts, and status is
+  shown as icon + text, never colour alone. Every UI string goes in `values/` and `values-in/`.
+- **Material 3 is pinned to 1.5.0-alpha18 on purpose** (`docs/design/design-system.md`). Do not
+  move to alpha19+ without the compileSdk 37 / AGP 9.1 migration.
+- **No secrets, signing keys or tokens in the repository or the APK.**
 
 ## Commands
 
 | Purpose | Command | Status |
 |---|---|---|
-| Build | — | Not Configured |
-| Test | — | Not Configured |
-| Lint / format | — | Not Configured |
+| Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-19 |
+| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: exit 0, 2026-10-19 |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 37 passed, 2026-10-19 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 17 passed, 2026-10-19 |
+| Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-19 |
+| Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-19 |
+| Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-19 |
 | Validate agent foundation | `python3 <path-to-.github>/agent-foundation/scripts/validate_agent_setup.py .` | Configured |
 
 Only list commands that exist in this repository. Never invent one.

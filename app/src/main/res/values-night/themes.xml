@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Zairenkai" parent="android:Theme.Material.NoActionBar">
+        <item name="android:fontFamily">@font/google_sans_flex</item>
+        <item name="android:windowBackground">@color/zairenkai_background</item>
+        <item name="android:colorPrimary">@color/zairenkai_primary</item>
+        <item name="android:colorAccent">@color/zairenkai_primary</item>
+    </style>
+</resources>

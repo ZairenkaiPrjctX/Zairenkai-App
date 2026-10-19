@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mirrors ZairenkaiColorScheme.dark (design/Color.kt). -->
+<resources>
+    <color name="zairenkai_background">#FF0F1417</color>
+    <color name="zairenkai_primary">#FF65D3FF</color>
+</resources>

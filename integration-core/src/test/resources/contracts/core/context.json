@@ -1,0 +1,172 @@
+{
+  "id": "cli-8186-2603697",
+  "ok": true,
+  "result": {
+    "context": {
+      "collected_at_ms": 2603486,
+      "identity": {
+        "abi": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "getprop",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "unavailable",
+            "value": "getprop failed"
+          }
+        },
+        "api_level": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "getprop",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "unavailable",
+            "value": "getprop failed"
+          }
+        },
+        "brand": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "getprop",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "unavailable",
+            "value": "getprop failed"
+          }
+        },
+        "device": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "getprop",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "unavailable",
+            "value": "getprop failed"
+          }
+        },
+        "kernel_release": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "uname",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "value",
+            "value": "6.18.44-fc-v139"
+          }
+        },
+        "model": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "getprop",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "unavailable",
+            "value": "getprop failed"
+          }
+        },
+        "root_manager": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "/data/adb markers",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "value",
+            "value": "none"
+          }
+        },
+        "selinux": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "/sys/fs/selinux/enforce (absent)",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "value",
+            "value": "disabled"
+          }
+        },
+        "soc": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "getprop",
+          "ttl_ms": 86400000,
+          "value": {
+            "status": "unavailable",
+            "value": "getprop failed"
+          }
+        }
+      },
+      "telemetry": {
+        "battery_level": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "/sys/class/power_supply/battery/capacity",
+          "ttl_ms": 15000,
+          "value": {
+            "status": "unsupported"
+          }
+        },
+        "battery_temp": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "/sys/class/power_supply/battery/temp",
+          "ttl_ms": 15000,
+          "value": {
+            "status": "unsupported"
+          }
+        },
+        "charging": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "/sys/class/power_supply/battery/status",
+          "ttl_ms": 15000,
+          "value": {
+            "status": "unsupported"
+          }
+        },
+        "fas": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "zfasd status",
+          "ttl_ms": 15000,
+          "value": {
+            "status": "unavailable",
+            "value": "Unavailable: /data/adb/zairenkai-fas/zfasd.sock: No such file or directory (os error 2)"
+          }
+        },
+        "low_power_mode": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "settings get global low_power",
+          "ttl_ms": 15000,
+          "value": {
+            "status": "unavailable",
+            "value": "spawn failed: No such file or directory (os error 2)"
+          }
+        },
+        "mem_available": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "/proc/meminfo",
+          "ttl_ms": 15000,
+          "value": {
+            "status": "value",
+            "value": 14359640
+          }
+        },
+        "thermal_status": {
+          "observed_at_ms": 2603486,
+          "provenance": "measured",
+          "source": "dumpsys thermalservice",
+          "ttl_ms": 15000,
+          "value": {
+            "status": "unavailable",
+            "value": "spawn failed: No such file or directory (os error 2)"
+          }
+        }
+      }
+    },
+    "knowledge": "NotFound"
+  },
+  "v": 1
+}
