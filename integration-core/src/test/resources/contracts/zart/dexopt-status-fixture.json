@@ -1,0 +1,46 @@
+{
+  "status": "value",
+  "value": {
+    "package": "com.example.app",
+    "primary": [
+      {
+        "path": "/data/app/~~abc==/com.example.app-xyz==/base.apk",
+        "visibility": null,
+        "class_loader_context": null,
+        "statuses": [
+          {
+            "isa": "arm64",
+            "status": "speed-profile",
+            "reason": "bg-dexopt",
+            "primary_abi": true,
+            "location": "/data/app/~~abc==/com.example.app-xyz==/oat/arm64/base.odex"
+          },
+          {
+            "isa": "arm",
+            "status": "run-from-apk",
+            "reason": "unknown",
+            "primary_abi": false,
+            "location": "unknown"
+          }
+        ]
+      }
+    ],
+    "secondary": [
+      {
+        "path": "/data/user/0/com.example.app/files/plugin.jar",
+        "visibility": "public",
+        "class_loader_context": "PCL[]",
+        "statuses": [
+          {
+            "isa": "arm64",
+            "status": "run-from-apk",
+            "reason": "unknown",
+            "primary_abi": true,
+            "location": "unknown"
+          }
+        ]
+      }
+    ]
+  },
+  "source": "cmd package art dump"
+}

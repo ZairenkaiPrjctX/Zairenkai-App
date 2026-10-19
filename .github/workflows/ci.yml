@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Runs without access to the other (private) Zairenkai repositories. The APK built here has no
+  # integration components (zart, AFID asset): their features report NATIVE_COMPONENT_UNAVAILABLE.
+  # A complete APK needs integration/scripts/build-components.sh first (docs/build/building.md).
+  android:
+    name: unit and UI tests, lint, debug APK (no components)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Use the runner's JDK 17 and Android SDK
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+      # Kotlin and Java unit tests (integration-core), Robolectric Compose UI tests and Java
+      # platform tests (app). No emulator is used.
+      - run: ./gradlew --no-daemon :integration-core:test :app:testDebugUnitTest
+      - run: ./gradlew --no-daemon lint assembleDebug -Pzairenkai.allowMissingComponents=true
+
+  scripts:
+    name: integration scripts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: shellcheck integration/scripts/*.sh
+      - run: python3 -m py_compile integration/scripts/afid_asset.py
+      - run: python3 -c "import json; [json.load(open(f)) for f in ('integration/organization-repositories.json', 'integration/repository-lock.json')]"

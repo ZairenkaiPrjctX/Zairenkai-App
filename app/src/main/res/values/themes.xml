@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Window theme for the activity and any framework View (dialogs, choosers drawn by the app):
+      Google Sans Flex from res/font, and window colours matching the Compose theme so there is
+      no flash of the wrong background at start-up. Compose screens use design/Theme.kt.
+    -->
+    <style name="Theme.Zairenkai" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">@font/google_sans_flex</item>
+        <item name="android:windowBackground">@color/zairenkai_background</item>
+        <item name="android:colorPrimary">@color/zairenkai_primary</item>
+        <item name="android:colorAccent">@color/zairenkai_primary</item>
+    </style>
+</resources>

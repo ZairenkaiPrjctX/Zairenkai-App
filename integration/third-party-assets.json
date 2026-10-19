@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "assets": [
+    {
+      "id": "google-sans-flex",
+      "path": "app/src/main/res/font/google_sans_flex.ttf",
+      "sha256": "a9ac770798857d5e8ac593ced42b22e40a7c08cec98319f92b0eccc2783a77ba",
+      "source": {
+        "repository": "google/fonts",
+        "url": "https://github.com/google/fonts",
+        "commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+        "path": "ofl/googlesansflex/GoogleSansFlex[ROND,opsz,slnt,wdth,wght].ttf"
+      },
+      "upstream": {
+        "repository": "googlefonts/googlesans-flex",
+        "url": "https://github.com/googlefonts/googlesans-flex",
+        "tag": "v5.000",
+        "commit": "cedf1e9cef08ddf33d711dd259601ea3017b7cd4",
+        "evidence": "name table version 'Version 5.000;[cedf1e9]'; METADATA.pb copyright names github.com/googlefonts/googlesans-flex"
+      },
+      "license": "OFL-1.1 (name ID 13; METADATA.pb license: OFL)",
+      "notices": [
+        "app/src/main/assets/licenses/google-sans-flex/OFL.txt",
+        "app/src/main/assets/licenses/google-sans-flex/TRADEMARKS.md"
+      ],
+      "axes": [
+        "ROND 0-100",
+        "opsz 1-144",
+        "slnt -10-0",
+        "wdth 25-151",
+        "wght 1-1000"
+      ],
+      "notes": "Not taken from googlefonts/googlesans-flex documentation/demo-fonts: those are 0.006 preview builds for documentation images. The bundled file's name ID 0 reads 'Copyright 2015 Google LLC. All Rights Reserved.' while OFL.txt and METADATA.pb name 'The Google Sans Flex Project Authors'; Google Fonts distributes it under OFL-1.1. 'Google Sans Flex' is a Google trademark (TRADEMARKS.md): it is named only to identify the font, never in the product name."
+    }
+  ]
+}

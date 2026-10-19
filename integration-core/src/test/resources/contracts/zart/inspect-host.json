@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "zart_version": "0.1.0",
+  "process": {
+    "uid": {
+      "status": "value",
+      "value": 0,
+      "source": "/proc/self/status"
+    },
+    "selinux_context": {
+      "status": "value",
+      "value": "kernel",
+      "source": "/proc/self/attr/current"
+    },
+    "zart_arch": "x86_64"
+  },
+  "api_level": {
+    "status": "unavailable",
+    "source": "getprop",
+    "detail": "No such file or directory (os error 2)"
+  },
+  "art_module": {
+    "status": "unavailable",
+    "source": "/apex/apex-info-list.xml",
+    "detail": "No such file or directory (os error 2)"
+  },
+  "art_properties": {
+    "status": "unavailable",
+    "source": "getprop",
+    "detail": "No such file or directory (os error 2)"
+  },
+  "page_size_bytes": {
+    "status": "value",
+    "value": 4096,
+    "source": "/proc/self/auxv"
+  },
+  "isa": []
+}

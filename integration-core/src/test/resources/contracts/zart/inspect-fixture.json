@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "zart_version": "0.1.0",
+  "process": {
+    "uid": {
+      "status": "value",
+      "value": 10123,
+      "source": "/proc/self/status"
+    },
+    "selinux_context": {
+      "status": "value",
+      "value": "u:r:untrusted_app:s0:c123,c256,c512,c768",
+      "source": "/proc/self/attr/current"
+    },
+    "zart_arch": "aarch64"
+  },
+  "api_level": {
+    "status": "value",
+    "value": 37,
+    "source": "getprop ro.build.version.sdk"
+  },
+  "art_module": {
+    "status": "value",
+    "value": [
+      {
+        "module_name": "com.android.art",
+        "module_path": "/data/apex/active/com.android.art@370000000.apex",
+        "preinstalled_module_path": "/system/apex/com.google.android.art.apex",
+        "version_code": 370000000,
+        "version_name": "",
+        "is_factory": false,
+        "is_active": true,
+        "last_update_millis": 1760000000000,
+        "partition": "SYSTEM"
+      },
+      {
+        "module_name": "com.android.art",
+        "module_path": "/system/apex/com.google.android.art.apex",
+        "preinstalled_module_path": "/system/apex/com.google.android.art.apex",
+        "version_code": 361000000,
+        "version_name": "",
+        "is_factory": true,
+        "is_active": false,
+        "last_update_millis": 0,
+        "partition": "SYSTEM"
+      }
+    ],
+    "source": "/apex/apex-info-list.xml"
+  },
+  "art_properties": {
+    "status": "value",
+    "value": {
+      "dalvik.vm.isa.arm.features": "default",
+      "dalvik.vm.isa.arm.variant": "cortex-a55",
+      "dalvik.vm.isa.arm64.features": "default",
+      "dalvik.vm.isa.arm64.variant": "cortex-a76",
+      "dalvik.vm.usejit": "true",
+      "pm.dexopt.install": "speed-profile",
+      "ro.build.version.release": "17",
+      "ro.build.version.sdk": "37",
+      "ro.product.cpu.abilist": "arm64-v8a,armeabi-v7a,armeabi"
+    },
+    "source": "getprop"
+  },
+  "page_size_bytes": {
+    "status": "value",
+    "value": 16384,
+    "source": "/proc/self/auxv"
+  },
+  "isa": [
+    {
+      "abi": "arm64-v8a",
+      "isa": "arm64",
+      "variant": {
+        "status": "value",
+        "value": "cortex-a76",
+        "source": "getprop dalvik.vm.isa.arm64.variant"
+      },
+      "features": {
+        "status": "value",
+        "value": "default",
+        "source": "getprop dalvik.vm.isa.arm64.features"
+      },
+      "arm64": {
+        "table_revision": "art android-17.0.0_r1 (b753cf9792) runtime/arch/arm64/instruction_set_features_arm64.cc",
+        "effective": {
+          "a53_errata_fix": false,
+          "crc": true,
+          "lse": true,
+          "fp16": true,
+          "dotprod": true,
+          "sve": false
+        },
+        "detected": {
+          "a53_errata_fix": false,
+          "crc": true,
+          "lse": true,
+          "fp16": true,
+          "dotprod": false,
+          "sve": false
+        },
+        "findings": [
+          {
+            "id": "configured_feature_not_in_hwcap",
+            "severity": "warning",
+            "message": "configuration enables dotprod, but AT_HWCAP of this CPU does not report it"
+          }
+        ]
+      }
+    },
+    {
+      "abi": "armeabi-v7a",
+      "isa": "arm",
+      "variant": {
+        "status": "value",
+        "value": "cortex-a55",
+        "source": "getprop dalvik.vm.isa.arm.variant"
+      },
+      "features": {
+        "status": "value",
+        "value": "default",
+        "source": "getprop dalvik.vm.isa.arm.features"
+      },
+      "arm64": null
+    }
+  ]
+}

@@ -10,3 +10,13 @@
 *.p12
 *.jks
 *.keystore
+
+# Build output
+/build/
+**/build/
+/.gradle/
+/local.properties
+/integration/out/
+*.apk
+*.aab
+*.idsig

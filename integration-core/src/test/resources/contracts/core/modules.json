@@ -1,0 +1,70 @@
+{
+  "id": "cli-8187-2603700",
+  "ok": true,
+  "result": [
+    {
+      "compatible": false,
+      "detail": "Zairenkai-ThermalTools: no released component; Core has no adapter for it yet",
+      "health": "not_installed",
+      "id": "zairenkai_thermaltools",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    },
+    {
+      "compatible": false,
+      "detail": "Zairenkai-SDK: no released component; Core has no adapter for it yet",
+      "health": "not_installed",
+      "id": "zairenkai_sdk",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    },
+    {
+      "compatible": false,
+      "detail": "Zairenkai-License-Server: no released component; Core has no adapter for it yet",
+      "health": "not_installed",
+      "id": "zairenkai_license_server",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    },
+    {
+      "compatible": false,
+      "detail": "Zairenkai-Intelligence-Engine: no released component; Core has no adapter for it yet",
+      "health": "not_installed",
+      "id": "zairenkai_intelligence",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    },
+    {
+      "compatible": false,
+      "detail": "Zairenkai-Graphics-Platform: no released component; Core has no adapter for it yet",
+      "health": "not_installed",
+      "id": "zairenkai_graphics",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    },
+    {
+      "compatible": false,
+      "detail": "Zairenkai-ART: no released component; Core has no adapter for it yet",
+      "health": "not_installed",
+      "id": "zairenkai_art",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    },
+    {
+      "compatible": false,
+      "detail": "Zairenkai-Modules: no released component; Core has no adapter for it yet",
+      "health": "not_installed",
+      "id": "zairenkai_modules",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    }
+  ],
+  "v": 1
+}
