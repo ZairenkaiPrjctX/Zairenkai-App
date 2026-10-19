@@ -13,7 +13,7 @@
 | Components at locked commits | `integration/scripts/build-components.sh` | yes | yes | exit 0. zart 0.1.0 @ `fc72192` (3 ABIs, `SHA256SUMS` verified); AFID asset @ `6e3db46` (353 candidates) |
 | Contract capture from real binaries | `integration/scripts/capture-contracts.sh` | yes | yes | exit 0. zart, zcored @ `ad0c195`, zfasd @ `0877452` (observe-only) |
 | Kotlin and Java unit tests (integration-core) | `./gradlew :integration-core:test --rerun-tasks` | yes | yes | 37 passed, 0 failed, 0 skipped (CoreClient 5, Data 4, FasClient 4, JavaInterop 3, ProcessCommandRunner 6, Registry 3, RootShell 6, Zart 6) |
-| Compose UI, design-system and Java platform tests (Robolectric) | `./gradlew :app:testDebugUnitTest` | yes | yes | 17 passed, 0 failed (AppUi 6, DesignSystem 8, PlatformJava 3) |
+| Compose UI, design-system and Java platform tests (Robolectric) | `./gradlew :app:testDebugUnitTest` | yes | yes | 19 passed, 0 failed (AppUi 5, DesignSystem 8, Language 3, PlatformJava 3) |
 | Android lint | `./gradlew lint` | yes (`abortOnError`) | yes | 0 errors. 24 warnings, all "newer version available" (21 GradleDependency, 3 AndroidGradlePluginVersion) |
 | Debug APK | `./gradlew assembleDebug` | yes | yes | built |
 | Release APK | `./gradlew assembleRelease` | yes | yes | built, **unsigned** (no release key exists) |
@@ -28,8 +28,8 @@
 
 | | Path | Size (bytes) | SHA-256 | Signing |
 |---|---|---|---|---|
-| Debug | `app/build/outputs/apk/debug/app-debug.apk` | 34,343,750 | `7582e96253b1bb0079680c0a68463d7ceadd02f218f34479329cc592889b73bc` | APK Signature Scheme v2, Android Debug certificate (SHA-256 `d651160e…bfef`); `apksigner verify` passes |
-| Release | `app/build/outputs/apk/release/app-release-unsigned.apk` | 27,394,204 | `2c7ec68237233a33e9cd7d91387ae4c779773fa7c0ac245074a3b217efd958dc` | unsigned (`apksigner verify` fails: no signature) |
+| Debug | `app/build/outputs/apk/debug/app-debug.apk` | 34,354,838 | `1ca1af3a3e62c77fca360097e23d3d839749c5967a545061541b790e5087d95b` | APK Signature Scheme v2, Android Debug certificate (SHA-256 `d651160e…bfef`); `apksigner verify` passes |
+| Release | `app/build/outputs/apk/release/app-release-unsigned.apk` | 27,401,212 | `0b916148d14c0403616b3b222780198b827695c59f51773177c71444db52add7` | unsigned (`apksigner verify` fails: no signature) |
 
 These are build outputs, not committed. The hashes identify this build; a rebuild produces a new
 debug signature.
@@ -59,7 +59,8 @@ APK contents (`aapt2 dump badging`, `unzip -l`):
 | Material 3 Expressive theme | `ZairenkaiTheme` → `MaterialExpressiveTheme`; `DesignSystemTest.themeAppliesTypographyAndBrandColours`, `darkModeUsesTheDarkScheme` |
 | Google Sans Flex is the default face | `DesignSystemTest.everyTextStyleUsesGoogleSansFlex`, `bundledFontResourceLoads` |
 | Status not by colour alone | `DesignSystemTest.statusIsTextAndStateDescriptionNotColourAlone` |
-| Indonesian and English | `DesignSystemTest.indonesianStrings`, `AppUiTest.indonesianNavigation`; key parity script (182 strings, 3 plurals each) |
+| Indonesian and English | `DesignSystemTest.indonesianStrings`; key parity script (182 strings, 3 plurals each) |
+| English by default, even on an Indonesian system | `LanguageTest.englishIsTheDefaultOnAnIndonesianSystem`, `choosingIndonesianSwitchesTheAppAndBack` (API 35, `LocaleManager`), `beforeAndroid13TheChoiceIsStoredAndTheActivityRecreated` (API 32) |
 | Reduced motion | `DesignSystemTest.reducedMotionFollowsTheSystemAnimatorScale` |
 | Adaptive layout, large font | `AppUiTest.wideScreensUseTheNavigationRail` (840 dp), `smallScreenWithLargeFontStillRenders` (320 dp, font scale 2) |
 | Settings persist | `AppUiTest.themeChoiceIsAppliedAndPersisted` (real touch) |

@@ -28,7 +28,8 @@ Non-negotiables in this repo:
 - **Contract fixtures come from the real binaries** (`capture-contracts.sh`), never hand-written
   JSON claiming to be real.
 - **New UI uses the design system** (`design/`): no hard-coded colours or fonts, and status is
-  shown as icon + text, never colour alone. Every UI string goes in `values/` and `values-in/`.
+  shown as icon + text, never colour alone. Every UI string goes in `values/` (English, the default
+  language whatever the system language) and `values-in/` (`AppLanguage`).
 - **Material 3 is pinned to 1.5.0-alpha18 on purpose** (`docs/design/design-system.md`). Do not
   move to alpha19+ without the compileSdk 37 / AGP 9.1 migration.
 - **No secrets, signing keys or tokens in the repository or the APK.**
@@ -40,7 +41,7 @@ Non-negotiables in this repo:
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-19 |
 | Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: exit 0, 2026-10-19 |
 | Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 37 passed, 2026-10-19 |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 17 passed, 2026-10-19 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 19 passed, 2026-10-19 |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-19 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-19 |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-19 |

@@ -85,6 +85,12 @@ android {
         localeFilters += listOf("en", "in")
     }
 
+    bundle {
+        // The language is chosen in the app (AppLanguage), not by the system language, so an App
+        // Bundle install must carry both languages instead of only the device's.
+        language { enableSplit = false }
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true

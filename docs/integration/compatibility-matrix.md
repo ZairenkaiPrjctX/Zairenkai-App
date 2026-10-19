@@ -5,7 +5,7 @@
 | Android version | minSdk 29 (Android 10) to targetSdk 35 | `app/build.gradle.kts`; `MATCH_APEX` and the thermal listener need API 29 | No |
 | Thermal headroom | API 30+ (`UNSUPPORTED_DEVICE` below) | `PlatformSubsystem` | No |
 | SoC fields, dynamic colour | API 31+ | `AndroidPlatformInfo`, `ZairenkaiTheme` | No |
-| Per-app language setting | API 33+ (generated `localeConfig`: en, in) | `androidResources.generateLocaleConfig` | No |
+| App language (English default, Indonesian on request) | API 29–32: in-app choice stored in preferences; API 33+: per-app language via `LocaleManager` (generated `localeConfig`: en, in) | `AppLanguage`, `LanguageTest` (SDK 32 and 35) | No |
 | ABIs packaged | arm64-v8a, armeabi-v7a, x86_64 | `aapt2 dump badging`: native-code | No |
 | 16 KB page size | zart arm64-v8a and x86_64 LOAD segments aligned to 0x4000; AndroidX's own library 0x4000 | `llvm-readelf -lW` | No |
 | zart inspect | Any of the ABIs above, as the app uid | `ZartTest` (host and fixture output) | No |

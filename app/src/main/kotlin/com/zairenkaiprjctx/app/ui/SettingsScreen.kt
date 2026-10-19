@@ -1,5 +1,8 @@
 package com.zairenkaiprjctx.app.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -27,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zairenkaiprjctx.app.AppLanguage
 import com.zairenkaiprjctx.app.R
 import com.zairenkaiprjctx.app.design.LocalReducedMotion
 import com.zairenkaiprjctx.app.design.SectionCard
@@ -75,6 +79,18 @@ fun SettingsScreen(vm: SettingsViewModel, padding: PaddingValues) {
         }
         item {
             SectionCard(stringResource(R.string.settings_language)) {
+                val activity = context.findActivity()
+                val current = AppLanguage.current(context)
+                Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                    AppLanguage.entries.forEach { language ->
+                        ToggleButton(
+                            checked = current == language,
+                            onCheckedChange = { if (language != current && activity != null) AppLanguage.set(activity, language) },
+                            enabled = activity != null,
+                            modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
+                        ) { Text(stringResource(language.label), maxLines = 1) }
+                    }
+                }
                 Supporting(stringResource(R.string.settings_language_note))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     OutlinedButton(onClick = {
@@ -84,4 +100,11 @@ fun SettingsScreen(vm: SettingsViewModel, padding: PaddingValues) {
             }
         }
     }
+}
+
+/** The hosting activity, if any (none in a preview or a test host without one). */
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

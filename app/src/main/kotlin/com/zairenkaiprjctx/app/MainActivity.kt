@@ -1,5 +1,6 @@
 package com.zairenkaiprjctx.app
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -80,6 +81,11 @@ enum class Tab(@StringRes val title: Int, val icon: ImageVector, val subsystems:
 }
 
 class MainActivity : ComponentActivity() {
+    /** English unless the user chose another language: see [AppLanguage]. */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguage.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

@@ -21,7 +21,7 @@
 |---|---|---|
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
 | JVM integration layer (Kotlin + Java) | `integration-core/` | Verified. Evidence: 37 tests |
-| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 17 Robolectric tests. **Unverified** on a device |
+| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 19 Robolectric tests. **Unverified** on a device |
 | Organization inventory, lock, scripts | `integration/` | Verified. Evidence: scripts exit 0, 2026-10-19 |
 | CI | `.github/workflows/ci.yml` | Verified locally. Evidence: actionlint clean. **Unverified** on GitHub |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |

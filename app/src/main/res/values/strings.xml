@@ -198,7 +198,10 @@
     <string name="settings_motion_reduced">Animations are off in system settings, so transitions are instant.</string>
     <string name="settings_motion_full">Transitions use the Material 3 Expressive motion scheme. Turn off animations in system accessibility settings to make them instant.</string>
     <string name="settings_language">Language</string>
-    <string name="settings_language_note">English and Bahasa Indonesia. The app follows the system language or the per-app language setting.</string>
+    <string name="settings_language_note">English is the default, whatever the system language. Choose Bahasa Indonesia to switch the app.</string>
+    <!-- Each language is named in itself, so it stays recognisable in either language. -->
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_indonesian" translatable="false">Bahasa Indonesia</string>
     <string name="settings_language_open">App language settings</string>
     <string name="expand_section">Expand %1$s</string>
     <string name="collapse_section">Collapse %1$s</string>

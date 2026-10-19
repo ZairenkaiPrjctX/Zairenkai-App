@@ -14,7 +14,6 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.zairenkaiprjctx.integration.model.AvailabilityState
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -99,16 +98,5 @@ class AppUiTest {
         RuntimeEnvironment.setFontScale(2f)
         launch()
         compose.onNode(hasText("This device")).assertExists()
-    }
-
-    @Test
-    @Config(qualifiers = "in")
-    fun indonesianNavigation() {
-        launch()
-        // "Beranda" is both the top-bar title and the navigation label.
-        assertTrue(compose.onAllNodesWithText("Beranda").fetchSemanticsNodes().size >= 2)
-        compose.onNodeWithText("Sistem").performClick()
-        compose.waitForIdle()
-        compose.onNodeWithText("Akses root").assertIsDisplayed()
     }
 }

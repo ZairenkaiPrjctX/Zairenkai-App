@@ -99,3 +99,8 @@ replaced by toggle buttons, which pass the same touch test.
   - merged rows for key/value pairs.
 - **Languages:** English (`values/`) and Bahasa Indonesia (`values-in/`); 182 strings and 3
   plurals each. Daemon and integration diagnostics are shown as reported, in English.
+- **Default language: English**, whatever the system language. Indonesian applies only when
+  chosen in Settings › Language (`AppLanguage`, applied in `MainActivity.attachBaseContext`):
+  - API 33+: the choice is the per-app language (`LocaleManager`), so the system's app-language
+    setting shows the same value; "System default" there means English;
+  - API 29–32: the choice is stored in the app's preferences (`app_language`).

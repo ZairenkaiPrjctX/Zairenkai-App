@@ -186,7 +186,7 @@
     <string name="settings_motion_reduced">Animasi dimatikan di setelan sistem, jadi transisi berlangsung instan.</string>
     <string name="settings_motion_full">Transisi memakai skema gerak Material 3 Expressive. Matikan animasi di setelan aksesibilitas sistem agar transisi instan.</string>
     <string name="settings_language">Bahasa</string>
-    <string name="settings_language_note">Bahasa Inggris dan Bahasa Indonesia. Aplikasi mengikuti bahasa sistem atau setelan bahasa per aplikasi.</string>
+    <string name="settings_language_note">Bahasa Inggris adalah bawaan, apa pun bahasa sistemnya. Pilih Bahasa Indonesia untuk mengganti bahasa aplikasi.</string>
     <string name="settings_language_open">Setelan bahasa aplikasi</string>
     <string name="expand_section">Bentangkan %1$s</string>
     <string name="collapse_section">Ciutkan %1$s</string>
