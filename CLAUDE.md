@@ -53,9 +53,9 @@ Non-negotiables in this repo:
 | Purpose | Command | Status |
 |---|---|---|
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
-| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified as root. Evidence: exit 0, 2026-10-21 (re-run at the merge-commit pins). As non-root (CI): Unverified; failed in CI runs 39639587745/39639605601, fixed 2026-10-22 |
-| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 74 passed, 2026-10-21 |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 24 passed, 2026-10-21 |
+| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins) and as uid 1001 in CI run 39645071811 (2026-10-22). The installed-module fixture step is new and not yet run in CI |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 88 passed, 1 skipped, 2026-10-22 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 28 passed, 1 skipped (needs native graphics), 2026-10-22, on aarch64 with a local LEGACY-graphics init script; CI is the reference |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-21 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |

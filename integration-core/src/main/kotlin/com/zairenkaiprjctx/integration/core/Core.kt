@@ -29,6 +29,18 @@ object CorePaths {
     const val DIR = "/data/adb/zairenkai-core"
 }
 
+/** The only envelope version Core 1.x speaks (`PROTOCOL_VERSION`, `crates/zcore-domain/src/protocol.rs`). */
+const val CORE_PROTOCOL_VERSION = 1
+
+/**
+ * Core's `Version` (`crates/zcore-domain/src/module.rs`). serde writes it as an object,
+ * `{"major":0,"minor":1,"patch":0}`, not as a string.
+ */
+@Serializable
+data class CoreVersion(val major: Int, val minor: Int, val patch: Int) {
+    override fun toString() = "$major.$minor.$patch"
+}
+
 @Serializable
 data class CoreHealth(
     val state: String,
@@ -58,7 +70,7 @@ data class CoreModule(
     val health: String,
     val compatible: Boolean = false,
     val detail: String = "",
-    val version: String? = null,
+    val version: CoreVersion? = null,
     val owns: List<String> = emptyList(),
     @SerialName("requested_permissions") val requestedPermissions: List<String> = emptyList(),
 )
@@ -85,8 +97,15 @@ data class ActionResult(
     val message: String = "",
 )
 
-/** A Core observation: provenance plus `{status, value}`. */
-data class CoreObservation(val status: String, val value: JsonElement?, val source: String, val provenance: String) {
+/** A Core observation: provenance plus `{status, value}`, on Core's monotonic clock (0 = never observed). */
+data class CoreObservation(
+    val status: String,
+    val value: JsonElement?,
+    val source: String,
+    val provenance: String,
+    val observedAtMs: Long = 0,
+    val ttlMs: Long = 0,
+) {
     val text: String? get() = (value as? JsonPrimitive)?.contentOrNull
 }
 
@@ -171,6 +190,11 @@ class CoreClient(private val root: RootShell) {
         } catch (e: Exception) {
             return CoreCall.Failed("zcored ctl exited $exit without JSON: ${stderr.trim().take(300)}")
         }
+        when (val v = (obj["v"] as? JsonPrimitive)?.contentOrNull?.toIntOrNull()) {
+            CORE_PROTOCOL_VERSION -> Unit
+            null -> return CoreCall.Failed("Core response has no protocol version (v)")
+            else -> return CoreCall.Failed("unsupported Core protocol version $v (this app speaks $CORE_PROTOCOL_VERSION)")
+        }
         val ok = (obj["ok"] as? JsonPrimitive)?.contentOrNull == "true"
         if (!ok) {
             val err = obj["error"] as? JsonObject
@@ -182,11 +206,12 @@ class CoreClient(private val root: RootShell) {
         return obj["result"]?.let { CoreCall.Ok(it) } ?: CoreCall.Failed("response without result")
     }
 
-    private inline fun <reified T> CoreCall<JsonElement>.decode(): CoreCall<T> = when (this) {
+    /** Decode a result; a mismatch names the method and keeps the decoder's path ($.version, ...). */
+    private inline fun <reified T> CoreCall<JsonElement>.decode(method: String): CoreCall<T> = when (this) {
         is CoreCall.Ok -> try {
             CoreCall.Ok(json.decodeFromJsonElement<T>(value))
         } catch (e: Exception) {
-            CoreCall.Failed("unexpected Core result: ${e.message?.take(200)}")
+            CoreCall.Failed("Core's $method result does not match this app's contract: ${e.message?.lineSequence()?.first()?.take(200)}")
         }
         is CoreCall.Error -> this
         CoreCall.NotInstalled -> CoreCall.NotInstalled
@@ -195,19 +220,27 @@ class CoreClient(private val root: RootShell) {
         is CoreCall.Failed -> this
     }
 
-    fun health(): CoreCall<CoreHealth> = call("health").decode()
-    fun capabilities(): CoreCall<List<CoreCapability>> = call("capabilities").decode()
-    fun modules(): CoreCall<List<CoreModule>> = call("modules").decode()
+    fun health(): CoreCall<CoreHealth> = call("health").decode("health")
+    fun capabilities(): CoreCall<List<CoreCapability>> = call("capabilities").decode("capabilities")
+    fun modules(): CoreCall<List<CoreModule>> = call("modules").decode("modules")
 
-    /** Thermal status, battery saver and other telemetry, keyed by field name. */
-    fun telemetry(): CoreCall<Map<String, CoreObservation>> = when (val r = call("context")) {
-        is CoreCall.Ok -> try {
-            val t = r.value.jsonObject["context"]!!.jsonObject["telemetry"]!!.jsonObject
-            CoreCall.Ok(t.mapNotNull { (k, v) -> parseObservation(v)?.let { k to it } }.toMap())
-        } catch (e: Exception) {
-            CoreCall.Failed("unexpected Core context: ${e.message?.take(200)}")
+    /** Thermal status, battery saver and other telemetry, keyed by field name, with Core's clock. */
+    fun telemetry(): CoreCall<CoreTelemetry> = when (val r = call("context")) {
+        is CoreCall.Ok -> {
+            val ctx = (r.value as? JsonObject)?.get("context") as? JsonObject
+            val t = ctx?.get("telemetry") as? JsonObject
+            val at = (ctx?.get("collected_at_ms") as? JsonPrimitive)?.contentOrNull?.toLongOrNull()
+            if (t == null || at == null) {
+                CoreCall.Failed("Core's context result does not match this app's contract: no context.telemetry or collected_at_ms")
+            } else {
+                CoreCall.Ok(CoreTelemetry(at, t.mapNotNull { (k, v) -> parseObservation(v)?.let { k to it } }.toMap()))
+            }
         }
-        else -> r.decode<Map<String, CoreObservation>>()
+        is CoreCall.Error -> r
+        CoreCall.NotInstalled -> CoreCall.NotInstalled
+        is CoreCall.Unreachable -> r
+        is CoreCall.NoRoot -> r
+        is CoreCall.Failed -> r
     }
 
     internal fun parseObservation(e: JsonElement): CoreObservation? {
@@ -218,6 +251,8 @@ class CoreClient(private val root: RootShell) {
             value = v["value"],
             source = (o["source"] as? JsonPrimitive)?.contentOrNull ?: "",
             provenance = (o["provenance"] as? JsonPrimitive)?.contentOrNull ?: "",
+            observedAtMs = (o["observed_at_ms"] as? JsonPrimitive)?.contentOrNull?.toLongOrNull() ?: 0,
+            ttlMs = (o["ttl_ms"] as? JsonPrimitive)?.contentOrNull?.toLongOrNull() ?: 0,
         )
     }
 
@@ -232,7 +267,7 @@ class CoreClient(private val root: RootShell) {
             if (durationMs != null) put("duration_ms", durationMs)
             put("reason", "zairenkai-app")
         }
-        return call("submit", params).decode()
+        return call("submit", params).decode("submit")
     }
 
     /** The most recent audit events (oldest first), as raw JSON objects. */

@@ -327,4 +327,20 @@
     <string name="module_distribution">Distribusi</string>
     <string name="module_distribution_ok">Berlisensi untuk didistribusikan</string>
     <string name="module_distribution_internal">Hanya build pengembangan internal, tidak untuk didistribusikan</string>
+    <string name="core_field_thermal_status">Status termal (framework, lewat Core)</string>
+    <string name="core_field_battery_temp">Suhu baterai</string>
+    <string name="core_field_battery_level">Level baterai</string>
+    <string name="core_field_charging">Mengisi daya</string>
+    <string name="reading_celsius">%1$.1f °C</string>
+    <string name="reading_percent">%1$d %%</string>
+    <string name="reading_stale">%1$s (kedaluwarsa: %2$d dtk melewati masa berlaku)</string>
+    <string name="reading_invalid">Pembacaan tidak valid, tidak ditampilkan: %1$s</string>
+    <string name="reading_not_reported">%1$s: %2$s</string>
+    <string name="obs_status_unavailable">Tidak tersedia</string>
+    <string name="obs_status_unsupported">Tidak didukung di perangkat ini</string>
+    <string name="obs_status_permission_denied">Izin ditolak</string>
+    <string name="obs_status_unknown">Belum diukur</string>
+    <string name="profile_confirmed">Terkonfirmasi: zfasd kini melaporkan %1$s.</string>
+    <string name="profile_not_reflected">Belum terkonfirmasi: zfasd melaporkan %1$s (diminta %2$s).</string>
+    <string name="profile_unreadable">Belum terkonfirmasi: status zfasd tidak dapat dibaca sesudahnya.</string>
 </resources>

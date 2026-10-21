@@ -203,11 +203,21 @@ private fun ActionDialog(state: ActionState, vm: PerformanceViewModel) {
             title = state.label.resolve(),
             body = { Text(stringResource(R.string.direct_confirm)) },
             confirmLabel = stringResource(R.string.send),
-            onConfirm = { if (!confirmed) { confirmed = true; vm.applyDirect(state.label, state.run) } },
+            onConfirm = { if (!confirmed) { confirmed = true; vm.applyDirect(state.label, state.run, state.requestedProfile) } },
             onDismiss = vm::dismiss,
             destructive = true,
         )
-        is ActionState.Done -> ResultDialog(state.label.resolve(), stringResource(if (state.succeeded) R.string.action_done else R.string.action_not_applied) + " · " + state.message, vm::dismiss)
+        is ActionState.Done -> {
+            val check = state.profile?.let { p ->
+                when {
+                    p.confirmed -> stringResource(R.string.profile_confirmed, p.requested)
+                    p.reported == null -> stringResource(R.string.profile_unreadable)
+                    else -> stringResource(R.string.profile_not_reflected, p.reported, p.requested)
+                }
+            }
+            val head = stringResource(if (state.succeeded) R.string.action_done else R.string.action_not_applied) + " · " + state.message
+            ResultDialog(state.label.resolve(), listOfNotNull(head, check).joinToString("\n"), vm::dismiss)
+        }
         is ActionState.Error -> ResultDialog(state.label.resolve(), stringResource(R.string.action_failed) + " · " + state.detail, vm::dismiss)
     }
 }

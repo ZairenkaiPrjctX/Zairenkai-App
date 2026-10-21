@@ -11,6 +11,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -232,22 +235,63 @@ fun MetricTile(label: String, value: String, caption: String?, modifier: Modifie
     }
 }
 
-/** Key/value row for technical details. [code] switches the value to monospace. */
+/** Whether [InfoRow] keeps its 42 % / 58 % columns: only when the longest unbreakable word of each fits. */
+internal fun infoRowSideBySide(keyLongestWord: Int, valueLongestWord: Int, width: Int, gap: Int): Boolean {
+    val keyColumn = (width * 0.42f).toInt()
+    return keyLongestWord <= keyColumn && valueLongestWord <= width - keyColumn - gap
+}
+
+/**
+ * Key/value row for technical details; [code] switches the value to monospace.
+ * Label and value side by side (42 % / 58 %) when every word fits its column; otherwise the label
+ * stacks above the value at full width. Property names, paths and package names have no break
+ * points, and a fixed split wrapped them one character per line on narrow screens. Code values are
+ * selectable so long identifiers can be copied.
+ */
 @Composable
 fun InfoRow(key: String, value: String?, code: Boolean = false, numeric: Boolean = false) {
-    Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.Top) {
-        Text(key, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.42f))
-        Spacer(Modifier.width(ZairenkaiSpacing.s))
-        Text(
-            value ?: stringResource(R.string.not_reported),
-            style = when {
-                code -> ZairenkaiTextStyles.code
-                numeric -> ZairenkaiTextStyles.numeric
-                else -> MaterialTheme.typography.bodyMedium
+    val shown = value ?: stringResource(R.string.not_reported)
+    val row = @Composable {
+        Layout(
+            content = {
+                Text(key, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    shown,
+                    style = when {
+                        code -> ZairenkaiTextStyles.code
+                        numeric -> ZairenkaiTextStyles.numeric
+                        else -> MaterialTheme.typography.bodyMedium
+                    },
+                )
             },
-            modifier = Modifier.weight(0.58f),
-        )
+            modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        ) { measurables, constraints ->
+            val (k, v) = measurables
+            val width = constraints.maxWidth
+            val gap = ZairenkaiSpacing.s.roundToPx()
+            val keyColumn = (width * 0.42f).toInt()
+            val valueColumn = width - keyColumn - gap
+            val sideBySide = constraints.hasBoundedWidth &&
+                infoRowSideBySide(k.minIntrinsicWidth(Constraints.Infinity), v.minIntrinsicWidth(Constraints.Infinity), width, gap)
+            if (sideBySide) {
+                val kp = k.measure(Constraints(maxWidth = keyColumn))
+                val vp = v.measure(Constraints(maxWidth = valueColumn))
+                layout(width, maxOf(kp.height, vp.height)) {
+                    kp.placeRelative(0, 0)
+                    vp.placeRelative(keyColumn + gap, 0)
+                }
+            } else {
+                val bounded = Constraints(maxWidth = if (constraints.hasBoundedWidth) width else Constraints.Infinity)
+                val kp = k.measure(bounded)
+                val vp = v.measure(bounded)
+                layout(maxOf(kp.width, vp.width).coerceAtMost(constraints.maxWidth), kp.height + vp.height) {
+                    kp.placeRelative(0, 0)
+                    vp.placeRelative(0, kp.height)
+                }
+            }
+        }
     }
+    if (code) SelectionContainer { row() } else row()
 }
 
 @Composable

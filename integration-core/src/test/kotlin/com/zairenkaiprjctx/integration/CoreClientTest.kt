@@ -38,7 +38,7 @@ class CoreClientTest {
         val mods = (client("modules", 0, contract("core/modules.json")).first.modules() as CoreCall.Ok).value
         assertTrue(mods.any { it.id == "zairenkai_thermaltools" && it.health == "not_installed" })
         val tel = (client("context", 0, contract("core/context.json")).first.telemetry() as CoreCall.Ok).value
-        val thermal = tel.getValue("thermal_status")
+        val thermal = tel["thermal_status"]!!
         assertEquals("unavailable", thermal.status)
         assertEquals("dumpsys thermalservice", thermal.source)
     }

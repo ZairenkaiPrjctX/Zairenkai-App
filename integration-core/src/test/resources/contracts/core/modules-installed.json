@@ -1,0 +1,20 @@
+{
+  "v": 1,
+  "id": "fixture-modules",
+  "ok": true,
+  "result": [
+    {
+      "compatible": true,
+      "detail": "no zairenkai-module.toml; known first-party modules are handled by built-in adapters",
+      "health": "unknown",
+      "id": "zairenkai_core",
+      "owns": [],
+      "requested_permissions": [],
+      "version": {
+        "major": 0,
+        "minor": 1,
+        "patch": 0
+      }
+    }
+  ]
+}

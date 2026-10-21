@@ -13,6 +13,8 @@
 #     dry-run submit (Core writes no device nodes; its state stays in TMP);
 #   - zfasd run --observe-only --dir TMP (in-memory control backend: no cpufreq writes), then
 #     zfasd ctl status and profile.
+#   - Core's own module inventory over a temporary root holding the module.prop packaged in
+#     zairenkai_core.zip, so the modules result carries an installed module and its version;
 #   - the module catalog build-components.sh wrote from the real module zips (run it first).
 # Requires: git read access to the repositories, Rust (stable), python3.
 set -euo pipefail
@@ -116,6 +118,28 @@ done
 capture "$DEST/core/audit.json" "$CORE" ctl --dir "$TMP/core" audit '{"limit":5}'
 capture "$DEST/core/submit-dry-run.json" "$CORE" ctl --dir "$TMP/core" submit \
   '{"operation":{"op":"fas_set_profile","profile":"performance"},"dry_run":true}'
+
+# The host has no /data/adb/modules: the daemon reports every module not_installed with
+# version null. Core's inventory and Response types serialise one installed module instead.
+CORE_ZIP="$ROOT/integration/out/assets/system-modules/zairenkai_core.zip"
+[ -f "$CORE_ZIP" ] || { echo "run integration/scripts/build-components.sh first ($CORE_ZIP missing)" >&2; exit 1; }
+python3 -c 'import sys, zipfile; sys.stdout.buffer.write(zipfile.ZipFile(sys.argv[1]).read("module.prop"))' "$CORE_ZIP" >"$TMP/core-module.prop"
+mkdir -p "$TMP/core-fixture/src"
+cat >"$TMP/core-fixture/Cargo.toml" <<TOML
+[package]
+name = "core-fixture"
+version = "0.0.0"
+edition = "2021"
+publish = false
+[dependencies]
+zcore-domain = { path = "$SRC/core/crates/zcore-domain" }
+zcore-platform = { path = "$SRC/core/crates/zcore-platform" }
+serde_json = "1"
+[workspace]
+TOML
+cp "$ROOT/integration/scripts/core_fixture_main.rs" "$TMP/core-fixture/src/main.rs"
+cp "$SRC/core/Cargo.lock" "$TMP/core-fixture/Cargo.lock"
+(cd "$TMP/core-fixture" && cargo run -q --release -- "$TMP/core-module.prop" "$TMP/core-root" "$DEST/core/modules-installed.json")
 
 FAS="$SRC/fas/target/release/zfasd"
 "$FAS" run --observe-only --dir "$TMP/fas" >"$TMP/fas.log" 2>&1 &
