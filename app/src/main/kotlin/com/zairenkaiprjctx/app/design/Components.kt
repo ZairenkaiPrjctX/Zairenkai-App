@@ -267,9 +267,8 @@ fun InfoRow(key: String, value: String?, code: Boolean = false, numeric: Boolean
         numeric -> ZairenkaiTextStyles.numeric
         else -> MaterialTheme.typography.bodyMedium
     }
-    // Longest word measured here, not with minIntrinsicWidth: that follows the line BreakIterator,
-    // which (on the JVM, and on some ICU versions) breaks at '.' and '_', so a property name looked
-    // like short words that fit the 42 % column and then wrapped beside its value.
+    // Longest whitespace-separated word, measured on one line: the columns are kept only when no
+    // word has to be broken, whatever break opportunities the line breaker would find inside it.
     val measurer = rememberTextMeasurer()
     val keyWord = remember(key, keyStyle, measurer) { longestWordWidth(measurer, key, keyStyle) }
     val valueWord = remember(shown, valueStyle, measurer) { longestWordWidth(measurer, shown, valueStyle) }

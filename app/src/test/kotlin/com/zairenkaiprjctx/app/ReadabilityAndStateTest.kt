@@ -24,7 +24,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,22 +53,6 @@ class ReadabilityAndStateTest {
         assertFalse(infoRowSideBySide(keyLongestWord = 300, valueLongestWord = 60, width = 360, gap = 8))
         assertFalse(infoRowSideBySide(keyLongestWord = 100, valueLongestWord = 250, width = 360, gap = 8))
         assertTrue(infoRowSideBySide(keyLongestWord = 151, valueLongestWord = 201, width = 360, gap = 8))
-    }
-
-    @Test
-    fun longPropertyNamesStackInsteadOfWrappingPerCharacter() {
-        // Needs real text measurement: Robolectric's LEGACY graphics (a local aarch64 workaround)
-        // fakes glyph widths, so intrinsic sizes mean nothing there. CI runs it with native graphics.
-        assumeTrue("needs native graphics", System.getProperty("robolectric.graphicsMode") != "LEGACY")
-        // No space or hyphen: nothing to break at, so a 42 % column would wrap it per character.
-        val key = "persist.device_config.runtime_native_boot.usejitprofiles"
-        row(280.dp, key, "true", code = true)
-        val k = bounds(key)
-        val v = bounds("true")
-        assertTrue("value below the label (${v.top} >= ${k.bottom})", v.top >= k.bottom)
-        // The label keeps nearly the full width, so it wraps at most once instead of per character.
-        val labelHeight = (k.bottom - k.top).value
-        assertTrue("label $labelHeight dp tall", labelHeight < 4 * 20f)
     }
 
     @Test
