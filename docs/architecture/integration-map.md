@@ -9,13 +9,15 @@
                          │        └──── RootShell ───────┘   │      assets/afid/     │
                          │                │ su -c 'w1' 'w2'…  │      device-          │
                          │                │                   │      candidates.json  │
-                         │                │        lib/<abi>/libzart.so (exec)        │
+                         │                │  lib/<abi>/libzart.so, libzthermal.so     │
                          └────────────────┼───────────────────┼───────────────────────┘
                                           ▼                   ▼
              /data/adb/modules/zairenkai_core/bin/zcored ctl --dir /data/adb/zairenkai-core …
              /data/adb/modules/zairenkai_fas/bin/zfasd  ctl --dir /data/adb/zairenkai-fas  …
              <nativeLibraryDir>/libzart.so dexopt-status <package>   (root)
              <nativeLibraryDir>/libzart.so inspect                   (app uid, no root)
+             <nativeLibraryDir>/libzthermal.so snapshot              (app uid, no root)
+             <nativeLibraryDir>/libzthermal.so snapshot --framework  (root, on request)
 ```
 
 | Path | Command | Parsed by | Contract source | Fixture |
@@ -27,6 +29,7 @@
 | FAS control | `ctl enable\|disable\|reset\|profile <enum>` | `FasClient.command`, `setProfile` | same | `contracts/fas/profile-ok.json` |
 | ART inspection | `libzart.so inspect` | `ZartParser.inspect` | zart `inspect.rs` (schema 1) | `contracts/zart/inspect-*.json` |
 | Dexopt status | `su -c '<libzart.so>' 'dexopt-status' '<pkg>'` | `ZartParser.dexoptStatus` | zart `dexopt.rs` | `contracts/zart/dexopt-*.json` |
+| Thermal snapshot | `libzthermal.so snapshot`; `su -c '<libzthermal.so>' 'snapshot' '--framework'` | `ThermalToolsParser.snapshot` | ThermalTools `schemas/snapshot.schema.json` (schema_version 1) | `contracts/zthermal/snapshot-*.json` |
 | Device candidates | asset read | `AfidCatalog.parse` | `integration/scripts/afid_asset.py` | `fixtures/afid-two-devices.json` |
 
 Routing rule: while Core answers, every action goes through Core (policy, arbitration, audit).

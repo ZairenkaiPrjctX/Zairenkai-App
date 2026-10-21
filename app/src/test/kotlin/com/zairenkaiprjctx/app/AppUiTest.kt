@@ -71,6 +71,21 @@ class AppUiTest {
     }
 
     @Test
+    fun thermalScreenSaysWhyZthermalCannotRunAndOffersNoControl() {
+        launch()
+        compose.onNodeWithText("Thermal").performClick()
+        compose.waitForIdle()
+        val snap = container.registry.snapshot.value
+        // The Robolectric APK has no packaged zthermal: the state says so instead of showing data.
+        assertEquals(AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE, snap.availability("thermaltools.snapshot").state)
+        assertEquals(AvailabilityState.NO_UPSTREAM_IMPLEMENTATION, snap.availability("thermaltools.control").state)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Thermal controls"))
+        compose.onNodeWithText("Thermal controls").assertIsDisplayed()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Thermal sensors"))
+        compose.onNodeWithText("Thermal sensors").assertIsDisplayed()
+    }
+
+    @Test
     fun themeChoiceIsAppliedAndPersisted() {
         launch()
         compose.onNodeWithContentDescription("Open settings").performClick()

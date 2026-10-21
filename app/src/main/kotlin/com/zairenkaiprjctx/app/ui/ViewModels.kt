@@ -18,6 +18,8 @@ import com.zairenkaiprjctx.integration.fas.FasCall
 import com.zairenkaiprjctx.integration.fas.FasCommand
 import com.zairenkaiprjctx.integration.fas.FasStatus
 import com.zairenkaiprjctx.integration.registry.RegistrySnapshot
+import com.zairenkaiprjctx.integration.thermaltools.ThermalSnapshot
+import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsResult
 import com.zairenkaiprjctx.integration.zart.Obs
 import com.zairenkaiprjctx.integration.zart.PackageDexopt
 import com.zairenkaiprjctx.integration.zart.PackageNames
@@ -241,6 +243,7 @@ class ThermalViewModel(private val c: AppContainer) : ViewModel() {
         }
         jobs = listOf(statusJob, headroomJob)
         viewModelScope.launch(Dispatchers.IO) { telemetry.value = c.core.telemetry() }
+        if (zthermal.value == null) loadThermalTools()
     }
 
     fun stop() {
@@ -250,6 +253,24 @@ class ThermalViewModel(private val c: AppContainer) : ViewModel() {
 
     fun reloadCore() {
         viewModelScope.launch(Dispatchers.IO) { telemetry.value = c.core.telemetry() }
+    }
+
+    private val zthermal = MutableStateFlow<ThermalToolsResult<ThermalSnapshot>?>(null)
+
+    /** The latest zthermal snapshot (read only), or why there is none. */
+    val thermalTools: StateFlow<ThermalToolsResult<ThermalSnapshot>?> = zthermal.asStateFlow()
+    private val zthermalBusy = MutableStateFlow(false)
+    val thermalToolsBusy: StateFlow<Boolean> = zthermalBusy.asStateFlow()
+    val rootGranted: Boolean get() = c.root.state == RootState.GRANTED
+
+    /** `zthermal snapshot` as the app uid; with [withRoot], through su with `--framework`. */
+    fun loadThermalTools(withRoot: Boolean = false) {
+        if (zthermalBusy.value) return
+        zthermalBusy.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            zthermal.value = if (withRoot) c.zthermal.snapshotWithRoot() else c.zthermal.snapshot()
+            zthermalBusy.value = false
+        }
     }
 }
 

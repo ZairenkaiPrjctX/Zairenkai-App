@@ -145,6 +145,13 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
                 }
                 afid?.getOrNull()?.let { Supporting(stringResource(R.string.licence_data, it.license.spdx, it.license.attribution)) }
                 Supporting(stringResource(R.string.licence_zart))
+                Supporting(stringResource(R.string.licence_zthermal))
+                if (c.components?.zthermalCommit != null) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                        TextButton(onClick = { licence = "licenses/zthermal/LICENSE" }) { Text(stringResource(R.string.licence_zthermal_view)) }
+                        TextButton(onClick = { licence = "licenses/zthermal/NOTICE" }) { Text(stringResource(R.string.licence_zthermal_notice)) }
+                    }
+                }
                 Supporting(stringResource(R.string.licence_libs))
                 Supporting(stringResource(R.string.licence_project))
             }
@@ -170,6 +177,8 @@ private fun Diagnostics(vm: SystemViewModel, snapshot: RegistrySnapshot, root: R
         InfoRow(stringResource(R.string.key_app), "${c.versionName} (${c.packageName})", code = true)
         InfoRow(stringResource(R.string.key_zart), comp?.let { "${it.zartVersion} @ ${it.zartCommit?.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
         InfoRow(stringResource(R.string.key_zart_exe), stringResource(if (c.zartPath != null) R.string.present else R.string.missing_abi))
+        InfoRow(stringResource(R.string.key_zthermal), comp?.zthermalCommit?.let { "${comp.zthermalVersion} @ ${it.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
+        InfoRow(stringResource(R.string.key_zthermal_exe), stringResource(if (c.zthermalPath != null) R.string.present else R.string.missing_abi))
         InfoRow(stringResource(R.string.key_afid_data), comp?.afidCommit?.take(12) ?: stringResource(R.string.not_packaged), code = true)
         val chooserTitle = stringResource(R.string.diagnostics_share)
         Button(onClick = {
@@ -178,6 +187,7 @@ private fun Diagnostics(vm: SystemViewModel, snapshot: RegistrySnapshot, root: R
                 put("api_level", c.platform.sdkInt)
                 put("abis", JsonArray(c.platform.supportedAbis.map { JsonPrimitive(it) }))
                 put("zart_commit", comp?.zartCommit)
+                put("zthermal_commit", comp?.zthermalCommit)
                 put("afid_commit", comp?.afidCommit)
                 put("root_state", root.name)
                 put(

@@ -23,7 +23,9 @@ import com.zairenkaiprjctx.integration.registry.DeviceDbSubsystem
 import com.zairenkaiprjctx.integration.registry.FasSubsystem
 import com.zairenkaiprjctx.integration.registry.IntegrationRegistry
 import com.zairenkaiprjctx.integration.registry.PlatformSubsystem
+import com.zairenkaiprjctx.integration.registry.ThermalToolsSubsystem
 import com.zairenkaiprjctx.integration.registry.UpstreamGapSubsystem
+import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsClient
 import com.zairenkaiprjctx.integration.zart.ZartClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
@@ -33,7 +35,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 
 /** Revisions of the packaged components (assets/components.json, written by build-components.sh). */
-data class PackagedComponents(val zartCommit: String?, val zartVersion: String?, val afidCommit: String?)
+data class PackagedComponents(val zartCommit: String?, val zartVersion: String?, val zthermalCommit: String?, val zthermalVersion: String?, val afidCommit: String?)
 
 /** Appearance preferences, persisted in SharedPreferences and observed by the root composable. */
 class ThemePreferences(private val prefs: android.content.SharedPreferences) {
@@ -80,7 +82,13 @@ class AppContainer(private val app: Application) {
     val thermalMonitor = ThermalStatusMonitor(app)
 
     /** zart is extracted to nativeLibraryDir (useLegacyPackaging) and must be executable there. */
-    val zartPath: String? = File(app.applicationInfo.nativeLibraryDir, "libzart.so").takeIf { it.isFile && it.canExecute() }?.absolutePath
+    val zartPath: String? = nativeExecutable("libzart.so")
+
+    /** zthermal, packaged the same way. */
+    val zthermalPath: String? = nativeExecutable("libzthermal.so")
+
+    private fun nativeExecutable(name: String): String? =
+        File(app.applicationInfo.nativeLibraryDir, name).takeIf { it.isFile && it.canExecute() }?.absolutePath
 
     fun asset(path: String): String = app.assets.open(path).use { it.readBytes().decodeToString() }
 
@@ -94,23 +102,30 @@ class AppContainer(private val app: Application) {
         runCatching {
             val o = Json.parseToJsonElement(asset("components.json")).jsonObject
             fun field(section: String, key: String) = (o[section] as? JsonObject)?.get(key)?.jsonPrimitive?.content
-            PackagedComponents(field("zart", "commit"), field("zart", "version"), field("afid", "commit"))
+            PackagedComponents(
+                field("zart", "commit"), field("zart", "version"),
+                field("zthermal", "commit"), field("zthermal", "version"),
+                field("afid", "commit"),
+            )
         }.getOrNull()
     }
 
     private fun lockedCommit(repo: String): String? = inventory?.byName(repo)?.auditedCommit
 
     val zart = ZartClient({ zartPath }, runner, root)
+    val zthermal = ThermalToolsClient({ zthermalPath }, runner, root)
     val core = CoreClient(root)
     val fas = FasClient(root)
 
     val art = ArtSubsystem(zart, root, components?.zartCommit)
+    val thermalTools = ThermalToolsSubsystem(zthermal, root, components?.zthermalCommit)
     val fasSubsystem = FasSubsystem(fas, root, lockedCommit("Zairenkai-FAS"))
 
     val registry = IntegrationRegistry(
         listOf(
             PlatformSubsystem(platform),
             art,
+            thermalTools,
             DeviceDbSubsystem({ afid }, platform),
             CoreSubsystem(core, root, lockedCommit("Zairenkai-Core")),
             fasSubsystem,

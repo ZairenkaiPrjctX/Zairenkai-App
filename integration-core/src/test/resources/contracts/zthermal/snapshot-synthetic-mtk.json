@@ -1,0 +1,599 @@
+{
+  "schema_version": 1,
+  "tool_version": "0.2.0",
+  "generated_unix_ms": 1792588304970,
+  "root": "fixture",
+  "redacted": true,
+  "identity": {
+    "schema_version": 1,
+    "manufacturer": "Synthetic",
+    "brand": null,
+    "oem_family": {
+      "value": "other",
+      "confidence": "medium",
+      "evidence": [
+        {
+          "source": "ro.product.manufacturer",
+          "value": "Synthetic",
+          "indicates": "Other"
+        }
+      ],
+      "conflicts": []
+    },
+    "device": null,
+    "model": null,
+    "soc_vendor": {
+      "value": "mediatek",
+      "confidence": "medium",
+      "evidence": [
+        {
+          "source": "ro.board.platform",
+          "value": "mt6768",
+          "indicates": "Mediatek"
+        }
+      ],
+      "conflicts": []
+    },
+    "soc_model": null,
+    "board_platform": "mt6768",
+    "android_release": null,
+    "sdk": 31,
+    "build_fingerprint": null,
+    "vendor_fingerprint": null,
+    "build_type": null,
+    "kernel_release": null,
+    "arch": "x86_64",
+    "missing": [
+      "ro.product.brand",
+      "ro.product.vendor.manufacturer",
+      "ro.product.vendor.brand",
+      "ro.product.device",
+      "ro.product.vendor.device",
+      "ro.product.model",
+      "ro.product.name",
+      "ro.soc.manufacturer",
+      "ro.soc.model",
+      "ro.hardware",
+      "ro.hardware.chipname",
+      "ro.build.version.release",
+      "ro.build.fingerprint",
+      "ro.vendor.build.fingerprint",
+      "ro.build.type",
+      "ro.vndk.version"
+    ]
+  },
+  "sources": [
+    {
+      "source": "getprop",
+      "status": "valid",
+      "detail": null
+    },
+    {
+      "source": "dumpsys thermalservice",
+      "status": "unsupported",
+      "detail": "dumpsys thermalservice: not found (no fixture)"
+    },
+    {
+      "source": "dumpsys battery",
+      "status": "unsupported",
+      "detail": "dumpsys battery: not found (no fixture)"
+    }
+  ],
+  "summary": {
+    "zones": 3,
+    "zones_valid": 3,
+    "zones_invalid": 0,
+    "cooling_devices": 0,
+    "hottest_zone": {
+      "source": "/sys/class/thermal/thermal_zone0",
+      "name": "mtktscpu",
+      "millicelsius": 48000
+    },
+    "framework_status": null,
+    "battery_millicelsius": null
+  },
+  "sysfs": {
+    "thermal_class_present": true,
+    "zones": [
+      {
+        "path": "/sys/class/thermal/thermal_zone0",
+        "zone_type": {
+          "value": "mtktscpu",
+          "status": "valid",
+          "detail": null
+        },
+        "classification": {
+          "category": "cpu",
+          "rule": "name contains \"cpu\""
+        },
+        "temp": {
+          "raw": "48000",
+          "unit": "milli_celsius",
+          "millicelsius": 48000,
+          "status": "valid",
+          "reason": null
+        },
+        "temp_mode": {
+          "mode": "0644",
+          "owner_writable": true,
+          "world_readable": true
+        },
+        "mode": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone0/mode: No such file or directory (os error 2)"
+        },
+        "policy": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone0/policy: No such file or directory (os error 2)"
+        },
+        "available_policies": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone0/available_policies: No such file or directory (os error 2)"
+        },
+        "trips": [],
+        "bindings": []
+      },
+      {
+        "path": "/sys/class/thermal/thermal_zone1",
+        "zone_type": {
+          "value": "mtktsbattery",
+          "status": "valid",
+          "detail": null
+        },
+        "classification": {
+          "category": "battery",
+          "rule": "name contains \"battery\""
+        },
+        "temp": {
+          "raw": "31000",
+          "unit": "milli_celsius",
+          "millicelsius": 31000,
+          "status": "valid",
+          "reason": null
+        },
+        "temp_mode": {
+          "mode": "0644",
+          "owner_writable": true,
+          "world_readable": true
+        },
+        "mode": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone1/mode: No such file or directory (os error 2)"
+        },
+        "policy": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone1/policy: No such file or directory (os error 2)"
+        },
+        "available_policies": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone1/available_policies: No such file or directory (os error 2)"
+        },
+        "trips": [],
+        "bindings": []
+      },
+      {
+        "path": "/sys/class/thermal/thermal_zone2",
+        "zone_type": {
+          "value": "mtktsAP",
+          "status": "valid",
+          "detail": null
+        },
+        "classification": {
+          "category": "unknown",
+          "rule": null
+        },
+        "temp": {
+          "raw": "40000",
+          "unit": "milli_celsius",
+          "millicelsius": 40000,
+          "status": "valid",
+          "reason": null
+        },
+        "temp_mode": {
+          "mode": "0644",
+          "owner_writable": true,
+          "world_readable": true
+        },
+        "mode": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone2/mode: No such file or directory (os error 2)"
+        },
+        "policy": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone2/policy: No such file or directory (os error 2)"
+        },
+        "available_policies": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone2/available_policies: No such file or directory (os error 2)"
+        },
+        "trips": [],
+        "bindings": []
+      }
+    ],
+    "cooling_devices": [],
+    "hwmon": [],
+    "truncated": false
+  },
+  "thermalservice": null,
+  "battery": null,
+  "adapters": [
+    {
+      "adapter": "generic",
+      "applies": true,
+      "evidence": [
+        "applies to every device"
+      ],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [
+        {
+          "id": "sensors.thermal_zones",
+          "description": "read temperatures from /sys/class/thermal/thermal_zone*/temp",
+          "scope": "Linux thermal sysfs",
+          "discovery": "list /sys/class/thermal",
+          "requires": "read access to sysfs (granted to apps on most builds; SELinux may deny)",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "AVAILABLE_READ_ONLY",
+          "validation": "fixtures_only",
+          "evidence": [
+            "3 zones, 3 with a valid reading"
+          ],
+          "reason": null,
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "sensors.trip_points",
+          "description": "read trip point types, temperatures and hysteresis (read only; never written)",
+          "scope": "Linux thermal sysfs",
+          "discovery": "trip_point_*_{type,temp,hyst}",
+          "requires": "read access to sysfs",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "0 trip points"
+          ],
+          "reason": "no trip points exposed",
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "cooling.state_read",
+          "description": "read cooling device type, cur_state and max_state",
+          "scope": "Linux thermal sysfs",
+          "discovery": "list /sys/class/thermal/cooling_device*",
+          "requires": "read access to sysfs",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "0 cooling devices"
+          ],
+          "reason": "no cooling devices",
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "sensors.hwmon",
+          "description": "read hwmon temperature inputs",
+          "scope": "Linux hwmon",
+          "discovery": "list /sys/class/hwmon/hwmon*/temp*_input",
+          "requires": "read access to sysfs",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "0 hwmon devices, 0 temperature inputs"
+          ],
+          "reason": "no hwmon temperature inputs",
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "framework.thermal_status",
+          "description": "Android thermal status, HAL temperatures and cooling devices",
+          "scope": "Android 10+",
+          "discovery": "dumpsys thermalservice",
+          "requires": "android.permission.DUMP (adb shell or root)",
+          "privilege": "shell",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "probe: dumpsys thermalservice"
+          ],
+          "reason": "dumpsys thermalservice: not found (no fixture)",
+          "hardware_tested": false,
+          "probe": {
+            "source": "dumpsys thermalservice",
+            "status": "unsupported",
+            "detail": "dumpsys thermalservice: not found (no fixture)"
+          }
+        },
+        {
+          "id": "framework.battery_temperature",
+          "description": "battery temperature from BatteryService",
+          "scope": "Android 10+",
+          "discovery": "dumpsys battery",
+          "requires": "android.permission.DUMP (adb shell or root)",
+          "privilege": "shell",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "probe: dumpsys battery"
+          ],
+          "reason": "dumpsys battery: not found (no fixture)",
+          "hardware_tested": false,
+          "probe": {
+            "source": "dumpsys battery",
+            "status": "unsupported",
+            "detail": "dumpsys battery: not found (no fixture)"
+          }
+        },
+        {
+          "id": "control.thermal_policy",
+          "description": "apply a thermal policy through validated, reversible controls",
+          "scope": "devices with a validated control descriptor",
+          "discovery": "validated control allowlist",
+          "requires": "root, a validated descriptor matching this device, a hardware test record",
+          "privilege": "root",
+          "access": "write",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [],
+          "reason": "the validated control allowlist is empty in this release: no control has a hardware test record",
+          "hardware_tested": false,
+          "probe": null
+        }
+      ],
+      "notes": [
+        "controls are never derived from a writable node, a vendor name or root access"
+      ]
+    },
+    {
+      "adapter": "qualcomm",
+      "applies": false,
+      "evidence": [],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [],
+      "notes": []
+    },
+    {
+      "adapter": "mediatek",
+      "applies": true,
+      "evidence": [
+        "ro.board.platform = mt6768",
+        "3 zones with legacy mtkts* names",
+        "1 files in /vendor/etc/.tp"
+      ],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [
+        {
+          "path": "/vendor/etc/.tp/thermal.conf",
+          "status": "valid",
+          "detail": null,
+          "inspection": {
+            "schema_version": 1,
+            "path": "/vendor/etc/.tp/thermal.conf",
+            "size": 3046,
+            "sha256": "3d7761fc9241f519ddd4d34a88a8118c308f75c7796463d0b7af6b4bbc3bbddb",
+            "detection": {
+              "format": "opaque",
+              "reason": "printable text with entropy 6.56 bits/byte, 0.0% spaces, 32 distinct punctuation characters (a MediaTek /.tp/ policy file): enciphered by the vendor; no authorized decoder exists, so it is reported and never decoded",
+              "opaque": null
+            },
+            "summary": {},
+            "findings": [],
+            "safety_facts": [],
+            "round_trip": null
+          }
+        }
+      ],
+      "capabilities": [
+        {
+          "id": "config.mediatek_thermal_policy",
+          "description": "read, parse and validate the vendor thermal configuration (never written back)",
+          "scope": "MediaTek devices with /vendor/etc/.tp",
+          "discovery": "list /vendor/etc/.tp",
+          "requires": "read access to the file (usually world-readable under /vendor/etc)",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "DETECTED_UNVERIFIED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "/vendor/etc/.tp/thermal.conf"
+          ],
+          "reason": "files found, but their format has no parser (opaque or unrecognized); not interpreted",
+          "hardware_tested": false,
+          "probe": null
+        }
+      ],
+      "notes": [
+        "MediaTek .tp policy files are enciphered by the vendor; they are hashed and reported, never decoded"
+      ]
+    },
+    {
+      "adapter": "pixel",
+      "applies": false,
+      "evidence": [],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [],
+      "notes": []
+    },
+    {
+      "adapter": "xiaomi",
+      "applies": false,
+      "evidence": [],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [],
+      "notes": []
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "sensors.thermal_zones",
+      "description": "read temperatures from /sys/class/thermal/thermal_zone*/temp",
+      "scope": "Linux thermal sysfs",
+      "discovery": "list /sys/class/thermal",
+      "requires": "read access to sysfs (granted to apps on most builds; SELinux may deny)",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "AVAILABLE_READ_ONLY",
+      "validation": "fixtures_only",
+      "evidence": [
+        "3 zones, 3 with a valid reading"
+      ],
+      "reason": null,
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "sensors.trip_points",
+      "description": "read trip point types, temperatures and hysteresis (read only; never written)",
+      "scope": "Linux thermal sysfs",
+      "discovery": "trip_point_*_{type,temp,hyst}",
+      "requires": "read access to sysfs",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "0 trip points"
+      ],
+      "reason": "no trip points exposed",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "cooling.state_read",
+      "description": "read cooling device type, cur_state and max_state",
+      "scope": "Linux thermal sysfs",
+      "discovery": "list /sys/class/thermal/cooling_device*",
+      "requires": "read access to sysfs",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "0 cooling devices"
+      ],
+      "reason": "no cooling devices",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "sensors.hwmon",
+      "description": "read hwmon temperature inputs",
+      "scope": "Linux hwmon",
+      "discovery": "list /sys/class/hwmon/hwmon*/temp*_input",
+      "requires": "read access to sysfs",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "0 hwmon devices, 0 temperature inputs"
+      ],
+      "reason": "no hwmon temperature inputs",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "framework.thermal_status",
+      "description": "Android thermal status, HAL temperatures and cooling devices",
+      "scope": "Android 10+",
+      "discovery": "dumpsys thermalservice",
+      "requires": "android.permission.DUMP (adb shell or root)",
+      "privilege": "shell",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "probe: dumpsys thermalservice"
+      ],
+      "reason": "dumpsys thermalservice: not found (no fixture)",
+      "hardware_tested": false,
+      "probe": {
+        "source": "dumpsys thermalservice",
+        "status": "unsupported",
+        "detail": "dumpsys thermalservice: not found (no fixture)"
+      }
+    },
+    {
+      "id": "framework.battery_temperature",
+      "description": "battery temperature from BatteryService",
+      "scope": "Android 10+",
+      "discovery": "dumpsys battery",
+      "requires": "android.permission.DUMP (adb shell or root)",
+      "privilege": "shell",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "probe: dumpsys battery"
+      ],
+      "reason": "dumpsys battery: not found (no fixture)",
+      "hardware_tested": false,
+      "probe": {
+        "source": "dumpsys battery",
+        "status": "unsupported",
+        "detail": "dumpsys battery: not found (no fixture)"
+      }
+    },
+    {
+      "id": "control.thermal_policy",
+      "description": "apply a thermal policy through validated, reversible controls",
+      "scope": "devices with a validated control descriptor",
+      "discovery": "validated control allowlist",
+      "requires": "root, a validated descriptor matching this device, a hardware test record",
+      "privilege": "root",
+      "access": "write",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [],
+      "reason": "the validated control allowlist is empty in this release: no control has a hardware test record",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "config.mediatek_thermal_policy",
+      "description": "read, parse and validate the vendor thermal configuration (never written back)",
+      "scope": "MediaTek devices with /vendor/etc/.tp",
+      "discovery": "list /vendor/etc/.tp",
+      "requires": "read access to the file (usually world-readable under /vendor/etc)",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "DETECTED_UNVERIFIED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "/vendor/etc/.tp/thermal.conf"
+      ],
+      "reason": "files found, but their format has no parser (opaque or unrecognized); not interpreted",
+      "hardware_tested": false,
+      "probe": null
+    }
+  ]
+}

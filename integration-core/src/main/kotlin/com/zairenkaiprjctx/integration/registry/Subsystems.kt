@@ -15,10 +15,14 @@ import com.zairenkaiprjctx.integration.model.AvailabilityState.INITIALIZATION_FA
 import com.zairenkaiprjctx.integration.model.AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE
 import com.zairenkaiprjctx.integration.model.AvailabilityState.NOT_VERIFIED
 import com.zairenkaiprjctx.integration.model.AvailabilityState.NO_UPSTREAM_IMPLEMENTATION
+import com.zairenkaiprjctx.integration.model.AvailabilityState.PERMISSION_REQUIRED
 import com.zairenkaiprjctx.integration.model.AvailabilityState.ROOT_REQUIRED
 import com.zairenkaiprjctx.integration.model.AvailabilityState.UNSUPPORTED_DEVICE
 import com.zairenkaiprjctx.integration.model.Privilege
 import com.zairenkaiprjctx.integration.model.Provider
+import com.zairenkaiprjctx.integration.thermaltools.ThermalSnapshot
+import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsClient
+import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsResult
 import com.zairenkaiprjctx.integration.zart.ZartClient
 import com.zairenkaiprjctx.integration.zart.ZartReport
 import com.zairenkaiprjctx.integration.zart.ZartResult
@@ -139,6 +143,63 @@ class ArtSubsystem(
     }
 }
 
+class ThermalToolsSubsystem(
+    private val zthermal: ThermalToolsClient,
+    private val root: RootShell,
+    revision: String?,
+) : ZairenkaiSubsystem {
+    override val id = "thermaltools"
+    override val displayName = "Thermal diagnostics (Zairenkai-ThermalTools)"
+    override val provider = Provider("ZairenkaiPrjctX/Zairenkai-ThermalTools", revision, "zthermal")
+
+    @Volatile
+    var lastSnapshot: ThermalSnapshot? = null
+        private set
+
+    override fun probe(): List<CapabilityRecord> {
+        val snapshot = when (val r = zthermal.snapshot()) {
+            is ThermalToolsResult.Ok -> {
+                lastSnapshot = r.value
+                val s = r.value.summary
+                val counts = "zthermal ${r.value.toolVersion}: ${s.zonesValid} of ${s.zones} thermal zones readable"
+                when {
+                    s.zonesValid > 0 -> Availability.available(counts)
+                    r.value.accessDenied -> Availability(PERMISSION_REQUIRED, "$counts. Android denies this app the thermal zones; a root snapshot may read them.")
+                    else -> Availability(UNSUPPORTED_DEVICE, "$counts. The kernel exposes no readable thermal zone here.")
+                }
+            }
+            is ThermalToolsResult.Failed -> {
+                lastSnapshot = null
+                Availability(if (r.missingBinary) NATIVE_COMPONENT_UNAVAILABLE else INITIALIZATION_FAILED, r.detail)
+            }
+        }
+        val withRoot = rootUnavailable(root)
+            ?: if (snapshot.state == NATIVE_COMPONENT_UNAVAILABLE) snapshot
+            else Availability(NOT_VERIFIED, "Runs `zthermal snapshot --framework` through root when you ask; adds dumpsys thermalservice and battery.")
+        return listOf(
+            CapabilityRecord(
+                "thermaltools.snapshot", "Thermal sensors",
+                "Thermal zones, trip points, cooling devices and hwmon read by zthermal as this app (read only)",
+                provider, Privilege.STANDARD, snapshot, listOf("snapshot"),
+            ),
+            CapabilityRecord(
+                "thermaltools.snapshot_root", "Full thermal snapshot",
+                "The same snapshot through root, with the framework's thermal status and battery temperature",
+                provider, Privilege.ROOT, withRoot, listOf("snapshot --framework"),
+            ),
+            CapabilityRecord(
+                "thermaltools.control", "Thermal controls",
+                "Changing thermal policy, trip points or cooling devices",
+                provider, Privilege.NONE,
+                Availability(
+                    NO_UPSTREAM_IMPLEMENTATION,
+                    "zthermal has no validated control: it only plans changes and refuses to write. The app never runs apply, rollback or backup-config.",
+                ),
+            ),
+        )
+    }
+}
+
 class DeviceDbSubsystem(
     private val catalog: () -> Result<AfidCatalog>,
     private val platform: PlatformInfo,
@@ -226,7 +287,6 @@ class UpstreamGapSubsystem(private val inventory: () -> OrganizationInventory?) 
     override val provider = Provider("ZairenkaiPrjctX", null, "organization inventory")
 
     private val planned = listOf(
-        Triple("Zairenkai-ThermalTools", "thermaltools.config", "Thermal configuration tools"),
         Triple("Zairenkai-Intelligence-Engine", "intelligence.analysis", "Analysis and recommendations"),
         Triple("Zairenkai-License-Server", "license.entitlement", "Licence and entitlement"),
         Triple("Zairenkai-Sdk", "sdk.api", "SDK"),

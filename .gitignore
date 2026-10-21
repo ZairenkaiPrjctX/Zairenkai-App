@@ -20,3 +20,4 @@
 *.apk
 *.aab
 *.idsig
+__pycache__/

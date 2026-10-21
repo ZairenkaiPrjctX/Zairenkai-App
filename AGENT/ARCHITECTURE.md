@@ -34,13 +34,13 @@ Implemented and tested on the JVM; not yet run on a device. Full description:
 ## External interfaces
 
 - `zcored ctl` and `zfasd ctl` through `su` (`docs/architecture/integration-map.md`).
-- The packaged `libzart.so`.
+- The packaged `libzart.so` and `libzthermal.so` (only `zthermal snapshot`).
 - Packaged assets.
 - No network.
 
 ## Trust boundaries
 
-- **App uid:** public APIs and `zart inspect`.
+- **App uid:** public APIs, `zart inspect` and `zthermal snapshot`.
 - **Root:** only after consent, and only fixed commands.
 - **No secrets:** none in the repository or the APK.
 

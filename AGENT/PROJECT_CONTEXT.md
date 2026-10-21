@@ -20,9 +20,9 @@
 | Area | Location | Status |
 |---|---|---|
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
-| JVM integration layer (Kotlin + Java) | `integration-core/` | Verified. Evidence: 37 tests |
-| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 19 Robolectric tests. **Unverified** on a device |
-| Organization inventory, lock, scripts | `integration/` | Verified. Evidence: scripts exit 0, 2026-10-19 |
+| JVM integration layer (Kotlin + Java) | `integration-core/` | Verified. Evidence: 43 tests, 2026-10-21 |
+| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 20 Robolectric tests, 2026-10-21. **Unverified** on a device |
+| Organization inventory (16 repositories), lock, scripts | `integration/` | Verified. Evidence: scripts exit 0, re-audit 2026-10-21 |
 | CI | `.github/workflows/ci.yml` | Verified locally. Evidence: actionlint clean. **Unverified** on GitHub |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
 
@@ -49,15 +49,17 @@
 
 ## Related repositories
 
-- Zairenkai-Core (`ad0c195`), Zairenkai-FAS (`0877452`), Zairenkai-ART (`fc72192`) and
-  Zairenkai-Database-Source (`6e3db46`) are integrated. Verified. Evidence:
-  `integration/repository-lock.json`, contract tests.
-- The other 11 repositories have no runtime capability. Verified. Evidence:
-  `integration/repository-audit.md`.
+- Zairenkai-Core (`34e93e3`, topic branch), Zairenkai-FAS (`3c83f0e`), Zairenkai-ART (`19f658d`),
+  Zairenkai-ThermalTools (`9d4b310`, topic branch) and Zairenkai-Database-Source (`d9c4290`) are
+  integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
+- The other 10 Zairenkai repositories have no runtime capability, and anime-extensions is a separate
+  product. Verified. Evidence: `integration/repository-audit.md` (re-audit 2026-10-21).
+- The Core and ThermalTools pins are unmerged topic-branch commits. Verified. Evidence:
+  `git log origin/dev..origin/ccr-63f8aa87-1b0paj` in both repositories, 2026-10-21.
 
 ## Open questions
 
-- Which licence should the app use?
+- Which licence should the app use (and ART, whose zart is packaged unlicensed)?
 - Which device will run the first on-device validation?
 - Release signing: where will the key live, and who signs?
 - When should the app move to Material 3 1.5.0 stable (and the compileSdk 37 / AGP 9.1

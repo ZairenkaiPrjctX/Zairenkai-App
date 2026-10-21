@@ -1,7 +1,8 @@
 {
   "captured_by": "integration/scripts/capture-contracts.sh",
   "host": "Linux container (no Android services: device inputs report unavailable)",
-  "zart": "fc72192cfceb7068ad71ddc8d461f1dba6238dd5",
-  "zcored": "ad0c1954eb340e51f194e7c2dd33ed9186ce95cb",
-  "zfasd": "0877452636a6ad960a7f90834e0a0228f322f3c1"
+  "zart": "19f658d7af76c6aa276d37995ccc87a1cc640588",
+  "zthermal": "9d4b31017ea1c679ee155aa2df978752e1683fd6",
+  "zcored": "34e93e34440efb90d64d4af1f9f10292d790575c",
+  "zfasd": "3c83f0e1271f93ed85a456e8a65b1b719b41f8f1"
 }

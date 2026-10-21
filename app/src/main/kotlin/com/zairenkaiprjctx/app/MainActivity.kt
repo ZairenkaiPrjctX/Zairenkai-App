@@ -75,7 +75,7 @@ import com.zairenkaiprjctx.app.ui.ThermalViewModel
 enum class Tab(@StringRes val title: Int, val icon: ImageVector, val subsystems: List<String>) {
     HOME(R.string.nav_home, ZairenkaiIcons.home, listOf("android", "afid")),
     PERFORMANCE(R.string.nav_performance, ZairenkaiIcons.performance, listOf("core", "fas")),
-    THERMAL(R.string.nav_thermal, ZairenkaiIcons.thermal, listOf("android", "core", "fas")),
+    THERMAL(R.string.nav_thermal, ZairenkaiIcons.thermal, listOf("android", "thermaltools", "core", "fas")),
     RUNTIME(R.string.nav_runtime, ZairenkaiIcons.runtime, listOf("art")),
     SYSTEM(R.string.nav_system, ZairenkaiIcons.system, listOf("core", "afid", "upstream")),
 }

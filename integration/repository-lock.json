@@ -1,21 +1,40 @@
 {
   "schema_version": 1,
-  "locked_at": "2026-10-19",
-  "note": "Exact source revisions this app integrates. Branch names are recorded for context only; builds resolve the commit. Topic-branch revisions are not merged into their repository's default branch yet.",
+  "locked_at": "2026-10-21",
+  "note": "Exact source revisions this app integrates. Branch names are recorded for context only; builds resolve the commit. Components with \"merged\": false are pinned to a topic-branch commit that is not in the repository's default branch yet.",
   "components": [
     {
       "id": "zart",
       "repository": "ZairenkaiPrjctX/Zairenkai-ART",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ART.git",
-      "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "fc72192cfceb7068ad71ddc8d461f1dba6238dd5",
+      "branch": "dev",
+      "commit": "19f658d7af76c6aa276d37995ccc87a1cc640588",
+      "merged": true,
       "packaging": "native executable, built with the repository's scripts/build-android.sh and packaged as lib/<abi>/libzart.so",
       "abis": [
         "arm64-v8a",
         "armeabi-v7a",
         "x86_64"
       ],
-      "license": "No project licence chosen (no LICENSE file). Contains Apache-2.0 data derived from AOSP ART (crates/zart/src/isa.rs); Rust dependencies serde/serde_json are MIT OR Apache-2.0.",
+      "license": "No project licence chosen (no LICENSE file at this commit). Contains Apache-2.0 data derived from AOSP ART (crates/zart/src/isa.rs); Rust dependencies serde/serde_json are MIT OR Apache-2.0.",
+      "note": "Merge commit of ART PR #1; its tree is identical to fc72192, the commit audited on 2026-10-19.",
+      "integration_status": "implemented"
+    },
+    {
+      "id": "zthermal",
+      "repository": "ZairenkaiPrjctX/Zairenkai-ThermalTools",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ThermalTools.git",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "9d4b31017ea1c679ee155aa2df978752e1683fd6",
+      "merged": false,
+      "packaging": "native executable, built with the repository's scripts/build-android.sh and packaged as lib/<abi>/libzthermal.so; the app runs only `zthermal snapshot` (schema_version 1)",
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "license": "Apache-2.0 (LICENSE, NOTICE at this commit; packaged in assets/licenses/zthermal/). Statically linked Rust dependencies: MIT OR Apache-2.0, plus foldhash (Zlib), memchr (Unlicense OR MIT), generic-array and zmij (MIT); see the repository's docs/LICENSING.md.",
+      "note": "zthermal 0.2.0 is read-only: its validated control list is empty and apply/rollback/backup-config are never invoked by the app.",
       "integration_status": "implemented"
     },
     {
@@ -23,7 +42,8 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-Database-Source",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Database-Source.git",
       "branch": "dev",
-      "commit": "6e3db46b62bf6ac7fae484e379067d78b238ee68",
+      "commit": "d9c4290ae0c4503b30449edf636b865c51a96f15",
+      "merged": true,
       "paths": [
         "database/staging/unresolved/lineageos_wiki"
       ],
@@ -36,19 +56,23 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-Core",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core.git",
       "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "ad0c1954eb340e51f194e7c2dd33ed9186ce95cb",
+      "commit": "34e93e34440efb90d64d4af1f9f10292d790575c",
+      "merged": false,
       "packaging": "not packaged; the app calls the installed Magisk/KernelSU module (zairenkai_core) through root: zcored ctl, protocol v1",
-      "license": "No project licence chosen (no LICENSE file); no code is copied into the app.",
+      "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
+      "note": "Adds the read-only ThermalTools capabilities (thermaltools.diagnostics, thermaltools.sensors) to discovery. dev holds 455368f, without them.",
       "integration_status": "implemented"
     },
     {
       "id": "zfasd-ctl-contract",
       "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
-      "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "0877452636a6ad960a7f90834e0a0228f322f3c1",
+      "branch": "dev",
+      "commit": "3c83f0e1271f93ed85a456e8a65b1b719b41f8f1",
+      "merged": true,
       "packaging": "not packaged; the app calls the installed module (zairenkai_fas) through root: zfasd ctl (status schema 1, docs/INTEGRATION.md)",
       "license": "No project licence chosen (no LICENSE file); no code is copied into the app.",
+      "note": "Merge commit of FAS PR #2; its tree is identical to 0877452, the commit audited on 2026-10-19.",
       "integration_status": "implemented"
     }
   ]

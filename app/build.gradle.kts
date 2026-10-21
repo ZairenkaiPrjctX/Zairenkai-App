@@ -18,15 +18,18 @@ val copyIntegrationMeta = tasks.register<Copy>("copyIntegrationMeta") {
 val componentsDir = rootProject.file("integration/out")
 val allowMissingComponents = providers.gradleProperty("zairenkai.allowMissingComponents").map { it.toBoolean() }.orElse(false)
 val verifyIntegrationComponents = tasks.register("verifyIntegrationComponents") {
-    val required = listOf("arm64-v8a", "armeabi-v7a", "x86_64").map { "jniLibs/$it/libzart.so" } +
-        listOf("assets/afid/device-candidates.json", "assets/components.json")
+    val required = listOf("arm64-v8a", "armeabi-v7a", "x86_64").flatMap { listOf("jniLibs/$it/libzart.so", "jniLibs/$it/libzthermal.so") } +
+        listOf(
+            "assets/afid/device-candidates.json", "assets/components.json",
+            "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE",
+        )
     val allow = allowMissingComponents
     doLast {
         val missing = required.filterNot { componentsDir.resolve(it).isFile }
         if (missing.isNotEmpty()) {
             val msg = "Integration components missing: $missing. Run integration/scripts/build-components.sh, " +
-                "or pass -Pzairenkai.allowMissingComponents=true to build an APK whose ART and device-database " +
-                "features report NATIVE_COMPONENT_UNAVAILABLE / INITIALIZATION_FAILED."
+                "or pass -Pzairenkai.allowMissingComponents=true to build an APK whose ART, thermal-sensor and " +
+                "device-database features report NATIVE_COMPONENT_UNAVAILABLE / INITIALIZATION_FAILED."
             if (allow.get()) logger.warn("WARNING: $msg") else throw GradleException(msg)
         }
     }
@@ -43,7 +46,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         ndk {
-            // The ABIs zart is built for (integration/repository-lock.json).
+            // The ABIs zart and zthermal are built for (integration/repository-lock.json).
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
     }
@@ -66,7 +69,7 @@ android {
 
     packaging {
         jniLibs {
-            // zart is an executable, not a JNI library: it must be extracted to nativeLibraryDir
+            // zart and zthermal are executables, not JNI libraries: it must be extracted to nativeLibraryDir
             // so it can be executed (app data directories are not executable for targetSdk >= 29).
             useLegacyPackaging = true
         }

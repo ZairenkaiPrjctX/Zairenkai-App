@@ -201,4 +201,19 @@
     <plurals name="ecosystem_title">
         <item quantity="other">Ekosistem (%1$d repositori)</item>
     </plurals>
+    <string name="key_zthermal">zthermal</string>
+    <string name="key_zthermal_exe">Executable zthermal</string>
+    <string name="thermaltools_title">Sensor termal (zthermal)</string>
+    <string name="thermaltools_zones">Zona terbaca</string>
+    <string name="thermaltools_zones_value">%1$d dari %2$d</string>
+    <string name="thermaltools_hottest">Zona terpanas</string>
+    <string name="thermaltools_framework">Status termal framework</string>
+    <string name="thermaltools_battery">Suhu baterai</string>
+    <string name="thermaltools_denied">Android menolak akses aplikasi ini ke sebagian zona termal. Snapshot root mungkin dapat membacanya.</string>
+    <string name="thermaltools_zone_list">Semua zona (%1$d)</string>
+    <string name="thermaltools_source">Dibaca oleh zthermal %1$s dari /sys/class/thermal. Hanya baca: tidak ada yang ditulis.</string>
+    <string name="thermaltools_with_root">Baca dengan root</string>
+    <string name="licence_zthermal">zthermal (Zairenkai-ThermalTools) berlisensi Apache-2.0. Crate Rust yang ditautkan statis berlisensi MIT OR Apache-2.0, ditambah foldhash (Zlib), memchr (Unlicense OR MIT), generic-array dan zmij (MIT).</string>
+    <string name="licence_zthermal_view">Lihat lisensi zthermal</string>
+    <string name="licence_zthermal_notice">Lihat notice zthermal</string>
 </resources>

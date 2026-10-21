@@ -10,7 +10,7 @@ put detail in `AGENT/`.
 
 This repository is the **Zairenkai App** (Android, Kotlin + Java, Jetpack Compose with
 Material 3 Expressive, Google Sans Flex). Architecture: `docs/architecture/overview.md`.
-- `:integration-core`: pure JVM. Registry, typed clients (Core, FAS, zart, AFID), root shell,
+- `:integration-core`: pure JVM. Registry, typed clients (Core, FAS, zart, zthermal, AFID), root shell,
   and `ProcessCommandRunner` (Java).
 - `:app`: Compose UI and design system (`design/`), Android adapters in Java (`platform/`).
 - `integration/`: organization inventory, revision lock, component build and contract-capture
@@ -23,6 +23,8 @@ Non-negotiables in this repo:
   unprobed capability is NOT_VERIFIED, never AVAILABLE.
 - **Root commands are `ShellScript`s of validated `ShellWord`s, never strings.** No `su` call
   before the user enables root.
+- **zthermal is read only.** The app runs only `zthermal snapshot` (with `--framework` through
+  root, on request). Never `apply`, `rollback` or `backup-config`; no thermal control in the UI.
 - **Actions go through Core while it answers.** Direct `zfasd ctl` only when Core is down, and
   only after confirmation.
 - **Contract fixtures come from the real binaries** (`capture-contracts.sh`), never hand-written
@@ -38,13 +40,13 @@ Non-negotiables in this repo:
 
 | Purpose | Command | Status |
 |---|---|---|
-| Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-19 |
-| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: exit 0, 2026-10-19 |
-| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 37 passed, 2026-10-19 |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 19 passed, 2026-10-19 |
-| Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-19 |
-| Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-19 |
-| Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-19 |
+| Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
+| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: exit 0, 2026-10-21 |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 43 passed, 2026-10-21 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 20 passed, 2026-10-21 |
+| Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-21 |
+| Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
+| Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
 | Validate agent foundation | `python3 <path-to-.github>/agent-foundation/scripts/validate_agent_setup.py .` | Configured |
 
 Only list commands that exist in this repository. Never invent one.

@@ -1,0 +1,640 @@
+{
+  "schema_version": 1,
+  "tool_version": "0.2.0",
+  "generated_unix_ms": 1792588304966,
+  "root": "fixture",
+  "redacted": true,
+  "identity": {
+    "schema_version": 1,
+    "manufacturer": "Synthetic",
+    "brand": "synthetic",
+    "oem_family": {
+      "value": "other",
+      "confidence": "high",
+      "evidence": [
+        {
+          "source": "ro.product.manufacturer",
+          "value": "Synthetic",
+          "indicates": "Other"
+        },
+        {
+          "source": "ro.product.brand",
+          "value": "synthetic",
+          "indicates": "Other"
+        }
+      ],
+      "conflicts": []
+    },
+    "device": "synthpixel",
+    "model": null,
+    "soc_vendor": {
+      "value": "google_tensor",
+      "confidence": "high",
+      "evidence": [
+        {
+          "source": "ro.soc.manufacturer",
+          "value": "Google",
+          "indicates": "GoogleTensor"
+        },
+        {
+          "source": "ro.soc.model",
+          "value": "zuma",
+          "indicates": "GoogleTensor"
+        }
+      ],
+      "conflicts": []
+    },
+    "soc_model": "zuma",
+    "board_platform": null,
+    "android_release": null,
+    "sdk": 34,
+    "build_fingerprint": null,
+    "vendor_fingerprint": null,
+    "build_type": null,
+    "kernel_release": null,
+    "arch": "x86_64",
+    "missing": [
+      "ro.product.vendor.manufacturer",
+      "ro.product.vendor.brand",
+      "ro.product.vendor.device",
+      "ro.product.model",
+      "ro.product.name",
+      "ro.board.platform",
+      "ro.hardware",
+      "ro.hardware.chipname",
+      "ro.build.version.release",
+      "ro.build.fingerprint",
+      "ro.vendor.build.fingerprint",
+      "ro.build.type",
+      "ro.vndk.version"
+    ]
+  },
+  "sources": [
+    {
+      "source": "getprop",
+      "status": "valid",
+      "detail": null
+    },
+    {
+      "source": "dumpsys thermalservice",
+      "status": "permission_denied",
+      "detail": "Permission Denial: can't dump thermalservice"
+    },
+    {
+      "source": "dumpsys battery",
+      "status": "unsupported",
+      "detail": "dumpsys battery: not found (no fixture)"
+    }
+  ],
+  "summary": {
+    "zones": 3,
+    "zones_valid": 3,
+    "zones_invalid": 0,
+    "cooling_devices": 0,
+    "hottest_zone": {
+      "source": "/sys/class/thermal/thermal_zone0",
+      "name": "BIG",
+      "millicelsius": 52000
+    },
+    "framework_status": null,
+    "battery_millicelsius": null
+  },
+  "sysfs": {
+    "thermal_class_present": true,
+    "zones": [
+      {
+        "path": "/sys/class/thermal/thermal_zone0",
+        "zone_type": {
+          "value": "BIG",
+          "status": "valid",
+          "detail": null
+        },
+        "classification": {
+          "category": "cpu",
+          "rule": "name contains \"big\""
+        },
+        "temp": {
+          "raw": "52000",
+          "unit": "milli_celsius",
+          "millicelsius": 52000,
+          "status": "valid",
+          "reason": null
+        },
+        "temp_mode": {
+          "mode": "0644",
+          "owner_writable": true,
+          "world_readable": true
+        },
+        "mode": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone0/mode: No such file or directory (os error 2)"
+        },
+        "policy": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone0/policy: No such file or directory (os error 2)"
+        },
+        "available_policies": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone0/available_policies: No such file or directory (os error 2)"
+        },
+        "trips": [],
+        "bindings": []
+      },
+      {
+        "path": "/sys/class/thermal/thermal_zone1",
+        "zone_type": {
+          "value": "skin",
+          "status": "valid",
+          "detail": null
+        },
+        "classification": {
+          "category": "skin",
+          "rule": "name contains \"skin\""
+        },
+        "temp": {
+          "raw": "35000",
+          "unit": "milli_celsius",
+          "millicelsius": 35000,
+          "status": "valid",
+          "reason": null
+        },
+        "temp_mode": {
+          "mode": "0644",
+          "owner_writable": true,
+          "world_readable": true
+        },
+        "mode": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone1/mode: No such file or directory (os error 2)"
+        },
+        "policy": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone1/policy: No such file or directory (os error 2)"
+        },
+        "available_policies": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone1/available_policies: No such file or directory (os error 2)"
+        },
+        "trips": [],
+        "bindings": []
+      },
+      {
+        "path": "/sys/class/thermal/thermal_zone2",
+        "zone_type": {
+          "value": "battery",
+          "status": "valid",
+          "detail": null
+        },
+        "classification": {
+          "category": "battery",
+          "rule": "name contains \"battery\""
+        },
+        "temp": {
+          "raw": "29000",
+          "unit": "milli_celsius",
+          "millicelsius": 29000,
+          "status": "valid",
+          "reason": null
+        },
+        "temp_mode": {
+          "mode": "0644",
+          "owner_writable": true,
+          "world_readable": true
+        },
+        "mode": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone2/mode: No such file or directory (os error 2)"
+        },
+        "policy": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone2/policy: No such file or directory (os error 2)"
+        },
+        "available_policies": {
+          "value": null,
+          "status": "unsupported",
+          "detail": "/sys/class/thermal/thermal_zone2/available_policies: No such file or directory (os error 2)"
+        },
+        "trips": [],
+        "bindings": []
+      }
+    ],
+    "cooling_devices": [],
+    "hwmon": [],
+    "truncated": false
+  },
+  "thermalservice": null,
+  "battery": null,
+  "adapters": [
+    {
+      "adapter": "generic",
+      "applies": true,
+      "evidence": [
+        "applies to every device"
+      ],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [
+        {
+          "id": "sensors.thermal_zones",
+          "description": "read temperatures from /sys/class/thermal/thermal_zone*/temp",
+          "scope": "Linux thermal sysfs",
+          "discovery": "list /sys/class/thermal",
+          "requires": "read access to sysfs (granted to apps on most builds; SELinux may deny)",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "AVAILABLE_READ_ONLY",
+          "validation": "fixtures_only",
+          "evidence": [
+            "3 zones, 3 with a valid reading"
+          ],
+          "reason": null,
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "sensors.trip_points",
+          "description": "read trip point types, temperatures and hysteresis (read only; never written)",
+          "scope": "Linux thermal sysfs",
+          "discovery": "trip_point_*_{type,temp,hyst}",
+          "requires": "read access to sysfs",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "0 trip points"
+          ],
+          "reason": "no trip points exposed",
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "cooling.state_read",
+          "description": "read cooling device type, cur_state and max_state",
+          "scope": "Linux thermal sysfs",
+          "discovery": "list /sys/class/thermal/cooling_device*",
+          "requires": "read access to sysfs",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "0 cooling devices"
+          ],
+          "reason": "no cooling devices",
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "sensors.hwmon",
+          "description": "read hwmon temperature inputs",
+          "scope": "Linux hwmon",
+          "discovery": "list /sys/class/hwmon/hwmon*/temp*_input",
+          "requires": "read access to sysfs",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "0 hwmon devices, 0 temperature inputs"
+          ],
+          "reason": "no hwmon temperature inputs",
+          "hardware_tested": false,
+          "probe": null
+        },
+        {
+          "id": "framework.thermal_status",
+          "description": "Android thermal status, HAL temperatures and cooling devices",
+          "scope": "Android 10+",
+          "discovery": "dumpsys thermalservice",
+          "requires": "android.permission.DUMP (adb shell or root)",
+          "privilege": "shell",
+          "access": "read",
+          "state": "PERMISSION_DENIED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "probe: dumpsys thermalservice"
+          ],
+          "reason": "Permission Denial: can't dump thermalservice",
+          "hardware_tested": false,
+          "probe": {
+            "source": "dumpsys thermalservice",
+            "status": "permission_denied",
+            "detail": "Permission Denial: can't dump thermalservice"
+          }
+        },
+        {
+          "id": "framework.battery_temperature",
+          "description": "battery temperature from BatteryService",
+          "scope": "Android 10+",
+          "discovery": "dumpsys battery",
+          "requires": "android.permission.DUMP (adb shell or root)",
+          "privilege": "shell",
+          "access": "read",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [
+            "probe: dumpsys battery"
+          ],
+          "reason": "dumpsys battery: not found (no fixture)",
+          "hardware_tested": false,
+          "probe": {
+            "source": "dumpsys battery",
+            "status": "unsupported",
+            "detail": "dumpsys battery: not found (no fixture)"
+          }
+        },
+        {
+          "id": "control.thermal_policy",
+          "description": "apply a thermal policy through validated, reversible controls",
+          "scope": "devices with a validated control descriptor",
+          "discovery": "validated control allowlist",
+          "requires": "root, a validated descriptor matching this device, a hardware test record",
+          "privilege": "root",
+          "access": "write",
+          "state": "UNSUPPORTED",
+          "validation": "fixtures_only",
+          "evidence": [],
+          "reason": "the validated control allowlist is empty in this release: no control has a hardware test record",
+          "hardware_tested": false,
+          "probe": null
+        }
+      ],
+      "notes": [
+        "controls are never derived from a writable node, a vendor name or root access"
+      ]
+    },
+    {
+      "adapter": "qualcomm",
+      "applies": false,
+      "evidence": [],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [],
+      "notes": []
+    },
+    {
+      "adapter": "mediatek",
+      "applies": false,
+      "evidence": [],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [],
+      "notes": []
+    },
+    {
+      "adapter": "pixel",
+      "applies": true,
+      "evidence": [
+        "ro.soc.manufacturer = Google",
+        "ro.soc.model = zuma",
+        "1 thermal_info_config*.json files",
+        "vendor.thermal.config = thermal_info_config.json"
+      ],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [
+        {
+          "path": "/vendor/etc/thermal_info_config.json",
+          "status": "valid",
+          "detail": null,
+          "inspection": {
+            "schema_version": 1,
+            "path": "/vendor/etc/thermal_info_config.json",
+            "size": 413,
+            "sha256": "cd7ada43b3f98d5de75a86a47d99b1c4ccd63126a80a5478797ae7b42738bf14",
+            "detection": {
+              "format": "pixel_thermal_info_json",
+              "reason": "JSON object with Sensors/CoolingDevices keys",
+              "opaque": null
+            },
+            "summary": {
+              "top_level_keys": [
+                "Sensors",
+                "CoolingDevices"
+              ],
+              "sensors": 2,
+              "virtual_sensors": 0,
+              "sensors_with_hot_thresholds": 2,
+              "cooling_devices": 1,
+              "power_rails": 0,
+              "includes": [],
+              "has_stats": false,
+              "units": "temperatures in degrees Celsius except BCL types (mV, mA, %)"
+            },
+            "findings": [],
+            "safety_facts": [
+              {
+                "location": "Sensors[skin].HotThreshold[4]",
+                "description": "CRITICAL severity at 46.5"
+              },
+              {
+                "location": "Sensors[skin].HotThreshold[5]",
+                "description": "EMERGENCY severity at 52"
+              },
+              {
+                "location": "Sensors[skin].HotThreshold[6]",
+                "description": "SHUTDOWN severity at 55"
+              },
+              {
+                "location": "Sensors[BIG].HotThreshold[6]",
+                "description": "SHUTDOWN severity at 115"
+              }
+            ],
+            "round_trip": {
+              "byte_exact": false,
+              "model_equal": true
+            }
+          }
+        }
+      ],
+      "capabilities": [
+        {
+          "id": "config.pixel_thermal_info",
+          "description": "read, parse and validate the vendor thermal configuration (never written back)",
+          "scope": "Pixel devices with the Pixel Thermal HAL",
+          "discovery": "vendor.thermal.config, /vendor/etc/thermal_info_config*.json and their Include lists",
+          "requires": "read access to the file (usually world-readable under /vendor/etc)",
+          "privilege": "unprivileged",
+          "access": "read",
+          "state": "AVAILABLE_READ_ONLY",
+          "validation": "public_source",
+          "evidence": [
+            "/vendor/etc/thermal_info_config.json"
+          ],
+          "reason": null,
+          "hardware_tested": false,
+          "probe": null
+        }
+      ],
+      "notes": [
+        "active configuration: /vendor/etc/thermal_info_config.json (from vendor.thermal.config or the HAL default)"
+      ]
+    },
+    {
+      "adapter": "xiaomi",
+      "applies": false,
+      "evidence": [],
+      "services": {},
+      "candidate_services": {},
+      "config_files": [],
+      "capabilities": [],
+      "notes": []
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "sensors.thermal_zones",
+      "description": "read temperatures from /sys/class/thermal/thermal_zone*/temp",
+      "scope": "Linux thermal sysfs",
+      "discovery": "list /sys/class/thermal",
+      "requires": "read access to sysfs (granted to apps on most builds; SELinux may deny)",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "AVAILABLE_READ_ONLY",
+      "validation": "fixtures_only",
+      "evidence": [
+        "3 zones, 3 with a valid reading"
+      ],
+      "reason": null,
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "sensors.trip_points",
+      "description": "read trip point types, temperatures and hysteresis (read only; never written)",
+      "scope": "Linux thermal sysfs",
+      "discovery": "trip_point_*_{type,temp,hyst}",
+      "requires": "read access to sysfs",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "0 trip points"
+      ],
+      "reason": "no trip points exposed",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "cooling.state_read",
+      "description": "read cooling device type, cur_state and max_state",
+      "scope": "Linux thermal sysfs",
+      "discovery": "list /sys/class/thermal/cooling_device*",
+      "requires": "read access to sysfs",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "0 cooling devices"
+      ],
+      "reason": "no cooling devices",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "sensors.hwmon",
+      "description": "read hwmon temperature inputs",
+      "scope": "Linux hwmon",
+      "discovery": "list /sys/class/hwmon/hwmon*/temp*_input",
+      "requires": "read access to sysfs",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "0 hwmon devices, 0 temperature inputs"
+      ],
+      "reason": "no hwmon temperature inputs",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "framework.thermal_status",
+      "description": "Android thermal status, HAL temperatures and cooling devices",
+      "scope": "Android 10+",
+      "discovery": "dumpsys thermalservice",
+      "requires": "android.permission.DUMP (adb shell or root)",
+      "privilege": "shell",
+      "access": "read",
+      "state": "PERMISSION_DENIED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "probe: dumpsys thermalservice"
+      ],
+      "reason": "Permission Denial: can't dump thermalservice",
+      "hardware_tested": false,
+      "probe": {
+        "source": "dumpsys thermalservice",
+        "status": "permission_denied",
+        "detail": "Permission Denial: can't dump thermalservice"
+      }
+    },
+    {
+      "id": "framework.battery_temperature",
+      "description": "battery temperature from BatteryService",
+      "scope": "Android 10+",
+      "discovery": "dumpsys battery",
+      "requires": "android.permission.DUMP (adb shell or root)",
+      "privilege": "shell",
+      "access": "read",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [
+        "probe: dumpsys battery"
+      ],
+      "reason": "dumpsys battery: not found (no fixture)",
+      "hardware_tested": false,
+      "probe": {
+        "source": "dumpsys battery",
+        "status": "unsupported",
+        "detail": "dumpsys battery: not found (no fixture)"
+      }
+    },
+    {
+      "id": "control.thermal_policy",
+      "description": "apply a thermal policy through validated, reversible controls",
+      "scope": "devices with a validated control descriptor",
+      "discovery": "validated control allowlist",
+      "requires": "root, a validated descriptor matching this device, a hardware test record",
+      "privilege": "root",
+      "access": "write",
+      "state": "UNSUPPORTED",
+      "validation": "fixtures_only",
+      "evidence": [],
+      "reason": "the validated control allowlist is empty in this release: no control has a hardware test record",
+      "hardware_tested": false,
+      "probe": null
+    },
+    {
+      "id": "config.pixel_thermal_info",
+      "description": "read, parse and validate the vendor thermal configuration (never written back)",
+      "scope": "Pixel devices with the Pixel Thermal HAL",
+      "discovery": "vendor.thermal.config, /vendor/etc/thermal_info_config*.json and their Include lists",
+      "requires": "read access to the file (usually world-readable under /vendor/etc)",
+      "privilege": "unprivileged",
+      "access": "read",
+      "state": "AVAILABLE_READ_ONLY",
+      "validation": "public_source",
+      "evidence": [
+        "/vendor/etc/thermal_info_config.json"
+      ],
+      "reason": null,
+      "hardware_tested": false,
+      "probe": null
+    }
+  ]
+}
