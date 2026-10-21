@@ -53,15 +53,15 @@ Non-negotiables in this repo:
 | Purpose | Command | Status |
 |---|---|---|
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
-| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: exit 0, 2026-10-21 |
+| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified as root (exit 0, 2026-10-21). As non-root (CI): Unverified; failed in CI runs 39639587745/39639605601, fixed 2026-10-22 |
 | Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 74 passed, 2026-10-21 |
 | Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 24 passed, 2026-10-21 |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-21 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
 | Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/access/build/apk/report ok; `--release` fails on 3 blockers (signing), 2026-10-21 |
-| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 7 passed, 2026-10-21 |
-| Actions secrets (maintainer) | `integration/scripts/setup-actions-secrets.sh status\|environment\|ci-app\|module-key\|keystore` | Configured. `status` run 2026-10-21: everything MISSING |
+| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 17 passed, 2026-10-21 |
+| Actions secrets (maintainer) | `integration/scripts/setup-actions-secrets.sh help\|status\|environment\|app\|module-signing\|keystore` | Verified. Evidence: 10 tests with a fake `gh`, 2026-10-21; `status` against GitHub all ok, exit 0, 2026-10-22 |
 | Device check (read only) | `integration/scripts/device-readonly-check.sh [--root]` | Configured (no device available) |
 | Validate agent foundation | `python3 <path-to-.github>/agent-foundation/scripts/validate_agent_setup.py .` | Configured |
 

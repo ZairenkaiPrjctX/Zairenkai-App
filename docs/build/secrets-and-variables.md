@@ -3,12 +3,12 @@
 Every secret, variable and environment the Zairenkai workflows read, where each one lives, and
 how to install it. Values are never written here or anywhere in Git; only names.
 
-**Status, 2026-10-21:** nothing in the table below is installed. Zairenkai-App has no secrets
-and no variables, and no CI GitHub App exists in the organization (`gh secret list`,
-`gh variable list`, `GET /orgs/ZairenkaiPrjctX/installations`). The `release` environment
-exists (created 2026-10-21T16:10Z) but has **no protection rule and no branch policy yet**: run
-step 1 below (`setup-actions-secrets.sh environment`). Every value needs a key that only the maintainer can
-create, so `full-integration` and `release.yml` keep failing until they are set.
+**Status, 2026-10-22:** every value in the table below is set, and the `release` environment
+deploys only from `dev` (`setup-actions-secrets.sh status`: all `ok`, exit 0). The maintainer
+installed them. Set is not the same as working: `full-integration` got past the GitHub App
+step for the first time (runs 39639587745, 39639605601), then failed in `capture-contracts.sh`,
+and `release.yml` has never run. The module-signing public key enters `integration/module-trust.json`
+with this change; `release.yml` accepts the key only once that is merged to `dev`.
 
 ## Zairenkai-App
 
@@ -50,25 +50,38 @@ Zairenkai-Database-Source (`docs/build/ci.md`).
 
 ## Installing (maintainer)
 
-`integration/scripts/setup-actions-secrets.sh` installs each group. It needs `gh` logged in as
-a repository admin, reads keys from files and passwords from silent prompts, and passes them to
-`gh` on stdin, so no value is printed, put on a command line or written to disk.
+`integration/scripts/setup-actions-secrets.sh` (`help` lists each subcommand's prerequisites)
+checks that `gh` is logged in with admin access to the repository and, for environment secrets,
+that `release` exists. It asks before every change on GitHub and replaces an existing value only
+after you type `overwrite`. Keys are read from files, passwords from silent prompts, and both
+reach `gh` on stdin only: nothing is printed or put on a command line. Tests:
+`integration/scripts/tests/test_setup_actions_secrets.py` (a fake `gh`, no real keys).
 
-1. Create the environment:
-   `integration/scripts/setup-actions-secrets.sh environment`
-2. Create the CI GitHub App (`docs/build/ci.md`, steps 1 and 2: Contents read-only, installed on
-   the five repositories only), generate a private key, then:
-   `integration/scripts/setup-actions-secrets.sh ci-app <App ID> <downloaded .pem>`
-   and delete the downloaded PEM.
-3. Create the module-signing key offline and merge its public half into
-   `integration/module-trust.json` (`docs/build/release.md`). Then:
-   `integration/scripts/setup-actions-secrets.sh module-key <module-signing.pem>`
-   The script refuses a key whose `key_id` is not in the trust list, like
-   `sign-module-catalog.sh`.
-4. Create the release keystore outside the repository (`docs/build/release.md`), then:
-   `integration/scripts/setup-actions-secrets.sh keystore <release.jks> <alias>`
-   It checks the alias and password with `keytool` before storing anything.
-5. Check: `integration/scripts/setup-actions-secrets.sh status` lists each name as `ok` or
-   `MISSING` and exits non-zero while anything is missing.
+In Termux or a Linux shell, from the Zairenkai-App checkout:
+
+1. `gh auth login` (an account with admin on the repository), then
+   `integration/scripts/setup-actions-secrets.sh environment`: deployments only from `dev`.
+2. Create the CI GitHub App in the browser (`docs/build/ci.md`, steps 1 and 2: Contents
+   read-only, installed on the five repositories only) and click **Generate a private key**.
+   Then `integration/scripts/setup-actions-secrets.sh app <App ID> <downloaded .pem>`. Before
+   storing anything it authenticates as the App with that key, and refuses if the key belongs to
+   another App, if the App has any permission besides Contents: read, or if it is installed on
+   other repositories than the five. A locally made OpenSSL key cannot work: only GitHub issues
+   App keys. Delete the downloaded PEM afterwards.
+3. `integration/scripts/setup-actions-secrets.sh module-signing`: creates
+   `~/.zairenkai-keys/module-signing.pem` (P-256, directory 700, file 600; an existing key is
+   reused), adds only its public half to `integration/module-trust.json`, and stores the private
+   key as `ZAIRENKAI_MODULE_SIGNING_KEY`. Commit the trust list in a reviewed pull request and
+   merge it to `dev`: `release.yml` refuses a key that is not in the trust list of the commit it
+   builds.
+4. `integration/scripts/setup-actions-secrets.sh keystore`: asks for the alias, the certificate
+   name and a password (empty: a random one in `~/.zairenkai-keys/release-keystore.password`),
+   creates `~/.zairenkai-keys/release.jks` (PKCS12, RSA 4096, 30 years; key password = keystore
+   password), prints its public SHA-256 fingerprint and stores the four keystore secrets.
+5. `integration/scripts/setup-actions-secrets.sh status`: each name `ok` or `MISSING`, the
+   branch policy, the trust list and whether the local module key is in it. Exits 1 while
+   anything is missing.
+6. Back up `~/.zairenkai-keys` offline. Losing `release.jks` or its password means no update of
+   the app can ever be signed again.
 
 An agent must not run steps 2 to 4: the keys must never pass through a chat session or its logs.

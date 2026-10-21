@@ -42,11 +42,12 @@
   **Unverified**: no device has a validation record.
 - No release channel exists, so the module zips are packaged in the APK. Verified. Evidence:
   `list_releases` empty for Core, FAS and Release, 2026-10-21.
-- Module installation needs a catalog signed by a key in `integration/module-trust.json`, which
-  is empty. Every build therefore refuses to install. Verified. Evidence: `SystemModuleTrustTest`,
-  `verify_integration.py report --release`, 2026-10-21.
-- Release blocked by signing: APK unsigned, catalog unsigned, no trusted module key. The licence
-  checks pass. Verified. Evidence: the release gate, 2026-10-21.
+- Module installation needs a catalog signed by a key in `integration/module-trust.json`. The
+  list holds one maintainer key (`4330305a…`, 2026-10-21) from this change on; builds signed
+  without it still refuse to install. Verified. Evidence: `SystemModuleTrustTest`,
+  `setup-actions-secrets.sh status`, 2026-10-22.
+- No signed APK or catalog has been built yet: the release gate last ran 2026-10-21, with the APK
+  and catalog unsigned. The licence checks pass. Verified. Evidence: the release gate, 2026-10-21.
 - App, ART and FAS are Apache-2.0 (maintainer decision 2026-10-21). The ART and FAS licence
   commits (ART `31caf46`, `8c6cea2`; FAS `9d87236`, `f6de6ee`, `333365e`) are on their topic
   branches and not merged; the lock pins the latest of each.
@@ -54,10 +55,10 @@
 - FAS stays internal-only: its licence is not merged, and the first hardware test is Core only.
   The provenance audit found no copied GPL code. Verified. Evidence:
   `docs/integration/fas-provenance.md`, 2026-10-21.
-- No Actions secret or variable is set in Zairenkai-App; the `release` environment exists with
-  no protection, and required reviewers are refused on the current plan (HTTP 422). Verified.
-  Evidence: `setup-actions-secrets.sh status`, GitHub API, 2026-10-21
-  (`docs/build/secrets-and-variables.md`).
+- All seven Actions values are set (CI App ID and key at repository level, five signing secrets in
+  the `release` environment, which deploys only from `dev`; required reviewers are refused on the
+  current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
+  2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
 - Draft PRs Core #2 and ThermalTools #2 bring the pinned topic branches to `dev`; they are not
   merged. Verified. Evidence: GitHub, 2026-10-21.
 
@@ -84,7 +85,5 @@
 ## Open questions
 
 - Which device will run the first on-device validation?
-- Release signing: who creates the APK keystore and the module-signing key, and who holds them (`docs/build/release.md`)?
-- When will the CI GitHub App for the full integration build be created (`docs/build/ci.md`)?
 - When should the app move to Material 3 1.5.0 stable (and the compileSdk 37 / AGP 9.1
   toolchain)?
