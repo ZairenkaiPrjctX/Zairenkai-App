@@ -8,7 +8,7 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-ART",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ART.git",
       "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "31caf46ff8bc36d10a09fa76ffe68bfe2fec913e",
+      "commit": "8c6cea27a9c78fb9782dad7bb7f81872a9540f84",
       "merged": false,
       "packaging": "native executable, built with the repository's scripts/build-android.sh and packaged as lib/<abi>/libzart.so",
       "abis": [
@@ -17,7 +17,7 @@
         "x86_64"
       ],
       "license": "Apache-2.0 (LICENSE, NOTICE at this commit; packaged in assets/licenses/zart/). NOTICE carries the AOSP Apache-2.0 attribution for the arm64 variant tables in crates/zart/src/isa.rs. 11 statically linked Rust crates, all permissive.",
-      "note": "Licence commit on top of dev 19f658d (the merge of ART PR #1); it adds LICENSE, NOTICE and SPDX headers and changes no code. Not merged into dev yet.",
+      "note": "Licence commits 31caf46 and 8c6cea2 on top of dev 19f658d (the merge of ART PR #1); they add LICENSE, NOTICE and SPDX headers and changes no code. Not merged into dev yet.",
       "integration_status": "implemented"
     },
     {
@@ -68,11 +68,11 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
       "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "9d87236d757ceb680c51de2d80b7d6f898c78ec1",
+      "commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
       "merged": false,
       "packaging": "not packaged; the app calls the installed module (zairenkai_fas) through root: zfasd ctl (status schema 1, docs/INTEGRATION.md)",
       "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
-      "note": "Licence commit on top of dev 3c83f0e (the merge of FAS PR #2); it adds LICENSE, NOTICE and SPDX headers and changes no code. Not merged into dev yet.",
+      "note": "Licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (the merge of FAS PR #2); they add LICENSE, NOTICE and SPDX headers and changes no code. Not merged into dev yet.",
       "integration_status": "implemented"
     },
     {
@@ -94,7 +94,7 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
       "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "9d87236d757ceb680c51de2d80b7d6f898c78ec1",
+      "commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
       "merged": false,
       "packaging": "module zip built with the repository's scripts/build-android.sh (arm64-v8a); packaged as assets/system-modules/zairenkai_fas.zip ONLY in internal development builds (ZAIRENKAI_INTERNAL_BUILD=1), never in distributable builds",
       "abis": [

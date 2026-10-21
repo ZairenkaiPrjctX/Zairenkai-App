@@ -1,5 +1,50 @@
 # Verification report
 
+## Licence basis: authorship, Anthropic terms, AOSP NOTICE (2026-10-21)
+
+**Verdict:** the licence declarations are consistent and audited. Signing, the full CI job and
+device validation are still open, so this is **not release-ready**. Licence completion says
+nothing about device compatibility. Nothing ran on a device.
+
+Evidence reviewed:
+- **Git history** of App, ART and FAS: every non-merge commit is by Claude Code sessions run by
+  the maintainer, signed off except the first agent-foundation commit; the merges are the
+  maintainer's; no other contributor.
+- **Anthropic's terms:** Consumer Terms §4 (effective 2025-10-08) and Commercial Terms §B
+  (effective 2025-06-17). Both assign Anthropic's rights in Outputs, "if any", to the user.
+- **AOSP:**
+  - `platform/art` `NOTICE` at `android-17.0.0_r1` (SHA-256 `613c3a67…405fd`) carries
+    "Copyright (c) 2005-2013, The Android Open Source Project". This line is now repeated in
+    ART's NOTICE, the app NOTICE and zart's attribution file.
+  - The header of `instruction_set_features_arm64.cc` was checked as well.
+- **Line comparison** of the App with Magisk `af8c256`, KernelSU `6d31a61`, KernelSU-Next
+  `b427a3f` and APatch `e8e4651` (all GPL-3.0), ignoring imports:
+  - 26, 29, 22 and 21 matching lines; no run of 3 or more;
+  - every match is a common Compose, Android or Gradle idiom.
+- **FAS comparison:** unchanged (0 runs).
+
+Commits:
+- ART `8c6cea2`: NOTICE and authorship record.
+- FAS `f6de6ee` and `333365e`: NOTICE wording and authorship record.
+
+None changes code. All three commits are signed and verified.
+
+| Check | Result |
+|---|---|
+| SPDX headers | every own Kotlin, Java, Gradle, Python, shell, Rust and HTML file in App, ART and FAS; none added to the Gradle wrapper |
+| Crate licences | zart 11, zthermal 25, Core 29, FAS 24 packages (incl. its 3 own crates): MIT OR Apache-2.0, MIT, Unlicense OR MIT, (MIT OR Apache-2.0) AND Unicode-3.0, Zlib. No copyleft |
+| Android libraries | 112, all Apache-2.0, none undeclared |
+| `build-components.sh` | internal exit 0 (FAS zip `9e3503a2…e7d5` with the new NOTICE); default exit 0; `verify_integration.py build` ok in both |
+| `capture-contracts.sh` | exit 0 |
+| `:integration-core:test` / `:app:testDebugUnitTest` | 74 / 24 passed, 0 failed |
+| Verifier tests, lint | 7 passed; 0 lint errors |
+| APKs | debug 37,993,601 bytes `ef9bb2ed…7a63`; release unsigned 30,314,996 bytes `d026533f…36eb`; no FAS zip |
+| `verify_integration.py` lock, access, build, apk | ok |
+| Release gate | **fails on 3**: APK unsigned; catalog unsigned; no trusted module key (unchanged; no gate was weakened, no key created) |
+
+Remaining legal uncertainty: `docs/integration/license-inventory.md`, "Authorship and rights".
+
+
 ## Licences, component PRs, CI App input, Core-only device procedure (2026-10-21)
 
 **Verdict: partially verified.** The licence work and every host check passed. Signing, the

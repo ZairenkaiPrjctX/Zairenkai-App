@@ -65,7 +65,7 @@
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "9d87236d757ceb680c51de2d80b7d6f898c78ec1",
+      "audited_commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
       "code_present": true,
       "languages": [
         "Rust",
@@ -86,7 +86,7 @@
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_fas/bin/zfasd ctl (docs/INTEGRATION.md)",
       "runtime_requirements": "root and the zairenkai_fas module; telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
       "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (3c83f0e) has no LICENSE yet",
-      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 9d87236: the licence commit on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md."
+      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md."
     },
     {
       "name": "Zairenkai-ART",
@@ -99,7 +99,7 @@
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "31caf46ff8bc36d10a09fa76ffe68bfe2fec913e",
+      "audited_commit": "8c6cea27a9c78fb9782dad7bb7f81872a9540f84",
       "code_present": true,
       "languages": [
         "Rust",
@@ -119,7 +119,7 @@
       "integration_mechanism": "native executable lib/<abi>/libzart.so built by the repository's scripts/build-android.sh; JSON over stdout",
       "runtime_requirements": "inspect: none (runs as the app uid; some inputs may be denied by SELinux); dexopt-status: root",
       "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE with the AOSP attribution for crates/zart/src/isa.rs); dev (19f658d) has no LICENSE yet",
-      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 31caf46: the licence commit on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev."
+      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 8c6cea2: the two licence commits (31caf46, 8c6cea2) on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev."
     },
     {
       "name": "Zairenkai-Database-Source",

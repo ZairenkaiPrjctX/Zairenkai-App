@@ -48,7 +48,8 @@
 - Release blocked by signing: APK unsigned, catalog unsigned, no trusted module key. The licence
   checks pass. Verified. Evidence: the release gate, 2026-10-21.
 - App, ART and FAS are Apache-2.0 (maintainer decision 2026-10-21). The ART and FAS licence
-  commits (`31caf46`, `9d87236`) are on their topic branches and not merged; the lock pins them.
+  commits (ART `31caf46`, `8c6cea2`; FAS `9d87236`, `f6de6ee`, `333365e`) are on their topic
+  branches and not merged; the lock pins the latest of each.
   Verified. Evidence: `integration/repository-lock.json`, `docs/integration/license-inventory.md`.
 - FAS stays internal-only: its licence is not merged, and the first hardware test is Core only.
   The provenance audit found no copied GPL code. Verified. Evidence:
@@ -68,7 +69,7 @@
 
 ## Related repositories
 
-- Zairenkai-Core (`34e93e3`, topic branch), Zairenkai-FAS (`9d87236`, topic branch), Zairenkai-ART (`31caf46`, topic branch),
+- Zairenkai-Core (`34e93e3`, topic branch), Zairenkai-FAS (`333365e`, topic branch), Zairenkai-ART (`8c6cea2`, topic branch),
   Zairenkai-ThermalTools (`9d4b310`, topic branch) and Zairenkai-Database-Source (`d9c4290`) are
   integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
 - The other 10 Zairenkai repositories have no runtime capability, and anime-extensions is a separate

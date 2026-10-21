@@ -1,6 +1,10 @@
 Zairenkai App
 Copyright 2026 ZairenkaiPrjctX contributors
 
+"ZairenkaiPrjctX contributors" means the contributors recorded in this repository's Git history.
+It does not name a legal entity. See docs/integration/license-inventory.md, "Authorship and
+rights".
+
 This product includes software developed by the ZairenkaiPrjctX project, licensed under the
 Apache License, Version 2.0 (see LICENSE). That licence covers this repository's own code
 (app/, integration-core/, integration/scripts/, build files). It does not change the terms of
@@ -9,7 +13,8 @@ anything below, each of which keeps its own licence and notices.
 Bundled in the APK (details: docs/integration/license-inventory.md):
 - zart, from Zairenkai-ART (Apache-2.0). Its arm64 CPU variant tables are copied from AOSP ART
   runtime/arch/arm64/instruction_set_features_arm64.cc at android-17.0.0_r1,
-  Copyright (C) 2014 The Android Open Source Project, Apache-2.0.
+  Copyright (C) 2014 The Android Open Source Project, Apache-2.0. Attribution from the NOTICE
+  file of platform/art at that tag: Copyright (c) 2005-2013, The Android Open Source Project.
 - zthermal, from Zairenkai-ThermalTools (Apache-2.0).
 - The Zairenkai-Core module (Apache-2.0), with its own LICENSE and NOTICE in the zip.
 - Rust crates statically linked into those binaries, each under its own permissive licence
@@ -22,5 +27,7 @@ Bundled in the APK (details: docs/integration/license-inventory.md):
 - Device candidates from Zairenkai-Database-Source: LineageOS Wiki data adapted by AFID,
   CC BY-SA 3.0 (attribution in assets/afid/device-candidates.json).
 
-Not bundled: the Gradle wrapper (gradlew, gradlew.bat, gradle/wrapper/) is Copyright the
+Not bundled: AGENT/, .claude/ and AGENTS.md are agent-foundation files synced from
+ZairenkaiPrjctX/.github, written in the same maintainer's sessions; they are covered by this
+repository's licence. The Gradle wrapper (gradlew, gradlew.bat, gradle/wrapper/) is Copyright the
 original authors (Gradle), Apache-2.0, and keeps its own headers.

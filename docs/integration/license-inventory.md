@@ -10,23 +10,24 @@ The audits below support it. The release gate's licence check now passes. Distri
 **blocked by signing**: the APK is unsigned, the catalog is unsigned, and there is no trusted
 module key (`docs/build/release.md`).
 
-The licence commits of ART (`31caf46`) and FAS (`9d87236`) are on their topic branches and not
-yet merged, like the Core and ThermalTools pins. FAS stays an internal module
+The licence commits of ART (`31caf46`, `8c6cea2`) and FAS (`9d87236`, `f6de6ee`, `333365e`) are on their
+topic branches and not yet merged, like the Core and ThermalTools pins. FAS stays an internal module
 (`system-modules.json`): its licence is merged nowhere yet, and the first hardware test covers
 Core only.
 
 Copyright lines use the organization convention, "Copyright 2026 ZairenkaiPrjctX contributors".
-No owner was named beyond that, and no third-party header was changed.
+That phrase means the contributors in each repository's Git history, not a legal entity (see
+"Authorship and rights"). No third-party header was changed.
 
 ## Packaged in the APK
 
 | Item | From | Licence | Notices in the APK | Distributable |
 |---|---|---|---|---|
 | App code (`:app`, `:integration-core`) | Zairenkai-App (this branch) | Apache-2.0 (`LICENSE`, `NOTICE`, SPDX headers in every Kotlin, Java, Gradle, Python, shell and Rust source) | `licenses/zairenkai-app/LICENSE`, `NOTICE` | Yes |
-| `lib/<abi>/libzart.so` | Zairenkai-ART `31caf46` (licence commit on dev `19f658d`; no code change) | Apache-2.0. Contains arm64 variant tables copied from AOSP ART `instruction_set_features_arm64.cc` at `android-17.0.0_r1`, "Copyright (C) 2014 The Android Open Source Project", Apache-2.0 (checked in the file at that tag). `isa.rs` and ART's `NOTICE` cite it. No ART patch code is in zart. | `licenses/zart/LICENSE`, `NOTICE`, `AOSP-ATTRIBUTION.txt`, `THIRD_PARTY_NOTICES.txt` (11 crates) | Yes |
+| `lib/<abi>/libzart.so` | Zairenkai-ART `8c6cea2` (licence commits on dev `19f658d`; no code change) | Apache-2.0. Contains arm64 variant tables copied from AOSP ART `instruction_set_features_arm64.cc` at `android-17.0.0_r1`, "Copyright (C) 2014 The Android Open Source Project", Apache-2.0 (checked in the file at that tag). ART's `NOTICE` attribution at that tag, "Copyright (c) 2005-2013, The Android Open Source Project", is repeated (Apache-2.0 §4(d)). `cpu.rs` uses Linux UAPI constant values (syscall note). `isa.rs` and ART's `NOTICE` cite it. No ART patch code is in zart. | `licenses/zart/LICENSE`, `NOTICE`, `AOSP-ATTRIBUTION.txt`, `THIRD_PARTY_NOTICES.txt` (11 crates) | Yes |
 | `lib/<abi>/libzthermal.so` | Zairenkai-ThermalTools `9d4b310` | Apache-2.0 | `licenses/zthermal/LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.txt` (25 crates) | Yes |
 | `assets/system-modules/zairenkai_core.zip` | Zairenkai-Core `34e93e3` | Apache-2.0 | `LICENSE`, `NOTICE`, `THIRD_PARTY.md` in the zip (checked by `verify_integration.py build`); `licenses/zairenkai_core/THIRD_PARTY_NOTICES.txt` (29 crates) in the APK | Yes (from the APK). The zip alone lacks the crate licence texts (open item 1) |
-| `assets/system-modules/zairenkai_fas.zip` (**internal builds only**, absent by default) | Zairenkai-FAS `9d87236` (licence commit on dev `3c83f0e`; no code change) | Apache-2.0. The audit, re-run on this tree, found no copied or adapted GPL code (line comparison with fas-rs `09ba876`, fas-rs-cpcs `aa3583a` and encore_fas `f408a00`). It has no kernel module, and its 21 crates are permissive (`fas-provenance.md`). | Internal builds: `LICENSE`, `NOTICE`, `THIRD_PARTY.md` in the zip; `licenses/zairenkai_fas/THIRD_PARTY_NOTICES.txt` in the APK | Licence permits it, but it stays internal until the FAS licence is merged and the module is validated |
+| `assets/system-modules/zairenkai_fas.zip` (**internal builds only**, absent by default) | Zairenkai-FAS `333365e` (licence commits on dev `3c83f0e`; no code change) | Apache-2.0. The audit, re-run on this tree, found no copied or adapted GPL code (line comparison with fas-rs `09ba876`, fas-rs-cpcs `aa3583a` and encore_fas `f408a00`). It has no kernel module, and its 21 crates are permissive (`fas-provenance.md`). | Internal builds: `LICENSE`, `NOTICE`, `THIRD_PARTY.md` in the zip; `licenses/zairenkai_fas/THIRD_PARTY_NOTICES.txt` in the APK | Licence permits it, but it stays internal until the FAS licence is merged and the module is validated |
 | `assets/afid/device-candidates.json` | Zairenkai-Database-Source `d9c4290` | Data CC BY-SA 3.0 (LineageOS Wiki, adapted by AFID) | Attribution in the asset and on the device-search screen | Yes (share-alike applies to the data) |
 | `res/font/google_sans_flex.ttf` | google/fonts `47d54ca` | OFL-1.1 | `licenses/google-sans-flex/OFL.txt`, `TRADEMARKS.md` | Yes |
 | 112 Android libraries (AndroidX, Compose, Material 3, Kotlin, kotlinx) | Maven, release runtime classpath | Apache-2.0 (every POM; 109 "The Apache Software License, Version 2.0", 3 "The Apache License, Version 2.0") | `licenses/android/NOTICES.txt` (generated by `generateAndroidNotices`, which fails on a library without a declared licence) | Yes |
@@ -71,6 +72,71 @@ fail if one is missing.
 - **Notice preservation:** `verify_integration.py build` now fails if a packaged module zip lacks
   `LICENSE` or `NOTICE`, or if zart's `LICENSE` and `NOTICE` are missing. `apk` fails if the app's
   own licence and notice are missing.
+
+## Authorship and rights
+
+**History, checked 2026-10-21:**
+
+| Repository | Counted at | Non-merge commits | Author of every non-merge commit | Without `Signed-off-by` | Merges |
+|---|---|---|---|---|---|
+| Zairenkai-App | `4f06ba8` | 9 | "Claude <noreply@anthropic.com>" | the first agent-foundation commit | 1 (maintainer) |
+| Zairenkai-ART | `8c6cea2` | 9 | the same | the first agent-foundation commit | 1 (maintainer) |
+| Zairenkai-FAS | `f6de6ee` | 10 | the same | the first agent-foundation commit | 2 (maintainer) |
+
+Later commits on these branches are made the same way.
+
+- **Who made the commits:** "Claude" is Claude Code, run in this maintainer's sessions. The
+  maintainer is GitHub `FebriCahyaa`; sign-offs read `FebriCahyaa <febricahya12345@gmail.com>`.
+- **Other contributors:** none in any of the three histories.
+- **Resources:** the app's resources were also written for the project. That includes the
+  launcher icon, a single vector path.
+
+**Anthropic's terms, read 2026-10-21:**
+- Consumer Terms (effective 2025-10-08; they cover Claude.ai, Claude Pro and other individual
+  products), §4: "Subject to your compliance with our Terms, we assign to you all of our right,
+  title, and interest—if any—in Outputs."
+- Commercial Terms (effective 2025-06-17), §B: "Customer … owns its Outputs. Anthropic hereby
+  assigns to Customer its right, title and interest (if any) in and to Outputs."
+
+Under either set, Anthropic claims no rights in the code it produced for the account holder. The
+session metadata does not show which plan the sessions ran under. Both terms assign to the account
+holder, so the maintainer should confirm that the account holder is the same person who signs off
+the commits.
+
+**Comparison with the GPL projects the code was written against:**
+
+| Reference (GPL-3.0) | Revision | Matching code lines | Runs of 3 or more consecutive matches |
+|---|---|---|---|
+| Magisk | `af8c256` | 26 | 0 |
+| KernelSU | `6d31a61` | 29 | 0 |
+| KernelSU-Next | `b427a3f` | 22 | 0 |
+| APatch | `e8e4651` | 21 | 0 |
+
+How this was compared:
+- **Why these projects:** the App's root-manager adapters were written from reading these
+  managers' sources.
+- **Method:** as in `fas-provenance.md`, but `import`, `package` and annotation-only lines are
+  ignored.
+- **What matched:** common Compose, Android and Gradle idioms, such as
+  `viewModelScope.launch(Dispatchers.IO) {`, `val context = LocalContext.current` and
+  `override fun onCreate(savedInstanceState: Bundle?) {`.
+- **What is used from the managers:** their command-line interfaces, package names and file
+  locations (`magisk --install-module`, `/data/adb/ksud module install`, `su -v` output).
+  These are interface facts, not copied code.
+
+FAS's own comparison (fas-rs, fas-rs-cpcs, encore_fas) is in `fas-provenance.md`.
+
+**Remaining legal uncertainty (not resolved here; not legal advice):**
+1. Whether, and how far, copyright subsists in AI-assisted code depends on the jurisdiction and
+   on the human contribution. Apache-2.0 is granted to the extent the contributors hold rights;
+   where none subsist, the licence restricts nobody.
+2. The comparisons are evidence, not proof, of independent authorship. They test exact lines
+   against named projects, so paraphrase, or a source that was not compared, cannot be ruled out.
+3. Plan and account: the maintainer should confirm which Anthropic terms applied and that the
+   account holder is the signing maintainer.
+4. "ZairenkaiPrjctX" is a GitHub organization, not a registered entity. If a legal entity is
+   formed, or contributors other than the maintainer join, the copyright lines and a contributor
+   agreement (DCO or CLA) should be revisited.
 
 ## Open items
 

@@ -6,7 +6,8 @@ engineering record, not legal advice.
 **Outcome:** the audit found no copied or adapted third-party code, and no GPL dependency. On
 2026-10-21 the maintainer decided on Apache-2.0, conditional on this audit, and the audit supports
 it. The audit was re-run on the same tree that day, with the same result (below). FAS commit
-`9d87236`, on its topic branch and not merged yet, adds `LICENSE`, `NOTICE` and SPDX headers,
+`9d87236`, on its topic branch and not merged yet, adds `LICENSE`, `NOTICE` and SPDX headers
+(`f6de6ee` and `333365e` refine `NOTICE` and the authorship record),
 and changes no code.
 
 FAS **stays out of distributable builds** for now, for two reasons:
@@ -121,7 +122,7 @@ them today; an internal APK carries them in `licenses/zairenkai_fas/THIRD_PARTY_
 - **Zip contents.** The zip is FAS's own build output: module scripts, `bin/zfasd`, `webroot/`
   and `THIRD_PARTY.md`. It has no `LICENSE`.
 - **Licence.** At `3c83f0e` the zip had no licence, so it could not be distributed. At
-  `9d87236` it carries `LICENSE` and `NOTICE`, and `verify_integration.py build` fails on a
+  `9d87236` and later it carries `LICENSE` and `NOTICE`, and `verify_integration.py build` fails on a
   module zip that lacks either.
 - **This app's handling:**
   - `integration/system-modules.json` marks FAS `"distribution": "internal"`;
@@ -152,15 +153,18 @@ licence files, so it gives the same result:
    the organization convention, "ZairenkaiPrjctX contributors", as Core and ThermalTools do. It
    names no individual owner. Whether copyright subsists in AI-assisted output depends on
    jurisdiction; this record makes no legal claim about it.
-2. **Done in `9d87236`:**
+2. **Done in `9d87236`, `f6de6ee` and `333365e`:**
    - `LICENSE` (the official text), `NOTICE`, SPDX headers;
    - Cargo `license`;
    - `build-android.sh` now requires `LICENSE` and puts `LICENSE` and `NOTICE` in the zip;
    - `docs/THIRD_PARTY.md` keeps the "ideas, not code" record.
 
-   The app's lock pins this commit; the zip is `1c998502…7e2c`.
+   - an authorship section in `docs/THIRD_PARTY.md`: the Git history and Anthropic's terms
+     (`license-inventory.md`, "Authorship and rights").
+
+   The app's lock pins `333365e`.
 3. **Remaining:**
-   - merge `9d87236` into FAS `dev` and re-pin both FAS lock components to the merge commit;
+   - merge the licence commits into FAS `dev` and re-pin both FAS lock components to the merge commit;
    - put the crate licence texts in the zip;
    - then decide whether to change its `distribution` to `distributable`, and re-run the release
      gate.
