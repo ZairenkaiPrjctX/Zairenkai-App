@@ -96,11 +96,11 @@
       "branch": "dev",
       "commit": "3c83f0e1271f93ed85a456e8a65b1b719b41f8f1",
       "merged": true,
-      "packaging": "module zip built with the repository's scripts/build-android.sh (arm64-v8a), packaged as assets/system-modules/zairenkai_fas.zip; optional, installed only on the user's request",
+      "packaging": "module zip built with the repository's scripts/build-android.sh (arm64-v8a); packaged as assets/system-modules/zairenkai_fas.zip ONLY in internal development builds (ZAIRENKAI_INTERNAL_BUILD=1), never in distributable builds",
       "abis": [
         "arm64-v8a"
       ],
-      "license": "No project licence chosen (no LICENSE file at this commit); THIRD_PARTY.md inside the zip",
+      "license": "No project licence chosen (no LICENSE file at this commit); provenance audit: docs/integration/fas-provenance.md",
       "integration_status": "implemented"
     }
   ]

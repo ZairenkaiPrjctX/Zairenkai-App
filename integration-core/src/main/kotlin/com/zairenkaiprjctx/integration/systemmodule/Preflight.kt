@@ -165,6 +165,9 @@ object Preflight {
             }
         }
         if (module.rebootRequired) checks += PreflightCheck("reboot", CheckStatus.INFO, "a reboot activates the module")
+        if (module.distribution != "distributable") {
+            checks += PreflightCheck("distribution", CheckStatus.WARN, "internal development build only, not for distribution: ${module.distributionReason}")
+        }
 
         val validated = device.codename in module.validatedOn
         checks += PreflightCheck(

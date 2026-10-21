@@ -39,8 +39,21 @@ SRC_DIRS = {
     "zcored-ctl-contract": "core",
     "zfasd-ctl-contract": "fas",
 }
-# Packaged in the APK (contracts are only called at run time).
-PACKAGED = ("zart", "zthermal", "afid-device-candidates", "zairenkai-core-module", "zairenkai-fas-module")
+# Packaged in the APK (contracts are only called at run time). zairenkai-fas-module is packaged
+# only in internal development builds (components.json "profile": "internal").
+PACKAGED = ("zart", "zthermal", "afid-device-candidates", "zairenkai-core-module")
+INTERNAL_ONLY = ("zairenkai-fas-module",)
+
+
+def profile() -> str:
+    try:
+        return json.loads((OUT / "components.json").read_text()).get("profile", "distributable")
+    except Exception:  # noqa: BLE001 - no build yet
+        return "distributable"
+
+
+def packaged() -> tuple:
+    return PACKAGED + (INTERNAL_ONLY if profile() == "internal" else ())
 REQUIRED_FIELDS = ("id", "repository", "url", "branch", "commit", "merged", "packaging", "license", "integration_status")
 FORBIDDEN = re.compile(r"\.(pem|key|jks|keystore|p12|pfx)$|(^|/)\.git/|(^|/)id_(rsa|ed25519)", re.I)
 SECRET_MARKERS = (b"-----BEGIN PRIVATE KEY-----", b"-----BEGIN EC PRIVATE KEY-----", b"-----BEGIN RSA PRIVATE KEY-----",
@@ -79,7 +92,7 @@ def load_lock(errors: list) -> dict:
                 errors.append(f"lock: {cid}: unsupported ABI {abi}")
         if cid not in SRC_DIRS:
             errors.append(f"lock: {cid}: unknown component (add it to verify_integration.py)")
-    for cid in PACKAGED:
+    for cid in PACKAGED + INTERNAL_ONLY:
         if cid not in seen:
             errors.append(f"lock: mandatory component {cid} is missing")
     return lock
@@ -116,7 +129,7 @@ def check_build() -> list:
     errors: list = []
     lock = {c["id"]: c for c in load_lock(errors)["components"]}
     for cid, d in SRC_DIRS.items():
-        if cid not in lock or cid not in PACKAGED:
+        if cid not in lock or cid not in packaged():
             continue
         src = OUT / "src" / d
         head = subprocess.run(["git", "-C", str(src), "rev-parse", "HEAD"], capture_output=True, text=True)
@@ -143,11 +156,14 @@ def check_build() -> list:
             if f"jniLibs/{abi}/{lib}" not in files:
                 errors.append(f"build: jniLibs/{abi}/{lib} not built")
     for req in ("assets/afid/device-candidates.json", "assets/system-modules.json",
-                "assets/system-modules/zairenkai_core.zip", "assets/system-modules/zairenkai_fas.zip",
+                "assets/system-modules/zairenkai_core.zip",
                 "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE"):
         if req not in files:
             errors.append(f"build: {req} not built")
-    for c in ("zart", "zthermal", "zairenkai_core", "zairenkai_fas"):
+    internal = profile() == "internal"
+    if internal != ("assets/system-modules/zairenkai_fas.zip" in files):
+        errors.append(f"build: profile {profile()} but zairenkai_fas.zip is {'absent' if internal else 'present'}")
+    for c in ("zart", "zthermal", "zairenkai_core") + (("zairenkai_fas",) if internal else ()):
         if not (OUT / f"assets/licenses/{c}/THIRD_PARTY_NOTICES.txt").is_file():
             errors.append(f"build: third-party notices for {c} missing")
     if not (OUT / "assets/licenses/zart/AOSP-ATTRIBUTION.txt").is_file():
@@ -171,6 +187,8 @@ def check_build() -> list:
                 errors.append(f"build: {m['file']} does not match the catalog")
             if not {"customize.sh", "META-INF/com/google/android/update-binary"} <= set(m["source_matched"]):
                 errors.append(f"build: module {m['id']}: installer not matched to source")
+            if m.get("distribution") != "distributable" and not internal:
+                errors.append(f"build: internal module {m['id']} in a distributable build")
     return errors
 
 
@@ -233,6 +251,10 @@ def check_apk(apk: pathlib.Path, release: bool) -> list:
         for cid, lic in licence_status().items():
             if not lic["distributable"]:
                 errors.append(f"release: {cid} has no licence file at its pinned commit: it cannot be distributed")
+        if profile() != "distributable":
+            errors.append("release: this is an internal development build (ZAIRENKAI_INTERNAL_BUILD=1)")
+        if any(n.startswith("assets/system-modules/") and not n.endswith("zairenkai_core.zip") for n in facts["names"]):
+            errors.append("release: the APK contains a module other than zairenkai_core")
     return errors
 
 
@@ -241,7 +263,7 @@ def licence_status() -> dict:
     errors: list = []
     lock = {c["id"]: c for c in load_lock(errors)["components"]}
     status = {"Zairenkai-App": {"licence_file": (ROOT / "LICENSE").is_file()}}
-    for cid in PACKAGED:
+    for cid in packaged():
         src = OUT / "src" / SRC_DIRS[cid]
         status[cid] = {"licence_file": (src / "LICENSE").is_file(), "declared": lock.get(cid, {}).get("license", "")}
     for v in status.values():
@@ -263,12 +285,13 @@ def report(apk: pathlib.Path, release: bool) -> list:
         components.append({
             "id": c["id"], "repository": c["repository"], "pinned_commit": c["commit"], "merged": c["merged"],
             "checkout_verified": head.returncode == 0 and head.stdout.strip() == c["commit"],
-            "packaged": c["id"] in PACKAGED,
+            "packaged": c["id"] in packaged(),
         })
     comp = json.loads((OUT / "components.json").read_text()) if (OUT / "components.json").is_file() else {}
     rep = {
         "schema": 1,
-        "kind": "release" if release else "engineering (not for distribution)",
+        "kind": "release" if release else ("internal development build (not for distribution)" if profile() == "internal" else "engineering (not for distribution)"),
+        "profile": profile(),
         "ci_run": os.environ.get("GITHUB_RUN_ID"),
         "app_commit": subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip(),
         "apk": {"path": str(apk), "sha256": sha256(apk.read_bytes()) if apk.is_file() else None, "signed": signed, "signature": sig_detail},

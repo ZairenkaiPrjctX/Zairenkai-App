@@ -101,8 +101,17 @@ build_module() { # build_module <lock component> <module id> <dist prefix> <carg
   notices "$dir" "$4" "$id"
 }
 rm -f "$OUT/assets/system-modules.json"
+rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai_fas"
+mkdir -p "$OUT/assets/system-modules"
 build_module zairenkai-core-module zairenkai_core zairenkai-core zcored
-build_module zairenkai-fas-module zairenkai_fas zairenkai-fas zfasd
+# FAS has no licence yet (docs/integration/fas-provenance.md): it is an internal module, built
+# only for an explicitly labelled internal development build and never for distribution.
+PROFILE=distributable
+if [ "${ZAIRENKAI_INTERNAL_BUILD:-0}" = 1 ]; then
+  PROFILE=internal
+  echo "INTERNAL DEVELOPMENT BUILD: including zairenkai_fas (not for distribution)" >&2
+  build_module zairenkai-fas-module zairenkai_fas zairenkai-fas zfasd
+fi
 # The catalog is signed only when the module-signing key is provided (release builds); the
 # key's public half must be in integration/module-trust.json. Without it the catalog stays
 # unsigned and the app refuses to install modules from this build.
@@ -121,13 +130,14 @@ python3 "$ROOT/integration/scripts/afid_asset.py" --source "$OUT/src/afid" --com
   --out "$OUT/assets/afid/device-candidates.json"
 
 # --- record what was built ----------------------------------------------------------------
-python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$ZT_COMMIT" "$ZT_VERSION" "$AFID_COMMIT" <<'PY'
+python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$ZT_COMMIT" "$ZT_VERSION" "$AFID_COMMIT" "$PROFILE" <<'PY'
 import hashlib, json, pathlib, sys
-out, zart_commit, zart_version, zt_commit, zt_version, afid_commit = pathlib.Path(sys.argv[1]), *sys.argv[2:]
+out, zart_commit, zart_version, zt_commit, zt_version, afid_commit, profile = pathlib.Path(sys.argv[1]), *sys.argv[2:]
 files = sorted(p for p in (out / "jniLibs").rglob("*") if p.is_file()) + \
         sorted(p for p in (out / "assets").rglob("*") if p.is_file())
 rec = {
     "schema": 1,
+    "profile": profile,
     "zart": {"commit": zart_commit, "version": zart_version},
     "zthermal": {"commit": zt_commit, "version": zt_version},
     "afid": {"commit": afid_commit},

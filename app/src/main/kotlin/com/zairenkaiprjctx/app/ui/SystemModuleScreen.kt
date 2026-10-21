@@ -142,6 +142,11 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
         InfoRow(stringResource(R.string.module_version), "${m.version} (${m.versionCode})", code = true)
         InfoRow(stringResource(R.string.module_release), "${m.source.repository} @ ${m.source.commit.take(12)}", code = true)
         InfoRow(stringResource(R.string.module_source), stringResource(R.string.module_source_value))
+        InfoRow(
+            stringResource(R.string.module_distribution),
+            stringResource(if (m.distribution == "distributable") R.string.module_distribution_ok else R.string.module_distribution_internal),
+        )
+        if (m.distribution != "distributable" && m.distributionReason.isNotBlank()) Supporting(m.distributionReason)
         InfoRow(stringResource(R.string.module_digest), m.sha256, code = true)
         InfoRow(
             stringResource(R.string.module_signature),

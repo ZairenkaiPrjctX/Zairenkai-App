@@ -20,10 +20,10 @@
 | Area | Location | Status |
 |---|---|---|
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
-| JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 72 tests, 2026-10-21 |
+| JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 74 tests, 2026-10-21 |
 | Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 24 Robolectric tests, 2026-10-21. **Unverified** on a device |
 | Organization inventory (16 repositories), lock, scripts | `integration/` | Verified. Evidence: scripts exit 0, re-audit 2026-10-21 |
-| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build verified on GitHub. Evidence: run 39608170919 (7fc9cb2). The full-integration job is **Unverified** on GitHub: the CI GitHub App does not exist yet (`docs/build/ci.md`) |
+| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: run 39622352061 (f34246c). full-integration **fails** there at "Require the CI GitHub App": no CI run has built native components (`docs/build/ci.md`) |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
 
 ## Key facts and limitations
@@ -46,7 +46,10 @@
   is empty. Every build therefore refuses to install. Verified. Evidence: `SystemModuleTrustTest`,
   `verify_integration.py report --release`, 2026-10-21.
 - Release blocked: APK unsigned, catalog unsigned, no trusted module key, and no licence for the
-  App, ART or FAS. Verified. Evidence: the release gate, 2026-10-21.
+  App or ART. Verified. Evidence: the release gate, 2026-10-21.
+- FAS is excluded from distributable builds: no licence. The audit found no copied GPL code, but
+  authorship and rights need the maintainer's confirmation. Verified. Evidence:
+  `docs/integration/fas-provenance.md`, 2026-10-21.
 
 ## Authoritative sources
 

@@ -338,4 +338,7 @@
     <string name="module_life_uninstall">Uninstall</string>
     <string name="module_life_recovery">Recovery</string>
     <string name="module_life_kernel">Kernel</string>
+    <string name="module_distribution">Distribution</string>
+    <string name="module_distribution_ok">Licensed for distribution</string>
+    <string name="module_distribution_internal">Internal development build only, not for distribution</string>
 </resources>

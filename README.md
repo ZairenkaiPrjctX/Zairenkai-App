@@ -20,8 +20,8 @@ audited commit, instead of showing placeholders. Details: `integration/repositor
   (`docs/testing/verification-report.md`).
 - **Root is opt-in.** The app works without root; root features stay off until enabled in
   System › Root access.
-- **System module.** With root, the app can install the Zairenkai Core (and optional FAS)
-  module through the root manager's own installer, only after you confirm
+- **System module.** With root, the app can install the Zairenkai Core module (FAS only in
+  internal development builds: it has no licence yet) through the root manager's own installer, only after you confirm
   (`docs/integration/system-module.md`). Installation stays blocked until the module catalog is
   signed by a trusted module-signing key, and none exists yet. It has not been tested on a
   device.

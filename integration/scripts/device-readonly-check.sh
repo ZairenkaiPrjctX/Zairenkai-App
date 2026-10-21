@@ -38,6 +38,11 @@ sh_ ls /sys/class/thermal
 sh_ ls -d /sys/devices/system/cpu/cpufreq
 sh_ pm list packages com.topjohnwu.magisk me.weishu.kernelsu com.rifsxd.ksunext me.bmax.apatch com.zairenkaiprjctx.app
 sh_ dumpsys package com.zairenkaiprjctx.app
+echo "\$ sha256sum of the installed APK"
+for apk in $("${ADB[@]}" shell pm path com.zairenkaiprjctx.app 2>/dev/null | tr -d '\r' | sed -n 's/^package://p'); do
+  case "$apk" in /data/app/*.apk) "${ADB[@]}" shell sha256sum "$apk" 2>&1 || echo "(not readable as shell)" ;; esac
+done
+echo
 if [ "$ROOT" = 1 ]; then
   su_ 'id'
   su_ 'su -v'

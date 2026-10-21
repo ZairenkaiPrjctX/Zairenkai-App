@@ -568,14 +568,36 @@ class SystemModuleCatalogContractTest {
                 (o["id"] as kotlinx.serialization.json.JsonPrimitive).content to (o["commit"] as kotlinx.serialization.json.JsonPrimitive).content
             }
         assertEquals(commits["zairenkai-core-module"], c.byId("zairenkai_core")!!.source.commit)
-        assertEquals(commits["zairenkai-fas-module"], c.byId("zairenkai_fas")!!.source.commit)
         for (m in c.modules) {
             assertTrue("${m.id} claims a validation that never happened", m.validatedOn.isEmpty())
             assertTrue(m.sourceMatched.containsAll(listOf("customize.sh", "META-INF/com/google/android/update-binary")))
             assertFalse("no /system overlay", m.entries.keys.any { it.startsWith("system/") })
             assertEquals("arm64-v8a", m.requirements.abi)
         }
-        assertEquals(listOf("fas_rs"), c.byId("zairenkai_fas")!!.requirements.conflicts.map { it.id })
+        // The default (distributable) build packages Core only: FAS has no licence yet.
+        assertEquals(listOf("zairenkai_core"), c.modules.map { it.id })
+        assertEquals("distributable", c.byId("zairenkai_core")!!.distribution)
+    }
+
+    @Test
+    fun theSpecKeepsFasInternalWithItsConflict() {
+        val spec = kotlinx.serialization.json.Json.parseToJsonElement(repoFile("integration/system-modules.json")) as kotlinx.serialization.json.JsonObject
+        val mods = (spec["modules"] as kotlinx.serialization.json.JsonArray).map { it as kotlinx.serialization.json.JsonObject }
+        fun field(id: String, k: String) = (mods.single { (it["id"] as kotlinx.serialization.json.JsonPrimitive).content == id }[k] as kotlinx.serialization.json.JsonPrimitive).content
+        assertEquals("distributable", field("zairenkai_core", "distribution"))
+        assertEquals("internal", field("zairenkai_fas", "distribution"))
+        val fas = mods.single { (it["id"] as kotlinx.serialization.json.JsonPrimitive).content == "zairenkai_fas" }
+        assertTrue(fas.toString().contains("fas_rs"))
+    }
+
+    @Test
+    fun anInternalModuleIsFlaggedInThePreflight() {
+        val f = zip("zairenkai_core.zip", CORE_ENTRIES)
+        val m = module(f).copy(distribution = "internal", distributionReason = "no licence")
+        val d = Preflight.decide(m, DEVICE, ManagerIdentity(ManagerFamily.KERNELSU, "v1", 1, InstallSupport.DIRECT, emptyList()), InstalledState(null, null), emptySet(), { true }, { true })
+        assertTrue(d.checks.any { it.id == "distribution" && it.detail.contains("not for distribution") })
+        val ok = Preflight.decide(m.copy(distribution = "distributable"), DEVICE, ManagerIdentity(ManagerFamily.KERNELSU, "v1", 1, InstallSupport.DIRECT, emptyList()), InstalledState(null, null), emptySet(), { true }, { true })
+        assertTrue(ok.checks.none { it.id == "distribution" })
     }
 }
 

@@ -13,7 +13,12 @@ would break that lifecycle: FAS restores its cpufreq floors in its own `uninstal
 | Module id | Role | Built from | Provides | Why it needs root |
 |---|---|---|---|---|
 | `zairenkai_core` | base | Zairenkai-Core `34e93e3` (unmerged topic branch), `module/` + `scripts/build-android.sh` | `zcored`: Core health, policy-checked actions, module inventory | A root daemon with a root-only socket (Core ADR-0005) |
-| `zairenkai_fas` | optional | Zairenkai-FAS `3c83f0e` (dev) | `zfasd`: FAS status and controls | Writes cpufreq `scaling_min_freq` floors |
+| `zairenkai_fas` | optional, **internal only** | Zairenkai-FAS `3c83f0e` (dev) | `zfasd`: FAS status and controls | Writes cpufreq `scaling_min_freq` floors |
+
+**FAS is not in distributable builds.** It has no licence (`docs/integration/fas-provenance.md`),
+so it is built and packaged only with `ZAIRENKAI_INTERNAL_BUILD=1`. That build is labelled an
+internal development build, and the release gate refuses it. The default build, CI and
+`release.yml` package Core alone.
 
 **Zip contents.** Each zip is exactly what the component's own build script produces:
 - `module.prop`, `customize.sh`, `service.sh`, `uninstall.sh`, `action.sh`;
@@ -57,7 +62,7 @@ answers:
 
 | | A. Packaged in the APK (chosen) | B. Separately distributed release |
 |---|---|---|
-| APK size | +1.36 MB (both zips) | none |
+| APK size | +0.74 MB (the Core zip; FAS only in internal builds) | none |
 | Update independence | a module update needs an app update | modules can update alone |
 | Offline | works offline | needs the network at install time |
 | Network permission | none (the app has no INTERNET permission) | INTERNET permission required |
@@ -68,6 +73,16 @@ A is the simplest safe choice: no network capability, no release host to secure.
 added when a module release pipeline exists. It would reuse the same signed catalog format.
 
 ## Trust: a signed catalog
+
+Signatures and provenance answer different questions:
+
+| Question | Answered by |
+|---|---|
+| Was this zip built from the reviewed source at the locked commit? (provenance) | The build: `build-components.sh` checks the checkout `HEAD` against the lock, and `module_asset.py` requires the installer scripts to be byte-identical to `module/` at that commit. The results (commit, digests, matched files) are recorded in the catalog and the integration report. |
+| Did an authorised release process publish this catalog? (authenticity) | The module-signing key |
+
+The APK signature proves neither. It only says who built that APK, and a debug key proves
+nothing at all.
 
 - **The catalog is signed by a module-signing key.** `assets/system-modules.json` carries a
   detached signature (`system-modules.json.sig`: ECDSA P-256 over SHA-256, the format
@@ -229,3 +244,93 @@ System Module reopens the screen and can show the offer again.
 
 Validated devices and manager versions: **none**. When an install is tested, record it in
 `validated_on` with the device codename, and the manager and version in this table.
+
+## First hardware validation: Core module only
+
+**Not done yet.** No device has run it. The module screen and this page will only say
+"validated" once the record below exists for a device, in `docs/validation/`, and its
+codename is in `validated_on`.
+
+### Scope
+
+- **Modules:** `zairenkai_core` alone. FAS is not installed: it is internal-only, and the
+  default build does not contain it.
+- **One device, one manager.** The result validates that device codename with that root manager
+  and version, nothing broader.
+- **No thermal changes.** Do not disable thermal protection, change kernel or thermal controls,
+  or make any other system change. ThermalTools stays read-only, and zthermal is only read.
+
+### Prerequisites
+
+1. **A dedicated, recoverable test device.** It must not be a daily phone. Before starting:
+   - a full backup;
+   - an unmodified boot image for the current firmware;
+   - the manager's recovery path known and tried once on this device:
+     - **Magisk:** Safe Mode disables all modules (`docs/faq.md`: press volume-down a few
+       seconds before the boot animation, release when it appears). With adb working,
+       `adb shell magisk --remove-modules` removes **all** modules and reboots, so use it only
+       as a last resort;
+     - **KernelSU and KernelSU-Next:** press and release volume-down more than three times
+       after the first boot screen; the system's own Safe Mode also disables modules
+       (`website/docs/guide/rescue-from-bootloop.md`);
+     - **APatch:** its source has safe-mode handling (`apd/src/event.rs`, `utils.rs`), but the
+       key combination was not checked here. Read APatch's own documentation before relying
+       on it;
+   - adb authorised, and fastboot available.
+2. **A supported root manager**, as listed under "Root managers": Magisk ≥ v21.2, KernelSU or
+   KernelSU-Next, or APatch.
+3. **An APK from the full integration build** (default profile, Core only), with its
+   `integration-report.json`. Record the APK SHA-256, and the Core zip's SHA-256 from
+   `assets/system-modules.json`. For reference, the 2026-10-21 local build had:
+   - zip `f7651bf70f4e58841a602b2925b27686343f8490a0c57316d8ffd196e8c75f41`, 741,218 bytes;
+   - built from Core `34e93e34440efb90d64d4af1f9f10292d790575c`.
+4. **A catalog signed by a trusted module-signing key.** Without one the app stops at
+   `MODULE_NOT_AVAILABLE`, which is the state of every build today. Do not bypass it:
+   - no installing the zip by hand as "the app's install";
+   - no adding an untrusted key.
+
+   The maintainer creates the key (`docs/build/release.md`) first.
+
+### Procedure
+
+Every command below only reads, except the installation and removal, which the app performs
+through the manager after you confirm.
+
+| Step | Action | Record |
+|---|---|---|
+| 1 | `integration/scripts/device-readonly-check.sh > 1-before.txt` and `--root > 1-before-root.txt` | Device and SoC, Android and kernel (`uname -a`), page size, ABIs, root manager and version (`su -v`/`-V`, CLI), the initial module state of `zairenkai_core` (expected: absent), `getenforce`, avc denials, the installed APK's SHA-256 |
+| 2 | Open the app without root: Home, Thermal (zthermal snapshot), Runtime | Which thermal zones are readable or `permission_denied` |
+| 3 | System › Root access › Enable | The manager's prompt; the app shows root granted |
+| 4 | System › Zairenkai System Module | Detected manager and installer method; every preflight check; signature state; distribution "Licensed for distribution"; experimental notice |
+| 5 | **Install Zairenkai System Module**, then **Continue**, tick the acknowledgement, **Install** | Verification lines (size, SHA-256, entries, module.prop, scripts matched to Core `34e93e3`); the full "Installer output"; final state `INSTALL_PENDING_REBOOT` |
+| 6 | `device-readonly-check.sh --root > 2-staged.txt` | `/data/adb/modules_update/zairenkai_core/module.prop` shows `versionCode=100` (`v0.1.0`) |
+| 7 | Reboot, wait two minutes | Did it boot normally? |
+| 8 | `device-readonly-check.sh --root > 3-after.txt`, then the module screen's **Check again** | `zcored ctl health` (`ready`, or `degraded` with reasons: `degraded` is expected while FAS is absent); `/data/adb/zairenkai-core/failed` (must not exist); the tail of `zcored.log`; avc denials; the screen state (`DEGRADED` or `ACTIVE`; `INSTALLED_NOT_INITIALIZED` if zcored does not answer), which must agree with the readings |
+| 9 | Thermal screen (and "Read with root") | Snapshot taken; "Thermal controls" still says no validated control; thermal nodes unchanged between 1 and 3 |
+| 10 | **Remove** (KernelSU and APatch) or remove in the Magisk app; reboot; `device-readonly-check.sh --root > 4-removed.txt` | Uninstall result; `zairenkai_core` and `/data/adb/zairenkai-core` gone; every other module unchanged (compare the module lists in 1 and 4) |
+| 11 | Optional failure paths: decline the root prompt; cancel before installing; disable the module in the manager | `ROOT_PERMISSION_DENIED`; nothing staged; `DEGRADED`, then the manager's enable |
+
+If anything fails, stop and recover through the manager first. Record exactly what happened,
+including any boot problem, and attach the four output files.
+
+### Record (`docs/validation/<codename>-<YYYY-MM-DD>.md`)
+
+```
+Device: <manufacturer model> (<codename>), SoC <soc>
+Android <release> (API <n>), security patch <date>, kernel <uname -r>, page size <n>
+Root manager: <family> <version> (<versionCode>); su -v <…>; installer method shown <direct|handoff>
+Backup and recovery path checked: <yes: how>
+APK: <sha256> from integration report <run id / local>; module zairenkai_core <version> zip <sha256>
+Catalog signature: <verified, key id …>   Distribution: distributable
+Preflight: <verdict> — <checks that were WARN or FAIL>
+Initial module state: <absent | …>
+Install: <exit, full installer output attached>; staged versionCode <n>
+Reboot: <normal | problem: …>
+Core after reboot: health <ready|degraded: reasons>; failed marker <absent>; log <attached>
+App state after reboot: <ACTIVE|DEGRADED|INSTALLED_NOT_INITIALIZED>, consistent with readings: <yes/no>
+SELinux: getenforce <…>; denials <none | list>   Permission failures: <none | list>
+ThermalTools: snapshot <ok>; thermal nodes unchanged <yes/no>
+Uninstall: <result>; final module state <absent>; other modules unchanged <yes/no>
+Failures and recovery: <…>
+```
+

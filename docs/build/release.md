@@ -1,8 +1,10 @@
 # Release process and signing
 
 **Status (2026-10-21): no release can be produced.** The release gate
-(`verify_integration.py report <apk> --release`) lists six blockers, and each needs a
-maintainer decision or a key:
+(`verify_integration.py report <apk> --release`) lists five blockers, and each needs a
+maintainer decision or a key. FAS is not one of them, because it is excluded from distributable
+builds altogether: the gate also fails on any internal build, or any APK carrying a module other
+than `zairenkai_core` (`docs/integration/fas-provenance.md`).
 
 | Blocker | What resolves it |
 |---|---|
@@ -11,9 +13,8 @@ maintainer decision or a key:
 | `integration/module-trust.json` lists no key | Add the module-signing public key in a reviewed pull request |
 | Zairenkai-App has no licence | The maintainer chooses one |
 | Zairenkai-ART (zart, packaged) has no licence | The maintainer chooses one; keep the AOSP Apache-2.0 attribution (`docs/integration/license-inventory.md`) |
-| Zairenkai-FAS (module, packaged) has no licence | The maintainer chooses one |
 
-Until all six are resolved, builds are **engineering artifacts, not for distribution**:
+Until all five are resolved, builds are **engineering artifacts, not for distribution**:
 - debug APK: signed with the Android debug key;
 - release APK: unsigned.
 

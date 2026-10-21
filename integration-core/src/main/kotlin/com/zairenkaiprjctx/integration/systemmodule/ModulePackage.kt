@@ -63,6 +63,9 @@ data class BundledModule(
     @SerialName("validated_on") val validatedOn: List<String> = emptyList(),
     val risks: List<String> = emptyList(),
     val lifecycle: ModuleLifecycle = ModuleLifecycle(),
+    /** "distributable", or "internal": built only for the maintainer's internal development builds. */
+    val distribution: String = "internal",
+    @SerialName("distribution_reason") val distributionReason: String = "",
     val file: String,
     val version: String,
     @SerialName("version_code") val versionCode: Long,

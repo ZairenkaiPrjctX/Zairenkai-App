@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Reviewed specification of the root modules the app can install. build-components.sh builds each zip at the commit of its lock component, checks that every script in the zip is byte-identical to the module/ source at that commit, and writes assets/system-modules.json (this file plus digests). Requirements below come from each module's own customize.sh, update-binary and docs. lifecycle: destinations, start, stop, uninstall and recovery as the module's own scripts implement them.",
+  "note": "Reviewed specification of the root modules the app can install. build-components.sh builds each zip at the commit of its lock component, checks that every script in the zip is byte-identical to the module/ source at that commit, and writes assets/system-modules.json (this file plus digests). Requirements below come from each module's own customize.sh, update-binary and docs. lifecycle: destinations, start, stop, uninstall and recovery as the module's own scripts implement them. distribution: 'distributable' modules are built by default; 'internal' modules only with ZAIRENKAI_INTERNAL_BUILD=1, and the release gate refuses any catalog that contains one.",
   "modules": [
     {
       "id": "zairenkai_core",
@@ -52,7 +52,9 @@
         "recovery": "disable or remove the module in the root manager (or its safe mode); /data/adb/zairenkai-core/failed and zcored.log record start failures",
         "kernel": "none beyond Android 10+ arm64 (customize.sh checks ARCH and API)",
         "action": "action.sh prints zcored ctl health (the manager's Action button)"
-      }
+      },
+      "distribution": "distributable",
+      "distribution_reason": "Apache-2.0 (LICENSE and NOTICE at the pinned commit, inside the zip)"
     },
     {
       "id": "zairenkai_fas",
@@ -110,7 +112,9 @@
         "recovery": "disable or remove the module in the root manager; zfasd restore restores recorded floors",
         "kernel": "cpufreq policy directories under /sys/devices/system/cpu/cpufreq (required_paths)",
         "action": "action.sh shows zfasd status; KernelSU's WebUI serves webroot/"
-      }
+      },
+      "distribution": "internal",
+      "distribution_reason": "Zairenkai-FAS has no licence at the pinned commit; provenance audit in docs/integration/fas-provenance.md. Built only with ZAIRENKAI_INTERNAL_BUILD=1, for the maintainer's own development testing; never in a distributable build."
     }
   ]
 }

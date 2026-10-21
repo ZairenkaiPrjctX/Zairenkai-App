@@ -1,5 +1,37 @@
 # Verification report
 
+## Release gate, FAS provenance, first-hardware preparation (2026-10-21)
+
+**Verdict: partially verified.** Host checks passed. Nothing ran on a device.
+
+CI evidence:
+
+| Run | Commit | Jobs | What it shows |
+|---|---|---|---|
+| 39608170919 | **7fc9cb2** (not 4bd0dd2) | reduced build, scripts: success | the zthermal commit, built without native components or module zips |
+| 39617791701, 39618460955 | 4bd0dd2 | reduced build, scripts: success | the installer's JVM tests ran in `:integration-core:test`; no module zip was built or packaged |
+| 39622352061 | f34246c | scripts ✓, reduced ✓, **full-integration ✗** at "Require the CI GitHub App" | the designed failure: no CI GitHub App exists. No run has built native components or module zips |
+
+The push of f34246c triggered no `pull_request` run: PR #2 still lists 4bd0dd2 as its head.
+Run 39622352061 was dispatched by hand.
+
+Local results, default (distributable) profile:
+
+| Check | Result |
+|---|---|
+| `build-components.sh` | exit 0; Core module only (`zairenkai_core` v0.1.0, `f7651bf7…5f41`, 741,218 bytes, unchanged); catalog unsigned |
+| `ZAIRENKAI_INTERNAL_BUILD=1 build-components.sh` | exit 0; Core and FAS; `verify_integration.py build` ok; report labelled "internal development build (not for distribution)"; `apk --release` refuses it (internal build; module other than `zairenkai_core`) |
+| `capture-contracts.sh` | exit 0; the catalog fixture is byte-identical to the build |
+| `:integration-core:test` | 74 passed, 0 failed (adds `theSpecKeepsFasInternalWithItsConflict`, `anInternalModuleIsFlaggedInThePreflight`) |
+| `:app:testDebugUnitTest` | 24 passed, 0 failed |
+| Verifier tests | 6 passed |
+| `lint` | 0 errors, 24 warnings ("newer version available") |
+| APKs | debug 37,514,813 bytes `4d3f84d6…04e4`; release unsigned 30,300,624 bytes `ab1c0994…d074`; only `assets/system-modules/zairenkai_core.zip` (SHA-256 equal to the catalog) |
+| `verify_integration.py` lock, build, apk, report | ok |
+| Release gate (`--release`) | fails on 5: APK unsigned; catalog unsigned; no trusted module key; no licence for App, ART |
+| FAS provenance | no copied or adapted code found (`docs/integration/fas-provenance.md`) |
+
+
 ## Signed module release, notices, full-integration CI (2026-10-21)
 
 **Verdict: partially verified.**

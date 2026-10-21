@@ -320,4 +320,7 @@
     <string name="module_life_uninstall">Copot</string>
     <string name="module_life_recovery">Pemulihan</string>
     <string name="module_life_kernel">Kernel</string>
+    <string name="module_distribution">Distribusi</string>
+    <string name="module_distribution_ok">Berlisensi untuk didistribusikan</string>
+    <string name="module_distribution_internal">Hanya build pengembangan internal, tidak untuk didistribusikan</string>
 </resources>

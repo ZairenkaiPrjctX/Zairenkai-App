@@ -1,5 +1,10 @@
 # Physical-device validation procedure
 
+The first hardware test is the **Core module alone**: its procedure, prerequisites and record
+are in `docs/integration/system-module.md` ("First hardware validation"). FAS is not part of
+it, because it is internal-only (`docs/integration/fas-provenance.md`). This page is the
+general checklist.
+
 **No device has been validated.** Nothing below has been run yet. Results go in
 `docs/validation/<codename>-<YYYY-MM-DD>.md`, one file per device and root-manager combination.
 After a successful run, add the codename to the module's `validated_on` in

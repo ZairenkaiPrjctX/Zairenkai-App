@@ -10,6 +10,15 @@
 
 A green `reduced` job says nothing about the integrated app. Only `full-integration` does.
 
+`full-integration` builds the **distributable profile**: Core is the only module. FAS is
+internal-only, and is built only locally with `ZAIRENKAI_INTERNAL_BUILD=1`
+(`docs/integration/fas-provenance.md`). No CI job builds it.
+
+**Status, 2026-10-21:**
+- run 39622352061 (f34246c): `scripts` and `reduced` passed; `full-integration` failed at
+  "Require the CI GitHub App";
+- no CI run has built the native components or the module zips yet.
+
 ## Why the full build needs credentials
 
 Zairenkai-Core, Zairenkai-FAS and Zairenkai-ART are private (`list_repos`, 2026-10-21).
