@@ -31,9 +31,9 @@ Non-negotiables in this repo:
   list without the maintainer, and never put a private key anywhere in the repository or APK. Never
   write into `/data/adb` directly, never install on startup, and never mark a module ACTIVE
   without reading its state and its runtime.
-- **FAS stays out of distributable builds** until its licence commit is merged and it is
-  validated on hardware (`docs/integration/fas-provenance.md`): only `ZAIRENKAI_INTERNAL_BUILD=1`
-  packages it, labelled internal. Never change FAS files or headers to make an audit pass.
+- **FAS stays out of distributable builds** until the maintainer explicitly clears its
+  distribution, after hardware validation (`docs/integration/fas-provenance.md`); its licence is
+  merged. Only `ZAIRENKAI_INTERNAL_BUILD=1` packages it, labelled internal. Never change FAS files or headers to make an audit pass.
 - **Licensing:** the app is Apache-2.0 (`LICENSE`, `NOTICE`). New source files start with
   `SPDX-License-Identifier: Apache-2.0` and `Copyright 2026 ZairenkaiPrjctX contributors`. Never
   change third-party headers or notices (Gradle wrapper, font, AOSP attribution, device data).
@@ -53,7 +53,7 @@ Non-negotiables in this repo:
 | Purpose | Command | Status |
 |---|---|---|
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
-| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified as root (exit 0, 2026-10-21). As non-root (CI): Unverified; failed in CI runs 39639587745/39639605601, fixed 2026-10-22 |
+| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified as root. Evidence: exit 0, 2026-10-21 (re-run at the merge-commit pins). As non-root (CI): Unverified; failed in CI runs 39639587745/39639605601, fixed 2026-10-22 |
 | Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 74 passed, 2026-10-21 |
 | Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 24 passed, 2026-10-21 |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-21 |

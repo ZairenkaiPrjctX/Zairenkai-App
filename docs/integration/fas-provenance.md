@@ -6,12 +6,12 @@ engineering record, not legal advice.
 **Outcome:** the audit found no copied or adapted third-party code, and no GPL dependency. On
 2026-10-21 the maintainer decided on Apache-2.0, conditional on this audit, and the audit supports
 it. The audit was re-run on the same tree that day, with the same result (below). FAS commit
-`9d87236`, on its topic branch and not merged yet, adds `LICENSE`, `NOTICE` and SPDX headers
-(`f6de6ee` and `333365e` refine `NOTICE` and the authorship record),
+`9d87236` adds `LICENSE`, `NOTICE` and SPDX headers (`f6de6ee` and `333365e` refine `NOTICE`
+and the authorship record). They were merged into FAS `dev` by PR #3 (`be08b2d`, 2026-10-21),
 and changes no code.
 
 FAS **stays out of distributable builds** for now, for two reasons:
-- its licence is not merged into FAS `dev`;
+- its distribution has not been explicitly cleared by the maintainer;
 - the first hardware validation covers Core only.
 
 Making it distributable is a reviewed change to `integration/system-modules.json` and the release
@@ -162,11 +162,11 @@ licence files, so it gives the same result:
    - an authorship section in `docs/THIRD_PARTY.md`: the Git history and Anthropic's terms
      (`license-inventory.md`, "Authorship and rights").
 
-   The app's lock pins `333365e`.
+   Merged by PR #3 as `be08b2d`; the app's lock pins that merge commit.
 3. **Remaining:**
-   - merge the licence commits into FAS `dev` and re-pin both FAS lock components to the merge commit;
    - put the crate licence texts in the zip;
-   - then decide whether to change its `distribution` to `distributable`, and re-run the release
+   - validate FAS on hardware (not part of the first, Core-only test);
+   - then the maintainer decides whether to change its `distribution` to `distributable`, and re-run the release
      gate.
 
 Only licence files and headers were changed in FAS; no code.

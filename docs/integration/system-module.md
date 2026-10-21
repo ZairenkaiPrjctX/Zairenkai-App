@@ -12,11 +12,11 @@ would break that lifecycle: FAS restores its cpufreq floors in its own `uninstal
 
 | Module id | Role | Built from | Provides | Why it needs root |
 |---|---|---|---|---|
-| `zairenkai_core` | base | Zairenkai-Core `34e93e3` (unmerged topic branch), `module/` + `scripts/build-android.sh` | `zcored`: Core health, policy-checked actions, module inventory | A root daemon with a root-only socket (Core ADR-0005) |
+| `zairenkai_core` | base | Zairenkai-Core `11e9742` (`dev`, merge of PR #2), `module/` + `scripts/build-android.sh` | `zcored`: Core health, policy-checked actions, module inventory | A root daemon with a root-only socket (Core ADR-0005) |
 | `zairenkai_fas` | optional, **internal only** | Zairenkai-FAS `3c83f0e` (dev) | `zfasd`: FAS status and controls | Writes cpufreq `scaling_min_freq` floors |
 
-**FAS is not in distributable builds.** Its Apache-2.0 licence commits (`9d87236` to `333365e`) are not merged
-yet, and the first hardware test covers Core only (`docs/integration/fas-provenance.md`). So it is built and packaged only with `ZAIRENKAI_INTERNAL_BUILD=1`. That build is labelled an
+**FAS is not in distributable builds.** Its Apache-2.0 licence is merged (`be08b2d`), but its
+distribution has not been explicitly cleared, and the first hardware test covers Core only (`docs/integration/fas-provenance.md`). So it is built and packaged only with `ZAIRENKAI_INTERNAL_BUILD=1`. That build is labelled an
 internal development build, and the release gate refuses it. The default build, CI and
 `release.yml` package Core alone.
 
@@ -283,7 +283,8 @@ codename is in `validated_on`.
    `integration-report.json`. Record the APK SHA-256, and the Core zip's SHA-256 from
    `assets/system-modules.json`. For reference, the 2026-10-21 local build had:
    - zip `f7651bf70f4e58841a602b2925b27686343f8490a0c57316d8ffd196e8c75f41`, 741,218 bytes;
-   - built from Core `34e93e34440efb90d64d4af1f9f10292d790575c`.
+   - built from Core `34e93e34440efb90d64d4af1f9f10292d790575c`; rebuilt byte-identical from its
+     merge commit `11e97429068e69cc889deba891f2015b77060bfb`.
 4. **A catalog signed by a trusted module-signing key.** Without one the app stops at
    `MODULE_NOT_AVAILABLE`, which is the state of every build today. Do not bypass it:
    - no installing the zip by hand as "the app's install";

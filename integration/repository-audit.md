@@ -1,5 +1,20 @@
 # Organization repository audit
 
+## Merges and re-pin, 2026-10-21 (later the same day)
+
+The four component pull requests were merged by the maintainer. Each merge commit's parents and
+tree were checked (`git log -1 --format=%P`, `git diff --quiet <merge> <head>`):
+
+| Repository | PR | Merge commit on `dev` | Parents | Tree identical to | CI on the merge |
+|---|---|---|---|---|---|
+| Zairenkai-ART | #2 | `0d8cd72` | `19f658d`, `8c6cea2` | `8c6cea2` | run 39631263321: success |
+| Zairenkai-FAS | #3 | `be08b2d` | `3c83f0e`, `333365e` | `333365e` | run 39631199256: success |
+| Zairenkai-Core | #2 | `11e9742` | `455368f`, `34e93e3` | `34e93e3` | run 39646717993: success |
+| Zairenkai-ThermalTools | #2 | `3bc71fe` | `5358d4d`, `9d4b310` | `9d4b310` | run 39646811410: success |
+
+The lock now pins these merge commits (`"merged": true` for every component). Rebuilt from them,
+the Core and FAS module zips are byte-identical to the builds from the PR heads.
+
 ## Re-audit, 2026-10-21
 
 `list_repos` now returns 16 repositories in `ZairenkaiPrjctX`: the 15 below plus

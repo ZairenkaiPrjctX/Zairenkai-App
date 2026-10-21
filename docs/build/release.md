@@ -19,8 +19,8 @@ The gate is not the whole readiness question. Release readiness also needs:
   because the CI GitHub App does not exist yet);
 - the Core-only hardware validation record (`docs/testing/device-validation.md`; no device has
   run it);
-- the Core, ThermalTools, ART and FAS topic branches merged, and the lock re-pinned to the merge
-  commits.
+- the Core, ThermalTools, ART and FAS topic branches merged and the lock re-pinned to the merge
+  commits: **done** 2026-10-21 (`11e9742`, `3bc71fe`, `0d8cd72`, `be08b2d`).
 
 Until all of this holds, builds are **engineering artifacts, not for distribution**:
 - debug APK: signed with the Android debug key;

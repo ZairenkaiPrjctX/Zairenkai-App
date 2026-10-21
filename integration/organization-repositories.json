@@ -28,8 +28,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "34e93e34440efb90d64d4af1f9f10292d790575c",
+      "audited_branch": "dev",
+      "audited_commit": "11e97429068e69cc889deba891f2015b77060bfb",
       "code_present": true,
       "languages": [
         "Rust",
@@ -51,8 +51,8 @@
       ],
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_core/bin/zcored ctl (protocol v1 JSON)",
       "runtime_requirements": "root (Magisk/KernelSU) and the zairenkai_core module installed and running; ADR-0005 limits the socket to root clients",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (455368f) has no LICENSE yet",
-      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev."
+      "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
+      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev. Re-audited 2026-10-21 at 11e9742 (dev): Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21."
     },
     {
       "name": "Zairenkai-FAS",
@@ -64,8 +64,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
+      "audited_branch": "dev",
+      "audited_commit": "be08b2d89df0c673d8bf7aa76367ee9a4fbb81f4",
       "code_present": true,
       "languages": [
         "Rust",
@@ -85,8 +85,8 @@
       ],
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_fas/bin/zfasd ctl (docs/INTEGRATION.md)",
       "runtime_requirements": "root and the zairenkai_fas module; telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (3c83f0e) has no LICENSE yet",
-      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md."
+      "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
+      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md. Re-audited 2026-10-21 at be08b2d (dev): Merge commit of FAS PR #3 (parents 3c83f0e and 333365e; tree identical to 333365e), verified 2026-10-21."
     },
     {
       "name": "Zairenkai-ART",
@@ -98,8 +98,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "8c6cea27a9c78fb9782dad7bb7f81872a9540f84",
+      "audited_branch": "dev",
+      "audited_commit": "0d8cd7248d7aff3504077b4f3e63af1bf6bf282c",
       "code_present": true,
       "languages": [
         "Rust",
@@ -118,8 +118,8 @@
       ],
       "integration_mechanism": "native executable lib/<abi>/libzart.so built by the repository's scripts/build-android.sh; JSON over stdout",
       "runtime_requirements": "inspect: none (runs as the app uid; some inputs may be denied by SELinux); dexopt-status: root",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE with the AOSP attribution for crates/zart/src/isa.rs); dev (19f658d) has no LICENSE yet",
-      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 8c6cea2: the two licence commits (31caf46, 8c6cea2) on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev."
+      "license": "Apache-2.0 (LICENSE, NOTICE with the AOSP attribution for crates/zart/src/isa.rs) on dev",
+      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 8c6cea2: the two licence commits (31caf46, 8c6cea2) on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev. Re-audited 2026-10-21 at 0d8cd72 (dev): Merge commit of ART PR #2 (parents 19f658d and 8c6cea2; tree identical to 8c6cea2), verified 2026-10-21."
     },
     {
       "name": "Zairenkai-Database-Source",
@@ -223,8 +223,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "9d4b31017ea1c679ee155aa2df978752e1683fd6",
+      "audited_branch": "dev",
+      "audited_commit": "3bc71fea9d2317db10ee551aede857de1448f90f",
       "code_present": true,
       "languages": [
         "Rust",
@@ -245,8 +245,8 @@
       ],
       "integration_mechanism": "lib/<abi>/libzthermal.so executed as the app uid (`snapshot`), or through root on request (`snapshot --framework`); JSON schema_version 1",
       "runtime_requirements": "Read access to /sys/class/thermal (SELinux may deny the app uid); dumpsys needs shell or root. No writes: the validated control list is empty.",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (5358d4d) has no LICENSE yet",
-      "evidence": "crates/zthermal (CLI), crates/zthermal-platform/src/snapshot.rs, schemas/snapshot.schema.json, policy::VALIDATED_CONTROLS empty; 0.2.0 at 9d4b310 (not merged into dev, which holds 0.1.0 at 5358d4d)."
+      "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
+      "evidence": "crates/zthermal (CLI), crates/zthermal-platform/src/snapshot.rs, schemas/snapshot.schema.json, policy::VALIDATED_CONTROLS empty; 0.2.0 at 9d4b310 (not merged into dev, which holds 0.1.0 at 5358d4d). Re-audited 2026-10-21 at 3bc71fe (dev): Merge commit of ThermalTools PR #2 (parents 5358d4d and 9d4b310; tree identical to 9d4b310), verified 2026-10-21."
     },
     {
       "name": "Zairenkai-Sdk",

@@ -10,10 +10,10 @@ The audits below support it. The release gate's licence check now passes. Distri
 **blocked by signing**: the APK is unsigned, the catalog is unsigned, and there is no trusted
 module key (`docs/build/release.md`).
 
-The licence commits of ART (`31caf46`, `8c6cea2`) and FAS (`9d87236`, `f6de6ee`, `333365e`) are on their
-topic branches and not yet merged, like the Core and ThermalTools pins. FAS stays an internal module
-(`system-modules.json`): its licence is merged nowhere yet, and the first hardware test covers
-Core only.
+Every licence commit is merged into its repository's `dev`: ART PR #2 (`0d8cd72`), FAS PR #3
+(`be08b2d`), Core PR #2 (`11e9742`), ThermalTools PR #2 (`3bc71fe`). The lock pins those merge
+commits. FAS stays an internal module (`system-modules.json`) until the maintainer explicitly
+clears its distribution; the first hardware test covers Core only.
 
 Copyright lines use the organization convention, "Copyright 2026 ZairenkaiPrjctX contributors".
 That phrase means the contributors in each repository's Git history, not a legal entity (see
@@ -24,10 +24,10 @@ That phrase means the contributors in each repository's Git history, not a legal
 | Item | From | Licence | Notices in the APK | Distributable |
 |---|---|---|---|---|
 | App code (`:app`, `:integration-core`) | Zairenkai-App (this branch) | Apache-2.0 (`LICENSE`, `NOTICE`, SPDX headers in every Kotlin, Java, Gradle, Python, shell and Rust source) | `licenses/zairenkai-app/LICENSE`, `NOTICE` | Yes |
-| `lib/<abi>/libzart.so` | Zairenkai-ART `8c6cea2` (licence commits on dev `19f658d`; no code change) | Apache-2.0. Contains arm64 variant tables copied from AOSP ART `instruction_set_features_arm64.cc` at `android-17.0.0_r1`, "Copyright (C) 2014 The Android Open Source Project", Apache-2.0 (checked in the file at that tag). ART's `NOTICE` attribution at that tag, "Copyright (c) 2005-2013, The Android Open Source Project", is repeated (Apache-2.0 §4(d)). `cpu.rs` uses Linux UAPI constant values (syscall note). `isa.rs` and ART's `NOTICE` cite it. No ART patch code is in zart. | `licenses/zart/LICENSE`, `NOTICE`, `AOSP-ATTRIBUTION.txt`, `THIRD_PARTY_NOTICES.txt` (11 crates) | Yes |
-| `lib/<abi>/libzthermal.so` | Zairenkai-ThermalTools `9d4b310` | Apache-2.0 | `licenses/zthermal/LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.txt` (25 crates) | Yes |
-| `assets/system-modules/zairenkai_core.zip` | Zairenkai-Core `34e93e3` | Apache-2.0 | `LICENSE`, `NOTICE`, `THIRD_PARTY.md` in the zip (checked by `verify_integration.py build`); `licenses/zairenkai_core/THIRD_PARTY_NOTICES.txt` (29 crates) in the APK | Yes (from the APK). The zip alone lacks the crate licence texts (open item 1) |
-| `assets/system-modules/zairenkai_fas.zip` (**internal builds only**, absent by default) | Zairenkai-FAS `333365e` (licence commits on dev `3c83f0e`; no code change) | Apache-2.0. The audit, re-run on this tree, found no copied or adapted GPL code (line comparison with fas-rs `09ba876`, fas-rs-cpcs `aa3583a` and encore_fas `f408a00`). It has no kernel module, and its 21 crates are permissive (`fas-provenance.md`). | Internal builds: `LICENSE`, `NOTICE`, `THIRD_PARTY.md` in the zip; `licenses/zairenkai_fas/THIRD_PARTY_NOTICES.txt` in the APK | Licence permits it, but it stays internal until the FAS licence is merged and the module is validated |
+| `lib/<abi>/libzart.so` | Zairenkai-ART `0d8cd72` (dev; merge of PR #2, licence commits only) | Apache-2.0. Contains arm64 variant tables copied from AOSP ART `instruction_set_features_arm64.cc` at `android-17.0.0_r1`, "Copyright (C) 2014 The Android Open Source Project", Apache-2.0 (checked in the file at that tag). ART's `NOTICE` attribution at that tag, "Copyright (c) 2005-2013, The Android Open Source Project", is repeated (Apache-2.0 §4(d)). `cpu.rs` uses Linux UAPI constant values (syscall note). `isa.rs` and ART's `NOTICE` cite it. No ART patch code is in zart. | `licenses/zart/LICENSE`, `NOTICE`, `AOSP-ATTRIBUTION.txt`, `THIRD_PARTY_NOTICES.txt` (11 crates) | Yes |
+| `lib/<abi>/libzthermal.so` | Zairenkai-ThermalTools `3bc71fe` (dev) | Apache-2.0 | `licenses/zthermal/LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.txt` (25 crates) | Yes |
+| `assets/system-modules/zairenkai_core.zip` | Zairenkai-Core `11e9742` (dev) | Apache-2.0 | `LICENSE`, `NOTICE`, `THIRD_PARTY.md` in the zip (checked by `verify_integration.py build`); `licenses/zairenkai_core/THIRD_PARTY_NOTICES.txt` (29 crates) in the APK | Yes (from the APK). The zip alone lacks the crate licence texts (open item 1) |
+| `assets/system-modules/zairenkai_fas.zip` (**internal builds only**, absent by default) | Zairenkai-FAS `be08b2d` (dev; merge of PR #3, licence commits only) | Apache-2.0. The audit, re-run on this tree, found no copied or adapted GPL code (line comparison with fas-rs `09ba876`, fas-rs-cpcs `aa3583a` and encore_fas `f408a00`). It has no kernel module, and its 21 crates are permissive (`fas-provenance.md`). | Internal builds: `LICENSE`, `NOTICE`, `THIRD_PARTY.md` in the zip; `licenses/zairenkai_fas/THIRD_PARTY_NOTICES.txt` in the APK | Licence permits it, but it stays internal until the FAS licence is merged and the module is validated |
 | `assets/afid/device-candidates.json` | Zairenkai-Database-Source `d9c4290` | Data CC BY-SA 3.0 (LineageOS Wiki, adapted by AFID) | Attribution in the asset and on the device-search screen | Yes (share-alike applies to the data) |
 | `res/font/google_sans_flex.ttf` | google/fonts `47d54ca` | OFL-1.1 | `licenses/google-sans-flex/OFL.txt`, `TRADEMARKS.md` | Yes |
 | 112 Android libraries (AndroidX, Compose, Material 3, Kotlin, kotlinx) | Maven, release runtime classpath | Apache-2.0 (every POM; 109 "The Apache Software License, Version 2.0", 3 "The Apache License, Version 2.0") | `licenses/android/NOTICES.txt` (generated by `generateAndroidNotices`, which fails on a library without a declared licence) | Yes |
@@ -144,5 +144,5 @@ FAS's own comparison (fas-rs, fas-rs-cpcs, encore_fas) is in `fas-provenance.md`
    `THIRD_PARTY.md`, which lists the crates. The full MIT and Unicode texts live only in the APK
    (`licenses/<module>/THIRD_PARTY_NOTICES.txt`). They are enough while the zip is distributed
    inside the APK. For a standalone zip, Core's and FAS's `build-android.sh` should add the texts.
-2. **Merge the licence commits.** ART and FAS `dev` still have no `LICENSE`; the lock pins their
-   topic-branch licence commits. Once merged, re-pin to the merge commits.
+2. **FAS distribution.** Its licence is merged; distribution still needs the maintainer's explicit
+   clearance and hardware validation.

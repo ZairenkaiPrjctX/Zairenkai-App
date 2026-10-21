@@ -1,5 +1,37 @@
 # Verification report
 
+## Re-pin to the component merge commits (2026-10-21)
+
+**Verdict: verified on the host.** Nothing ran on a device, and the release gate still fails on
+signing.
+
+The maintainer merged all four component PRs; the record is `integration/repository-audit.md`:
+- ART #2 → `0d8cd72`, dev CI 39631263321 ✓
+- FAS #3 → `be08b2d`, dev CI 39631199256 ✓
+- Core #2 → `11e9742`, dev CI 39646717993 ✓
+- ThermalTools #2 → `3bc71fe`, dev CI 39646811410 ✓
+
+Each merge commit's tree is identical to the PR head that was tested. The lock now pins the merge
+commits, all `"merged": true`.
+
+| Check | Result |
+|---|---|
+| `verify_integration.py lock`, `access` | ok |
+| `ZAIRENKAI_INTERNAL_BUILD=1 build-components.sh` | exit 0; Core zip `f7651bf7…5f41` and FAS zip `9e3503a2…e7d5`, both byte-identical to the builds from the PR heads; `build` ok |
+| `build-components.sh` (distributable) | exit 0; `build` ok; no FAS zip |
+| `capture-contracts.sh` | exit 0; fixtures differ only in timestamps, process ids and the recorded source commits |
+| `:integration-core:test` / `:app:testDebugUnitTest` | 74 / 24 passed, 0 failed |
+| Verifier tests, lint | 7 passed; 0 lint errors |
+| APKs (after rebasing onto the maintainer's release-signing commits) | debug 37,993,601 bytes `d7cd658d…d1fa`; release unsigned 30,315,188 bytes `e05333b3…678c` |
+| `apk` (debug, release) | ok |
+| Verifier and setup-script tests | 17 passed (includes the maintainer's `test_setup_actions_secrets.py`) |
+| Release gate (local, no signing secrets here) | **fails on 2**: APK unsigned; catalog unsigned. The trust list now holds the maintainer's key `4330305a…` (key id checked against the public key) |
+
+CI: run 39645071811, a dispatch at `8168526` (the maintainer's head, still on the topic-branch
+pins), passed all three jobs, **including full-integration**. It is the first CI run that built
+the native components. A run at the merge-commit pins follows this commit.
+
+
 ## Licence basis: authorship, Anthropic terms, AOSP NOTICE (2026-10-21)
 
 **Verdict:** the licence declarations are consistent and audited. Signing, the full CI job and

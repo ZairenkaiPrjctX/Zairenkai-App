@@ -1,12 +1,12 @@
 {
-  "id": "cli-22184-7496824",
+  "id": "cli-3012-588481",
   "ok": true,
   "result": {
     "context": {
-      "collected_at_ms": 7496612,
+      "collected_at_ms": 588264,
       "identity": {
         "abi": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "getprop",
           "ttl_ms": 86400000,
@@ -16,7 +16,7 @@
           }
         },
         "api_level": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "getprop",
           "ttl_ms": 86400000,
@@ -26,7 +26,7 @@
           }
         },
         "brand": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "getprop",
           "ttl_ms": 86400000,
@@ -36,7 +36,7 @@
           }
         },
         "device": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "getprop",
           "ttl_ms": 86400000,
@@ -46,7 +46,7 @@
           }
         },
         "kernel_release": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "uname",
           "ttl_ms": 86400000,
@@ -56,7 +56,7 @@
           }
         },
         "model": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "getprop",
           "ttl_ms": 86400000,
@@ -66,7 +66,7 @@
           }
         },
         "root_manager": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "/data/adb markers",
           "ttl_ms": 86400000,
@@ -76,7 +76,7 @@
           }
         },
         "selinux": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "/sys/fs/selinux/enforce (absent)",
           "ttl_ms": 86400000,
@@ -86,7 +86,7 @@
           }
         },
         "soc": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "getprop",
           "ttl_ms": 86400000,
@@ -98,7 +98,7 @@
       },
       "telemetry": {
         "battery_level": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "/sys/class/power_supply/battery/capacity",
           "ttl_ms": 15000,
@@ -107,7 +107,7 @@
           }
         },
         "battery_temp": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "/sys/class/power_supply/battery/temp",
           "ttl_ms": 15000,
@@ -116,7 +116,7 @@
           }
         },
         "charging": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "/sys/class/power_supply/battery/status",
           "ttl_ms": 15000,
@@ -125,7 +125,7 @@
           }
         },
         "fas": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "zfasd status",
           "ttl_ms": 15000,
@@ -135,7 +135,7 @@
           }
         },
         "low_power_mode": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "settings get global low_power",
           "ttl_ms": 15000,
@@ -145,17 +145,17 @@
           }
         },
         "mem_available": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "/proc/meminfo",
           "ttl_ms": 15000,
           "value": {
             "status": "value",
-            "value": 8526476
+            "value": 15822296
           }
         },
         "thermal_status": {
-          "observed_at_ms": 7496612,
+          "observed_at_ms": 588264,
           "provenance": "measured",
           "source": "dumpsys thermalservice",
           "ttl_ms": 15000,

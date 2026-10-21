@@ -48,19 +48,19 @@
   `setup-actions-secrets.sh status`, 2026-10-22.
 - No signed APK or catalog has been built yet: the release gate last ran 2026-10-21, with the APK
   and catalog unsigned. The licence checks pass. Verified. Evidence: the release gate, 2026-10-21.
-- App, ART and FAS are Apache-2.0 (maintainer decision 2026-10-21). The ART and FAS licence
-  commits (ART `31caf46`, `8c6cea2`; FAS `9d87236`, `f6de6ee`, `333365e`) are on their topic
-  branches and not merged; the lock pins the latest of each.
+- App, ART and FAS are Apache-2.0 (maintainer decision 2026-10-21). The licence commits are
+  merged: ART PR #2 (`0d8cd72`), FAS PR #3 (`be08b2d`).
   Verified. Evidence: `integration/repository-lock.json`, `docs/integration/license-inventory.md`.
-- FAS stays internal-only: its licence is not merged, and the first hardware test is Core only.
+- FAS stays internal-only until its distribution is explicitly cleared; the first hardware test is Core only.
   The provenance audit found no copied GPL code. Verified. Evidence:
   `docs/integration/fas-provenance.md`, 2026-10-21.
 - All seven Actions values are set (CI App ID and key at repository level, five signing secrets in
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
-- Draft PRs Core #2 and ThermalTools #2 bring the pinned topic branches to `dev`; they are not
-  merged. Verified. Evidence: GitHub, 2026-10-21.
+- Core PR #2 (`11e9742`) and ThermalTools PR #2 (`3bc71fe`) are merged. Every lock pin is now
+  a `dev` merge commit whose tree equals the PR head that was tested. Verified. Evidence:
+  `git log`/`git diff` on each `dev`, GitHub, 2026-10-21.
 
 ## Authoritative sources
 
@@ -74,13 +74,13 @@
 
 ## Related repositories
 
-- Zairenkai-Core (`34e93e3`, topic branch), Zairenkai-FAS (`333365e`, topic branch), Zairenkai-ART (`8c6cea2`, topic branch),
-  Zairenkai-ThermalTools (`9d4b310`, topic branch) and Zairenkai-Database-Source (`d9c4290`) are
+- Zairenkai-Core (`11e9742`), Zairenkai-FAS (`be08b2d`), Zairenkai-ART (`0d8cd72`),
+  Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source (`d9c4290`), all on `dev`, are
   integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
 - The other 10 Zairenkai repositories have no runtime capability, and anime-extensions is a separate
   product. Verified. Evidence: `integration/repository-audit.md` (re-audit 2026-10-21).
-- The Core, ThermalTools, ART and FAS pins are unmerged topic-branch commits. Verified. Evidence:
-  `git log origin/dev..origin/ccr-63f8aa87-1b0paj` in each repository, 2026-10-21.
+- No pin is an unmerged topic-branch commit any more. Verified. Evidence: `"merged": true` for
+  every component in `integration/repository-lock.json`, 2026-10-21.
 
 ## Open questions
 
