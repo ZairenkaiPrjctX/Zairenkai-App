@@ -21,7 +21,7 @@ audited commit, instead of showing placeholders. Details: `integration/repositor
 - **Root is opt-in.** The app works without root; root features stay off until enabled in
   System › Root access.
 - **System module.** With root, the app can install the Zairenkai Core module (FAS only in
-  internal development builds: it has no licence yet) through the root manager's own installer, only after you confirm
+  internal development builds) through the root manager's own installer, only after you confirm
   (`docs/integration/system-module.md`). Installation stays blocked until the module catalog is
   signed by a trusted module-signing key, and none exists yet. It has not been tested on a
   device.
@@ -54,10 +54,11 @@ Full instructions: `docs/build/building.md`.
 
 ## Licences
 
-- **This repository:** no licence has been chosen yet.
+- **This repository:** Apache-2.0 (`LICENSE`, `NOTICE`), as are the bundled zart, zthermal and
+  Core module. Each bundled component keeps its own licence and notices.
 - **Bundled font:** Google Sans Flex, SIL OFL 1.1. "Google Sans Flex" is a trademark of
   Google LLC, and this app is not affiliated with Google.
 - **Device data:** CC BY-SA 3.0 (LineageOS Wiki via AFID).
-- **zthermal:** Apache-2.0; its `LICENSE` and `NOTICE` are packaged in `assets/licenses/zthermal/`.
-  zart has no licence yet (Zairenkai-ART has no `LICENSE`). Full inventory:
-  `docs/integration/license-inventory.md`.
+- **zart and zthermal:** Apache-2.0; their `LICENSE` and `NOTICE` are packaged in
+  `assets/licenses/zart/` (with the AOSP attribution) and `assets/licenses/zthermal/`. Full
+  inventory: `docs/integration/license-inventory.md`.

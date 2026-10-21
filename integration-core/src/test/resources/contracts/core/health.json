@@ -1,9 +1,9 @@
 {
-  "id": "cli-10736-4636587",
+  "id": "cli-18352-6453122",
   "ok": true,
   "result": {
     "audit_dropped": 0,
-    "context_age_ms": 205,
+    "context_age_ms": 210,
     "core_api": "1.0.0",
     "leases": 0,
     "policy_version": "builtin-1/cfg-105385cae3148f35",
@@ -14,7 +14,7 @@
       "android.low_power_mode is Unknown"
     ],
     "state": "degraded",
-    "uptime_ms": 205,
+    "uptime_ms": 210,
     "version": "0.1.0"
   },
   "v": 1

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 """Failure paths of verify_integration.py: an incorrect lock, a repository CI cannot fetch, a
 missing native component, and an APK that differs from the build. Run with
 `python3 -m unittest discover -s integration/scripts/tests`."""
@@ -103,6 +105,21 @@ class BuildTest(unittest.TestCase):
         self.assertIn("forbidden files", r.stdout)
         self.assertIn("private-key or token markers", r.stdout)
         self.assertIn("assets/licenses/android/NOTICES.txt missing", r.stdout)
+        self.assertIn("assets/licenses/zairenkai-app/LICENSE missing", r.stdout)
+
+    def test_a_module_zip_without_its_licence_and_notice_fails(self):
+        (self.out / "assets/system-modules").mkdir(parents=True)
+        z = self.out / "assets/system-modules/zairenkai_core.zip"
+        with zipfile.ZipFile(z, "w") as zf:
+            zf.writestr("module.prop", "id=zairenkai_core\n")
+            zf.writestr("LICENSE", "Apache License\n")
+        (self.out / "assets/system-modules.json").write_text(json.dumps({"modules": [{
+            "id": "zairenkai_core", "file": "system-modules/zairenkai_core.zip", "sha256": "0" * 64,
+            "source": {"commit": "0" * 40}, "source_matched": [], "distribution": "distributable"}]}))
+        (self.out / "components.json").write_text(json.dumps({"profile": "distributable", "files": {}}))
+        r = run("build", env={"ZAIRENKAI_OUT": str(self.out)})
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("system-modules/zairenkai_core.zip lacks ['NOTICE']", r.stdout)
 
 
 if __name__ == "__main__":

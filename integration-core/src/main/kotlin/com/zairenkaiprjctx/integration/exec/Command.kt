@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.integration.exec
 
 /** Output of a finished process. A non-zero exit is data, not an exception. */

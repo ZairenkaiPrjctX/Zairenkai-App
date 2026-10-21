@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 """Write the third-party notices for one Rust binary built from a checked-out workspace.
 
 Usage: rust_notices.py --workspace <dir> --package <name> --target <triple> --component <label>

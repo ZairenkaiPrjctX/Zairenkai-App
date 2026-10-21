@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 # Sign the module catalog (integration/out/assets/system-modules.json) with the module-signing
 # key, writing system-modules.json.sig next to it.
 #

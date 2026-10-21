@@ -1,83 +1,111 @@
-# Physical-device validation procedure
+# Physical-device validation: Core module alone
 
-The first hardware test is the **Core module alone**: its procedure, prerequisites and record
-are in `docs/integration/system-module.md` ("First hardware validation"). FAS is not part of
-it, because it is internal-only (`docs/integration/fas-provenance.md`). This page is the
-general checklist.
+**No device has been validated.** Nothing on this page has been run. The step-by-step table and
+the recovery paths for each root manager are in `docs/integration/system-module.md` ("First
+hardware validation"). This page sets the rules: scope, what counts as evidence, when to stop,
+and the record to file.
 
-**No device has been validated.** Nothing below has been run yet. Results go in
-`docs/validation/<codename>-<YYYY-MM-DD>.md`, one file per device and root-manager combination.
-After a successful run, add the codename to the module's `validated_on` in
-`integration/system-modules.json`. Testing one device validates that device and that manager
-version, nothing more.
+## Scope
 
-## Prerequisites
+- **One module:** `zairenkai_core`. **No FAS.** It is internal-only, the default and release
+  builds do not contain it, and it must not be installed during this test, whether by hand or
+  from an internal build. Step 1 and the last step both confirm that `zairenkai_fas` is absent.
+- **One dedicated, recoverable, rooted device.** It must not be a daily phone. Before starting
+  you need a backup, the stock boot image for the installed firmware, adb authorisation and
+  fastboot, and the manager's safe mode tried once on this device.
+- **One root manager and version**, from the supported list: Magisk ≥ v21.2, KernelSU,
+  KernelSU-Next or APatch. A result validates that device codename with that manager version,
+  nothing broader.
+- **Nothing else changes on the device.** No thermal, cooling, CPU/GPU frequency, governor,
+  boot-image, firmware or partition change, by the app or by hand. zthermal only reads.
 
-- A rooted test device you can recover: a backup, and knowing how to boot the manager's safe
-  mode or remove modules from recovery.
-- `adb`, and an APK built by the full integration build (its report and hashes).
-- A module catalog signed by a trusted key. Without one the app refuses to install. That is
-  the expected result on today's builds, and it is the first thing to record.
-- Never disable thermal protection, and never change thermal or frequency settings by hand
-  during the test.
+## What counts as evidence
 
-## Steps
+Only output captured on the physical device during this procedure counts:
+- `device-readonly-check.sh` outputs;
+- the app's screens (screenshots), including its "Installer output";
+- `zcored ctl health`;
+- the manager's own module list.
 
-1. **Before (read only).** Run:
+These do **not** count as device validation, and must never be cited as such:
+- JVM and Robolectric tests;
+- fake or simulated `su`, the `FakeRunner`/fixture runs, host runs of the binaries;
+- emulators;
+- a reduced or full CI build.
 
-   ```sh
-   integration/scripts/device-readonly-check.sh > before.txt
-   integration/scripts/device-readonly-check.sh --root > before-root.txt
-   ```
+They show the code behaves as designed, not that a device does.
 
-   It records:
-   - identity, SoC, Android and kernel versions, page size;
-   - the thermal and cpufreq nodes;
-   - the root manager (`su -v`/`-V`, CLI, module list) and existing Zairenkai modules;
-   - `getenforce` and any Zairenkai SELinux denials.
+## Preconditions that block the test today
 
-   It writes nothing.
-2. **Install the app** (`adb install`). Note the APK SHA-256 from the integration report.
-3. **In the app:**
-   - Without root: Home, Thermal (zthermal snapshot as the app uid) and Runtime work. Record
-     which thermal zones are readable or denied.
-   - System › Root access › Enable: record the manager's prompt.
-   - System › Zairenkai System Module: record the detected manager and version, every
-     preflight check, the signature state, and the package verification lines.
-   - If the catalog is trusted, install the base module. Record the installer output (the
-     screen's "Installer output"), and confirm the state is `INSTALL_PENDING_REBOOT`.
-4. **After install, before reboot:** run the root check again
-   (`device-readonly-check.sh --root > staged.txt`).
-   `/data/adb/modules_update/zairenkai_core/module.prop` must show the packaged versionCode.
-5. **Reboot**, then wait two minutes.
-6. **After reboot:** run the root check again (`after.txt`), and record:
-   - `zcored ctl health` (`ready` or `degraded`, with reasons);
-   - `/data/adb/zairenkai-core/failed` (must not exist) and `zcored.log`;
-   - avc denials;
-   - the module screen state (`ACTIVE`, `DEGRADED` or `INSTALLED_NOT_INITIALIZED`), and that
-     it agrees with the readings.
-7. **ThermalTools stays read only:** take the snapshot (Thermal screen and "Read with root").
-   Confirm "Thermal controls" still says no validated control exists, and that no thermal node
-   changed between `before` and `after`.
-8. **Removal:** Remove on the module screen (KernelSU and APatch), or remove in the Magisk app.
-   Reboot. The module and `/data/adb/zairenkai-core` must be gone, and other modules unchanged
-   (compare the module lists).
-9. **Failure paths, where safe:**
-   - decline the root prompt (`ROOT_PERMISSION_DENIED`);
-   - cancel before installing (nothing staged);
-   - disable the module in the manager (`DEGRADED`, then the Enable action).
+| Precondition | State on 2026-10-21 |
+|---|---|
+| APK from the full integration build (default profile, Core only), with `integration-report.json` | Only local builds exist; CI's full build waits for the GitHub App (`docs/build/ci.md`) |
+| Catalog signed by a key in `integration/module-trust.json` | No key exists. The app stops at `MODULE_NOT_AVAILABLE` |
+| A dedicated device | Not chosen |
 
-## Record template
+**Do not work around the signature check.** Installing the zip from the manager by hand is a
+manager test, not the app's install, and an untrusted key must never be added to the trust
+list. Without a signed catalog, the only valid result is "blocked at `MODULE_NOT_AVAILABLE`"
+(steps 1–4 of the table).
+
+## Procedure summary
+
+The full table is in `system-module.md`. In outline:
+1. **Before.** Run `device-readonly-check.sh` and `--root`. Expect `zairenkai_core` and
+   `zairenkai_fas` to be absent.
+2. **Without root.** Home, Thermal and Runtime.
+3. **Enable root** in the app.
+4. **Check.** Run the System Module checks.
+5. **Install** after confirmation. Expect `INSTALL_PENDING_REBOOT`.
+6. **Staged state.** Run the root check again.
+7. **Reboot.**
+8. **Core runtime.** Run the root check, `zcored ctl health`, and the screen state.
+9. **zthermal.** Its snapshot still reads, and the thermal nodes are unchanged.
+10. **Remove** the module, reboot, and run the root check again.
+11. **Optional failure paths.**
+
+Expected Core runtime without FAS: `zcored ctl health` answers `degraded`, naming the FAS
+adapter as unavailable. The screen shows `DEGRADED`. `ACTIVE` would need every Core dependency
+healthy. `INSTALLED_NOT_INITIALIZED` means zcored did not answer: record it as a failure, with
+`zcored.log` and `/data/adb/zairenkai-core/failed`.
+
+## Stop and recover when
+
+- the device does not finish booting within five minutes of the reboot;
+- the manager or the app reports an install exit code other than 0;
+- `/data/adb/zairenkai-core/failed` exists, or zcored restarts repeatedly;
+- any thermal or cpufreq node differs between the "before" and "after" outputs;
+- a module other than `zairenkai_core` was added, changed or removed.
+
+Recover through the manager's safe mode or its module removal first
+(`system-module.md`, "Prerequisites"), then reflash the stock boot image if needed. Record what
+happened.
+
+## Record
+
+One file per device and manager: `docs/validation/<codename>-<YYYY-MM-DD>.md`. Attach the four
+outputs (`1-before.txt`, `2-staged.txt`, `3-after.txt`, `4-removed.txt`). Only after a complete,
+successful record, add the codename to `zairenkai_core`'s `validated_on` in
+`integration/system-modules.json`, in a reviewed pull request.
 
 ```
-Device: <manufacturer model> (<codename>), SoC <soc>, Android <release> (API <n>), kernel <uname -r>
-Root manager: <family> <version> (<versionCode>), su -v: <…>
-APK: <sha256> (integration report <run id>)    Module: zairenkai_core <version>, zip <sha256>
-Catalog signature: <verified key id | blocked: …>
-Install: <command shown> → exit <n>; staged versionCode <n>
-Reboot: yes   Post-reboot state: <ACTIVE|DEGRADED|INSTALLED_NOT_INITIALIZED> — Core health <…>
-FAS: <not installed | state>   SELinux denials: <none | list>
-ThermalTools: <zones readable/denied>; thermal nodes unchanged: <yes/no>
-Removal: <result after reboot>   Other modules unchanged: <yes/no>
-Failures and recovery: <…>
+Tester / date (UTC): <who> / <YYYY-MM-DD hh:mm>
+Device: <manufacturer model> (<codename>), SoC <soc>, ABIs <list>
+Android <release> (API <n>), build <ro.build.type>, security patch <date>
+Kernel: <uname -r>   Page size: <n>   SELinux: <Enforcing|Permissive>
+Root manager: <family> <version> (<versionCode>); su -v <…>; su -V <…>; CLI <path, version>
+Recovery path tried on this device: <how>   Stock boot image kept: <yes>
+App APK: <sha256> (installed copy: <sha256 from device-readonly-check>), build <CI run id | local>, app commit <sha>
+Catalog: signature <verified, key id …>; module zairenkai_core <version> (<versionCode>), zip <sha256>, built from Core <commit>
+Preflight: <verdict>; WARN/FAIL checks: <…>
+Before: zairenkai_core <absent>; zairenkai_fas <absent>; other modules: <list>
+Install: method <direct|handoff>, command shown <…>, exit <n>; installer output attached
+Staged: modules_update/zairenkai_core versionCode <n>
+Reboot: <normal | problem: …>, boot time <s>
+Core runtime: zcored ctl health <ready|degraded: reasons>; failed marker <absent>; log tail attached; screen state <ACTIVE|DEGRADED|INSTALLED_NOT_INITIALIZED>
+SELinux denials (avc, zairenkai): <none | list>
+zthermal: snapshot <ok>, zones readable/denied <n/n>; thermal and cpufreq nodes unchanged: <yes/no>
+Removal: method <…>, result after reboot <module and /data/adb/zairenkai-core gone: yes/no>; other modules unchanged: <yes/no>; zairenkai_fas absent throughout: <yes>
+Failures and recovery: <none | what, when, how recovered>
+Not covered: <e.g. other managers, other firmware versions>
 ```

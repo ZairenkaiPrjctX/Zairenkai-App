@@ -69,18 +69,18 @@ jobs:
         run: python3 integration/scripts/verify_integration.py lock
       - name: Require the CI GitHub App
         env:
-          CLIENT_ID: ${{ vars.ZAIRENKAI_CI_APP_CLIENT_ID }}
+          APP_ID: ${{ vars.ZAIRENKAI_CI_APP_ID }}
           HAS_KEY: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY != '' }}
         run: |
-          if [ -z "$CLIENT_ID" ] || [ "$HAS_KEY" != "true" ]; then
-            echo "::error::Full integration build blocked: the CI GitHub App is not configured (variable ZAIRENKAI_CI_APP_CLIENT_ID, secret ZAIRENKAI_CI_APP_PRIVATE_KEY). See docs/build/ci.md."
+          if [ -z "$APP_ID" ] || [ "$HAS_KEY" != "true" ]; then
+            echo "::error::Full integration build blocked: the CI GitHub App is not configured (variable ZAIRENKAI_CI_APP_ID, secret ZAIRENKAI_CI_APP_PRIVATE_KEY). See docs/build/ci.md."
             exit 1
           fi
       - name: Read-only token for the component repositories
         id: token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          client-id: ${{ vars.ZAIRENKAI_CI_APP_CLIENT_ID }}
+          app-id: ${{ vars.ZAIRENKAI_CI_APP_ID }} # the numeric App ID, not the OAuth Client ID (v3.3.0 marks app-id deprecated but still reads it)
           private-key: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY }}
           owner: ZairenkaiPrjctX
           repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source

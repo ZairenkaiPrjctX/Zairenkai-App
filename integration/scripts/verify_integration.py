@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 """Checks for the complete integration build, and its report.
 
   verify_integration.py lock                 validate integration/repository-lock.json (and the inventory)
@@ -157,7 +159,8 @@ def check_build() -> list:
                 errors.append(f"build: jniLibs/{abi}/{lib} not built")
     for req in ("assets/afid/device-candidates.json", "assets/system-modules.json",
                 "assets/system-modules/zairenkai_core.zip",
-                "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE"):
+                "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE",
+                "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE"):
         if req not in files:
             errors.append(f"build: {req} not built")
     internal = profile() == "internal"
@@ -185,6 +188,11 @@ def check_build() -> list:
             z = OUT / "assets" / m["file"]
             if z.is_file() and sha256(z.read_bytes()) != m["sha256"]:
                 errors.append(f"build: {m['file']} does not match the catalog")
+            if z.is_file():
+                with zipfile.ZipFile(z) as mz:
+                    missing = {"LICENSE", "NOTICE"} - set(mz.namelist())
+                if missing:
+                    errors.append(f"build: {m['file']} lacks {sorted(missing)}: the zip must carry its own notices")
             if not {"customize.sh", "META-INF/com/google/android/update-binary"} <= set(m["source_matched"]):
                 errors.append(f"build: module {m['id']}: installer not matched to source")
             if m.get("distribution") != "distributable" and not internal:
@@ -230,7 +238,8 @@ def check_apk(apk: pathlib.Path, release: bool) -> list:
         for lib in ("libzart.so", "libzthermal.so"):
             if f"lib/{abi}/{lib}" not in facts["names"]:
                 errors.append(f"apk: lib/{abi}/{lib} missing (ABI coverage)")
-    for req in ("assets/licenses/android/NOTICES.txt", "assets/integration/module-trust.json",
+    for req in ("assets/licenses/android/NOTICES.txt", "assets/licenses/zairenkai-app/LICENSE",
+                "assets/licenses/zairenkai-app/NOTICE", "assets/integration/module-trust.json",
                 "assets/integration/repository-lock.json", "assets/system-modules.json"):
         if req not in facts["names"]:
             errors.append(f"apk: {req} missing")

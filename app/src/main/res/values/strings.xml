@@ -180,9 +180,13 @@
     <string name="licence_font">Typeface: Google Sans Flex 5.000 (SIL Open Font License 1.1), bundled from Google Fonts. “Google Sans Flex” is a trademark of Google LLC; this app is not affiliated with or endorsed by Google.</string>
     <string name="licence_font_view">View font licence</string>
     <string name="licence_font_trademarks">View font trademark notice</string>
-    <string name="licence_zart">zart (Zairenkai-ART) contains CPU variant tables from AOSP ART (Apache-2.0); its Rust dependencies serde and serde_json are MIT OR Apache-2.0.</string>
+    <string name="licence_zart">zart (Zairenkai-ART) is Apache-2.0. Its arm64 CPU variant tables come from AOSP ART (Copyright The Android Open Source Project, Apache-2.0); its notice keeps that attribution.</string>
     <string name="licence_libs">AndroidX, Jetpack Compose, Kotlin coroutines and kotlinx.serialization: Apache-2.0.</string>
-    <string name="licence_project">No licence has been chosen yet for the Zairenkai repositories themselves.</string>
+    <string name="licence_project">Zairenkai App is licensed under the Apache License 2.0, as are zart, zthermal and the Core module. Each bundled component keeps its own licence and notices.</string>
+    <string name="licence_app_view">View app licence</string>
+    <string name="licence_app_notice">View app notice</string>
+    <string name="licence_zart_view">View zart licence</string>
+    <string name="licence_zart_notice">View zart notice</string>
     <string name="licence_data">Device data: %1$s. %2$s</string>
 
     <!-- Settings -->

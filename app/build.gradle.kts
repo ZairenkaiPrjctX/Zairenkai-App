@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -7,16 +9,20 @@ plugins {
 }
 
 // Integration metadata (inventory, lock) is copied into the APK's assets so the app can show
-// every repository's disposition and the revisions it was built from.
+// every repository's disposition and the revisions it was built from, together with the app's
+// own licence and notice.
 val integrationMeta = layout.buildDirectory.dir("generated/integration-meta")
 val copyIntegrationMeta = tasks.register<Copy>("copyIntegrationMeta") {
     from(
-        rootProject.file("integration/organization-repositories.json"),
-        rootProject.file("integration/repository-lock.json"),
-        // Module-signing public keys: the app trusts only these to authenticate module releases.
-        rootProject.file("integration/module-trust.json"),
-    )
-    into(integrationMeta.map { it.dir("integration") })
+        files(
+            rootProject.file("integration/organization-repositories.json"),
+            rootProject.file("integration/repository-lock.json"),
+            // Module-signing public keys: the app trusts only these to authenticate module releases.
+            rootProject.file("integration/module-trust.json"),
+        ),
+    ) { into("integration") }
+    from(files(rootProject.file("LICENSE"), rootProject.file("NOTICE"))) { into("licenses/zairenkai-app") }
+    into(integrationMeta)
 }
 
 // Notices for the Android libraries in the release runtime classpath: coordinates, the licence
@@ -65,7 +71,7 @@ val generateAndroidNotices = tasks.register("generateAndroidNotices") {
             if (ls.isEmpty()) text.appendLine("  Licence: NOT DECLARED")
         }
         text.appendLine()
-        text.appendLine("Apache License 2.0 text: licenses/zthermal/LICENSE in this APK, or https://www.apache.org/licenses/LICENSE-2.0.txt")
+        text.appendLine("Apache License 2.0 text: licenses/zairenkai-app/LICENSE in this APK, or https://www.apache.org/licenses/LICENSE-2.0.txt")
         val f = out.get().asFile
         f.parentFile.mkdirs()
         f.writeText(text.toString())
@@ -82,7 +88,8 @@ val verifyIntegrationComponents = tasks.register("verifyIntegrationComponents") 
         listOf(
             "assets/afid/device-candidates.json", "assets/components.json",
             "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE",
-            // FAS is an internal-only module (no licence yet): not required, absent by default.
+            "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE",
+            // FAS is an internal-only module: not required, absent by default.
             "assets/system-modules.json", "assets/system-modules/zairenkai_core.zip",
         )
     val allow = allowMissingComponents

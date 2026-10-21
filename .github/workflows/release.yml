@@ -30,13 +30,13 @@ jobs:
         run: python3 integration/scripts/verify_integration.py lock
       - name: Require every release secret
         env:
-          CLIENT_ID: ${{ vars.ZAIRENKAI_CI_APP_CLIENT_ID }}
+          APP_ID: ${{ vars.ZAIRENKAI_CI_APP_ID }}
           HAS_APP_KEY: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY != '' }}
           HAS_MODULE_KEY: ${{ secrets.ZAIRENKAI_MODULE_SIGNING_KEY != '' }}
           HAS_KEYSTORE: ${{ secrets.ZAIRENKAI_RELEASE_KEYSTORE_BASE64 != '' }}
         run: |
           missing=""
-          [ -n "$CLIENT_ID" ] && [ "$HAS_APP_KEY" = "true" ] || missing="$missing CI-GitHub-App"
+          [ -n "$APP_ID" ] && [ "$HAS_APP_KEY" = "true" ] || missing="$missing CI-GitHub-App"
           [ "$HAS_MODULE_KEY" = "true" ] || missing="$missing ZAIRENKAI_MODULE_SIGNING_KEY"
           [ "$HAS_KEYSTORE" = "true" ] || missing="$missing ZAIRENKAI_RELEASE_KEYSTORE_BASE64"
           if [ -n "$missing" ]; then
@@ -46,7 +46,7 @@ jobs:
       - id: token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          client-id: ${{ vars.ZAIRENKAI_CI_APP_CLIENT_ID }}
+          app-id: ${{ vars.ZAIRENKAI_CI_APP_ID }} # the numeric App ID, not the OAuth Client ID (v3.3.0 marks app-id deprecated but still reads it)
           private-key: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY }}
           owner: ZairenkaiPrjctX
           repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source

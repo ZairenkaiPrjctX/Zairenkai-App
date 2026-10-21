@@ -3,10 +3,18 @@
 Audited 2026-10-21 at `3c83f0e` (the locked commit: FAS `dev`, the merge of PR #2). This is an
 engineering record, not legal advice.
 
-**Outcome:** FAS stays **excluded from distributable builds**. The audit found no copied or
-adapted third-party code, and no GPL dependency. But the repository has no licence, and two
-questions need the maintainer's answer before any licence (Apache-2.0 or another) can be
-applied. See "What needs clarification".
+**Outcome:** the audit found no copied or adapted third-party code, and no GPL dependency. On
+2026-10-21 the maintainer decided on Apache-2.0, conditional on this audit, and the audit supports
+it. The audit was re-run on the same tree that day, with the same result (below). FAS commit
+`9d87236`, on its topic branch and not merged yet, adds `LICENSE`, `NOTICE` and SPDX headers,
+and changes no code.
+
+FAS **stays out of distributable builds** for now, for two reasons:
+- its licence is not merged into FAS `dev`;
+- the first hardware validation covers Core only.
+
+Making it distributable is a reviewed change to `integration/system-modules.json` and the release
+gate, after both are done.
 
 ## Source history
 
@@ -30,7 +38,7 @@ contributor appears.
 | `9d43894` | `enabled` and `default_profile` in the status |
 | `0877452` | 16 KB page-size linking |
 
-## Licence declarations in the source
+## Licence declarations in the source (at `3c83f0e`, before the licence commit)
 
 - **No licence.** There is no `LICENSE` or `COPYING` file, and no `license` field in any
   `Cargo.toml`.
@@ -112,8 +120,9 @@ them today; an internal APK carries them in `licenses/zairenkai_fas/THIRD_PARTY_
 
 - **Zip contents.** The zip is FAS's own build output: module scripts, `bin/zfasd`, `webroot/`
   and `THIRD_PARTY.md`. It has no `LICENSE`.
-- **Without a licence, recipients get no rights.** That holds whoever owns the copyright, so
-  the zip must not be distributed. The release gate checks this.
+- **Licence.** At `3c83f0e` the zip had no licence, so it could not be distributed. At
+  `9d87236` it carries `LICENSE` and `NOTICE`, and `verify_integration.py build` fails on a
+  module zip that lacks either.
 - **This app's handling:**
   - `integration/system-modules.json` marks FAS `"distribution": "internal"`;
   - `build-components.sh` builds and packages it only with `ZAIRENKAI_INTERNAL_BUILD=1`.
@@ -125,20 +134,35 @@ them today; an internal APK carries them in `licenses/zairenkai_fas/THIRD_PARTY_
 - **Internal builds** are for the maintainer's own testing of their own repository. That use
   needs no licence grant to third parties. They must not be shared.
 
-## What needs clarification (maintainer)
+## Re-run, 2026-10-21
 
-1. **Authorship and rights.** The code was produced in AI-assisted sessions the maintainer ran
-   and signed off. Whether, and how, copyright subsists in that output, and in whom, depends on
-   the jurisdiction and the tool's terms. The maintainer should confirm the rights they hold
-   (with counsel if needed) before granting a licence.
-2. **Licence choice.** Once rights are confirmed, choose a licence, add `LICENSE` (and any
-   `NOTICE`) to FAS through a reviewed pull request, and add crate notices to FAS's zip.
-   Nothing found here restricts the choice: no copied GPL code, permissive dependencies only.
-   Keep `docs/THIRD_PARTY.md`'s "ideas, not code" record.
+The same comparison was run on FAS `dev` (`3c83f0e`). Commit `9d87236` changes only headers and
+licence files, so it gives the same result:
 
-   After the licence is merged:
-   - re-pin `zairenkai-fas-module`;
-   - change its `distribution` to `distributable`;
-   - re-run the release gate.
+| Project | Matching lines | Runs of 3 or more consecutive matches |
+|---|---|---|
+| fas-rs | 22 | 0 |
+| fas-rs-cpcs | 24 | 0 |
+| encore_fas | 0 | 0 |
 
-No FAS file or header was changed by this audit.
+## Licence decision and what remains
+
+1. **Decision.** The maintainer adopted Apache-2.0 for FAS on 2026-10-21. The code came from
+   AI-assisted sessions that the maintainer ran and signed off. The copyright line therefore uses
+   the organization convention, "ZairenkaiPrjctX contributors", as Core and ThermalTools do. It
+   names no individual owner. Whether copyright subsists in AI-assisted output depends on
+   jurisdiction; this record makes no legal claim about it.
+2. **Done in `9d87236`:**
+   - `LICENSE` (the official text), `NOTICE`, SPDX headers;
+   - Cargo `license`;
+   - `build-android.sh` now requires `LICENSE` and puts `LICENSE` and `NOTICE` in the zip;
+   - `docs/THIRD_PARTY.md` keeps the "ideas, not code" record.
+
+   The app's lock pins this commit; the zip is `1c998502…7e2c`.
+3. **Remaining:**
+   - merge `9d87236` into FAS `dev` and re-pin both FAS lock components to the merge commit;
+   - put the crate licence texts in the zip;
+   - then decide whether to change its `distribution` to `distributable`, and re-run the release
+     gate.
+
+Only licence files and headers were changed in FAS; no code.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.integration.model
 
 /** Why a capability can or cannot be used right now. The UI renders exactly these states. */

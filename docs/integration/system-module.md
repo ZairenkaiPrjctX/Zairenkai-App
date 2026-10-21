@@ -15,8 +15,8 @@ would break that lifecycle: FAS restores its cpufreq floors in its own `uninstal
 | `zairenkai_core` | base | Zairenkai-Core `34e93e3` (unmerged topic branch), `module/` + `scripts/build-android.sh` | `zcored`: Core health, policy-checked actions, module inventory | A root daemon with a root-only socket (Core ADR-0005) |
 | `zairenkai_fas` | optional, **internal only** | Zairenkai-FAS `3c83f0e` (dev) | `zfasd`: FAS status and controls | Writes cpufreq `scaling_min_freq` floors |
 
-**FAS is not in distributable builds.** It has no licence (`docs/integration/fas-provenance.md`),
-so it is built and packaged only with `ZAIRENKAI_INTERNAL_BUILD=1`. That build is labelled an
+**FAS is not in distributable builds.** Its Apache-2.0 licence commit (`9d87236`) is not merged
+yet, and the first hardware test covers Core only (`docs/integration/fas-provenance.md`). So it is built and packaged only with `ZAIRENKAI_INTERNAL_BUILD=1`. That build is labelled an
 internal development build, and the release gate refuses it. The default build, CI and
 `release.yml` package Core alone.
 
@@ -24,7 +24,7 @@ internal development build, and the release gate refuses it. The default build, 
 - `module.prop`, `customize.sh`, `service.sh`, `uninstall.sh`, `action.sh`;
 - `META-INF/com/google/android/{update-binary,updater-script}`;
 - `bin/<daemon>`;
-- licence files (Core: `LICENSE`, `NOTICE`, `THIRD_PARTY.md`; FAS: `THIRD_PARTY.md` only);
+- licence files: `LICENSE`, `NOTICE` and `THIRD_PARTY.md` (Core, and FAS from `9d87236`), checked by `verify_integration.py build`;
 - `webroot/` (FAS).
 
 There are no other files, no configuration or profile data, and no `system/` overlay.

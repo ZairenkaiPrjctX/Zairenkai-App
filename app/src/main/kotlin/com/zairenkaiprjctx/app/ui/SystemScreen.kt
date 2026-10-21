@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.app.ui
 
 import android.content.Intent
@@ -159,6 +161,8 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
                 // Generated notices: Android libraries, and the Rust crates in each packaged binary.
                 val notices = listOf(
                     "licenses/android/NOTICES.txt" to R.string.licence_notices_android,
+                    "licenses/zart/LICENSE" to R.string.licence_zart_view,
+                    "licenses/zart/NOTICE" to R.string.licence_zart_notice,
                     "licenses/zart/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zart,
                     "licenses/zart/AOSP-ATTRIBUTION.txt" to R.string.licence_notices_zart_aosp,
                     "licenses/zthermal/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zthermal,
@@ -171,6 +175,15 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
                     }
                 }
                 Supporting(stringResource(R.string.licence_project))
+                val own = listOf(
+                    "licenses/zairenkai-app/LICENSE" to R.string.licence_app_view,
+                    "licenses/zairenkai-app/NOTICE" to R.string.licence_app_notice,
+                ).filter { c.assetExists(it.first) }
+                if (own.isNotEmpty()) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                        own.forEach { (path, label) -> TextButton(onClick = { licence = path }) { Text(stringResource(label)) } }
+                    }
+                }
             }
         }
     }

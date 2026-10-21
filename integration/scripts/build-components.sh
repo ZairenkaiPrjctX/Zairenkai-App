@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 # Build the packaged components at the exact commits in integration/repository-lock.json.
 #
 # Produces (git-ignored):
 #   integration/out/jniLibs/<abi>/libzart.so      zart from Zairenkai-ART (scripts/build-android.sh)
 #   integration/out/jniLibs/<abi>/libzthermal.so  zthermal from Zairenkai-ThermalTools (scripts/build-android.sh)
 #   integration/out/assets/licenses/zthermal/     zthermal's LICENSE and NOTICE (Apache-2.0)
+#   integration/out/assets/licenses/zart/         zart's LICENSE and NOTICE (Apache-2.0, with the AOSP attribution)
 #   integration/out/assets/licenses/<component>/THIRD_PARTY_NOTICES.txt  licences of every Rust
 #                                                   crate compiled into each binary (rust_notices.py)
 #   integration/out/assets/afid/device-candidates.json   AFID asset (integration/scripts/afid_asset.py)
@@ -66,6 +69,7 @@ notices() { # notices <workspace> <package> <component>
     --target aarch64-linux-android --component "$3" --out "$OUT/assets/licenses/$3/THIRD_PARTY_NOTICES.txt"
 }
 notices "$OUT/src/zart" zart zart
+install -m 0644 "$OUT/src/zart/LICENSE" "$OUT/src/zart/NOTICE" "$OUT/assets/licenses/zart/" # NOTICE: AOSP attribution
 install -m 0644 "$ROOT/integration/notices/zart-aosp-attribution.txt" "$OUT/assets/licenses/zart/AOSP-ATTRIBUTION.txt"
 
 # --- zthermal (Zairenkai-ThermalTools) ---------------------------------------------------
@@ -104,8 +108,8 @@ rm -f "$OUT/assets/system-modules.json"
 rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai_fas"
 mkdir -p "$OUT/assets/system-modules"
 build_module zairenkai-core-module zairenkai_core zairenkai-core zcored
-# FAS has no licence yet (docs/integration/fas-provenance.md): it is an internal module, built
-# only for an explicitly labelled internal development build and never for distribution.
+# FAS is an internal module (integration/system-modules.json, docs/integration/fas-provenance.md):
+# built only for an explicitly labelled internal development build and never for distribution.
 PROFILE=distributable
 if [ "${ZAIRENKAI_INTERNAL_BUILD:-0}" = 1 ]; then
   PROFILE=internal

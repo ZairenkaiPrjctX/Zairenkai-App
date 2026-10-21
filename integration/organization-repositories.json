@@ -64,8 +64,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "dev",
-      "audited_commit": "3c83f0e1271f93ed85a456e8a65b1b719b41f8f1",
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "9d87236d757ceb680c51de2d80b7d6f898c78ec1",
       "code_present": true,
       "languages": [
         "Rust",
@@ -85,8 +85,8 @@
       ],
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_fas/bin/zfasd ctl (docs/INTEGRATION.md)",
       "runtime_requirements": "root and the zairenkai_fas module; telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status"
+      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (3c83f0e) has no LICENSE yet",
+      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 9d87236: the licence commit on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md."
     },
     {
       "name": "Zairenkai-ART",
@@ -98,8 +98,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "dev",
-      "audited_commit": "19f658d7af76c6aa276d37995ccc87a1cc640588",
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "31caf46ff8bc36d10a09fa76ffe68bfe2fec913e",
       "code_present": true,
       "languages": [
         "Rust",
@@ -118,8 +118,8 @@
       ],
       "integration_mechanism": "native executable lib/<abi>/libzart.so built by the repository's scripts/build-android.sh; JSON over stdout",
       "runtime_requirements": "inspect: none (runs as the app uid; some inputs may be denied by SELinux); dexopt-status: root",
-      "license": "none chosen; Apache-2.0 data from AOSP ART in crates/zart/src/isa.rs",
-      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files"
+      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE with the AOSP attribution for crates/zart/src/isa.rs); dev (19f658d) has no LICENSE yet",
+      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 31caf46: the licence commit on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev."
     },
     {
       "name": "Zairenkai-Database-Source",
@@ -210,7 +210,7 @@
       "app_capabilities": [],
       "integration_mechanism": null,
       "runtime_requirements": null,
-      "license": "none chosen (no LICENSE file)",
+      "license": "Apache-2.0 on the topic branch ccr-63f8aa87-1b0paj (LICENSE, NOTICE, SPDX headers; maintainer decision 2026-10-21); dev has no LICENSE yet",
       "evidence": "app/, integration-core/, integration/ (merged PR #1, b288419)."
     },
     {

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 # Capture real outputs of the locked component revisions as contract fixtures for the parser
 # tests (integration-core/src/test/resources/contracts/).
 #

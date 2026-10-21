@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 """Check a built module zip against its source tree and record it for the app.
 
 Usage: module_asset.py --spec integration/system-modules.json --id <module id>

@@ -1,20 +1,28 @@
 # Release process and signing
 
-**Status (2026-10-21): no release can be produced.** The release gate
-(`verify_integration.py report <apk> --release`) lists five blockers, and each needs a
-maintainer decision or a key. FAS is not one of them, because it is excluded from distributable
-builds altogether: the gate also fails on any internal build, or any APK carrying a module other
-than `zairenkai_core` (`docs/integration/fas-provenance.md`).
+**Status (2026-10-21): no release can be produced, and none is ready.** The licences are
+settled: App, ART, Core, FAS and ThermalTools are Apache-2.0 (`docs/integration/license-inventory.md`).
+The release gate (`verify_integration.py report <apk> --release`) now lists three blockers. All
+three need keys that only the maintainer can create:
 
 | Blocker | What resolves it |
 |---|---|
 | The APK is unsigned | A release keystore in the protected `release` environment (below) |
 | The module catalog is unsigned | A module-signing key in the `release` environment |
 | `integration/module-trust.json` lists no key | Add the module-signing public key in a reviewed pull request |
-| Zairenkai-App has no licence | The maintainer chooses one |
-| Zairenkai-ART (zart, packaged) has no licence | The maintainer chooses one; keep the AOSP Apache-2.0 attribution (`docs/integration/license-inventory.md`) |
 
-Until all five are resolved, builds are **engineering artifacts, not for distribution**:
+The gate also fails on any internal build, and on any APK carrying a module other than
+`zairenkai_core` (FAS stays internal: `docs/integration/fas-provenance.md`).
+
+The gate is not the whole readiness question. Release readiness also needs:
+- the full-integration CI job green on the release commit (`docs/build/ci.md`; it has never run,
+  because the CI GitHub App does not exist yet);
+- the Core-only hardware validation record (`docs/testing/device-validation.md`; no device has
+  run it);
+- the Core, ThermalTools, ART and FAS topic branches merged, and the lock re-pinned to the merge
+  commits.
+
+Until all of this holds, builds are **engineering artifacts, not for distribution**:
 - debug APK: signed with the Android debug key;
 - release APK: unsigned.
 
@@ -33,6 +41,12 @@ token markers in the APK.
 
 ## Creating the module-signing key (maintainer, offline)
 
+Not done by an agent: the private key must never pass through a chat session, a log, the
+repository or a CI artifact. No development key exists to fall back on, and no build substitutes
+one. Without the trusted key, every build refuses to install modules.
+
+Run this on a trusted machine, in a directory outside any Git checkout:
+
 ```sh
 openssl ecparam -name prime256v1 -genkey -noout -out module-signing.pem   # keep offline / in a secret store
 openssl pkey -in module-signing.pem -pubout -out module-signing.pub.pem
@@ -40,10 +54,15 @@ integration/scripts/module-trust-key.sh module-signing.pub.pem "<owner>" <YYYY-M
 ```
 
 Then:
-1. Add the printed entry to `integration/module-trust.json` in a reviewed pull request.
+1. Check the printed `key_id` against the PEM:
+   `openssl pkey -pubin -in module-signing.pub.pem -outform DER | sha256sum`.
+   Add the printed entry (public key, `key_id`, owner, date) to `integration/module-trust.json`
+   in a reviewed pull request. Only the public half goes into Git.
 2. Store the private PEM as the secret `ZAIRENKAI_MODULE_SIGNING_KEY` in the `release`
-   environment.
+   environment, with required reviewers. Keep an offline backup, then delete every other copy.
 3. `sign-module-catalog.sh` refuses any key whose public half is not in the trust list.
+4. This key is separate from the APK keystore and from the CI GitHub App key. Never reuse one for
+   another.
 
 To rotate, add the new key, release, then remove the old key in a later release.
 

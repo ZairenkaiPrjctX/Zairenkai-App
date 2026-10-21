@@ -1,5 +1,58 @@
 # Verification report
 
+## Licences, component PRs, CI App input, Core-only device procedure (2026-10-21)
+
+**Verdict: partially verified.** The licence work and every host check passed. Signing, the
+full-integration CI job and device validation remain open, so this is **not release-ready**.
+Nothing ran on a device.
+
+CI evidence:
+
+| Run | Repository, commit | Result |
+|---|---|---|
+| 39622352061 | App f34246c (dispatch) | scripts ✓, reduced ✓, full-integration ✗ at "Require the CI GitHub App" |
+| 39623939493 | App b9ce39b (dispatch) | scripts ✓, reduced ✓, full-integration ✗ at the same step |
+| 39625331038 | Core PR #2, 34e93e3 | fmt/clippy/tests ✓, MSRV ✓, shellcheck ✓, Android arm64 module ✓ |
+| 39625349358 | ThermalTools PR #2, 9d4b310 | fmt/clippy/tests ✓, MSRV ✓, shellcheck ✓, Android binaries ✓ |
+
+No run of the full-integration job has built native components: the CI GitHub App does not
+exist yet. The reduced build proves nothing about the integrated APK.
+
+Component repositories (topic branch `ccr-63f8aa87-1b0paj`; every commit SSH-signed and
+verified):
+
+| Repository | Commit | What | Local checks |
+|---|---|---|---|
+| ART | `31caf46` on dev `19f658d` | Apache-2.0: LICENSE, NOTICE with the AOSP attribution (header checked in the AOSP file at `android-17.0.0_r1`), SPDX headers, Cargo licence; LICENSE and NOTICE in `dist/` | cargo 26 passed; tools tests OK; clippy, fmt, shellcheck clean; `art_upstream.py validate` ok; `build-android.sh` exit 0 |
+| FAS | `9d87236` on dev `3c83f0e` | Apache-2.0: LICENSE, NOTICE, SPDX headers, Cargo licence; LICENSE and NOTICE required in the zip | cargo 82 passed; clippy, fmt, shellcheck clean; zip `1c998502…7e2c` lists LICENSE, NOTICE, THIRD_PARTY.md |
+| Core | `34e93e3` (unchanged) | draft PR #2 into dev | cargo 65 passed; clippy and fmt clean |
+| ThermalTools | `9d4b310` (unchanged) | draft PR #2 into dev | cargo 109 passed; clippy and fmt clean |
+
+App, default (distributable) profile:
+
+| Check | Result |
+|---|---|
+| `build-components.sh` | exit 0; zart from `31caf46` with LICENSE and NOTICE; Core zip `f7651bf7…5f41`, unchanged and carrying LICENSE and NOTICE; catalog unsigned |
+| `ZAIRENKAI_INTERNAL_BUILD=1 build-components.sh` | exit 0; FAS zip from `9d87236` (`1c998502…7e2c`); `verify_integration.py build` ok |
+| `capture-contracts.sh` | exit 0; fixtures changed only in timestamps, process ids and the recorded source commits |
+| `:integration-core:test` | 74 passed, 0 failed |
+| `:app:testDebugUnitTest` | 24 passed, 0 failed |
+| Verifier tests | 7 passed (adds `test_a_module_zip_without_its_licence_and_notice_fails`) |
+| `lint` | 0 errors, 24 warnings |
+| APKs | debug 37,993,601 bytes `8fe1f6e5…cb1b`; release unsigned 30,314,568 bytes `6d3d2ed1…b7f`. Both contain `licenses/zairenkai-app/{LICENSE,NOTICE}` and `licenses/zart/{LICENSE,NOTICE}` |
+| `verify_integration.py` lock, access, build, apk | ok |
+| Release gate (`--release`) | **fails on 3**: APK unsigned; catalog unsigned; no trusted module-signing key. The licence checks pass |
+| shellcheck 0.10.0, actionlint 1.7.12 | clean |
+
+Not done, and why:
+- **CI GitHub App:** the maintainer must create it (`docs/build/ci.md`).
+- **Module-signing key and APK keystore:** maintainer-held keys (`docs/build/release.md`). No
+  agent may generate or handle the private halves, and no development key substitutes for them.
+- **Device validation:** no device. The Core-only procedure is in
+  `docs/testing/device-validation.md`.
+- **Merging the component PRs and re-pinning:** needs the maintainer.
+
+
 ## Release gate, FAS provenance, first-hardware preparation (2026-10-21)
 
 **Verdict: partially verified.** Host checks passed. Nothing ran on a device.

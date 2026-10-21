@@ -15,9 +15,10 @@ internal-only, and is built only locally with `ZAIRENKAI_INTERNAL_BUILD=1`
 (`docs/integration/fas-provenance.md`). No CI job builds it.
 
 **Status, 2026-10-21:**
-- run 39622352061 (f34246c): `scripts` and `reduced` passed; `full-integration` failed at
-  "Require the CI GitHub App";
-- no CI run has built the native components or the module zips yet.
+- run 39622352061 (f34246c) and run 39623939493 (b9ce39b): `scripts` and `reduced` passed;
+  `full-integration` failed at "Require the CI GitHub App", because the App does not exist yet;
+- no CI run has built the native components or the module zips yet. Only local builds have
+  (`docs/testing/verification-report.md`).
 
 ## Why the full build needs credentials
 
@@ -37,15 +38,29 @@ not configured". It never falls back to the reduced build.
 
 ## Setting it up (maintainer, once)
 
-1. Create a GitHub App owned by ZairenkaiPrjctX with **Repository permissions → Contents:
-   Read-only** and nothing else. It needs no webhook.
-2. Install it on Zairenkai-Core, Zairenkai-FAS, Zairenkai-ART, Zairenkai-ThermalTools and
-   Zairenkai-Database-Source only.
+1. Create a dedicated GitHub App owned by ZairenkaiPrjctX with **Repository permissions →
+   Contents: Read-only** and **Metadata: Read-only** (GitHub adds Metadata automatically), and
+   nothing else: no organization or account permissions, no webhook, no user authorization.
+2. Install it on **only** these five repositories ("Only select repositories"):
+   Zairenkai-Core, Zairenkai-FAS, Zairenkai-ART, Zairenkai-ThermalTools and
+   Zairenkai-Database-Source. The workflow also asks for exactly these five, with
+   `permission-contents: read`, so the token cannot reach anything else.
 3. In Zairenkai-App → Settings → Secrets and variables → Actions:
-   - variable `ZAIRENKAI_CI_APP_CLIENT_ID` = the App's client ID;
-   - secret `ZAIRENKAI_CI_APP_PRIVATE_KEY` = a private key generated for the App.
+   - variable `ZAIRENKAI_CI_APP_ID` = the App's **App ID** (the number on the App's settings
+     page), **not** its Client ID (`Iv…`);
+   - secret `ZAIRENKAI_CI_APP_PRIVATE_KEY` = a private key generated for the App (the whole
+     PEM). For `release.yml`, add the same two in the `release` environment, or at repository
+     level.
+   Never commit the key, paste it into an issue or log, or put it in a build artifact. Delete the
+   downloaded `.pem` once it is stored.
 4. Make `full integration build (locked sources, native components)` a required check on
    `dev`.
+
+The workflows pass the App ID as the action's `app-id` input. `actions/create-github-app-token`
+v3.3.0 marks `app-id` deprecated in favour of `client-id` and prints a warning, but still reads
+it (`main.js`: `getInput("client-id") || getInput("app-id")`), and GitHub accepts either
+identifier for App authentication. Checked in the action's source at the pinned SHA
+`64ab729a`, 2026-10-21.
 
 Pull requests from forks get no secrets, so the job does not run for them.
 

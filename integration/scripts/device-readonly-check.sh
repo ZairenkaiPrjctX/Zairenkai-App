@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 # Read-only snapshot of a connected Android device, for the validation record
 # (docs/testing/device-validation.md). Run it before installing anything, after installing
 # (before the reboot), and after the reboot; keep each output.

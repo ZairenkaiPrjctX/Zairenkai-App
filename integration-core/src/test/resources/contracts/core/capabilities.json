@@ -1,9 +1,9 @@
 {
-  "id": "cli-10737-4636591",
+  "id": "cli-18353-6453127",
   "ok": true,
   "result": [
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "Android API level unknown; battery saver control not assumed"
       ],
@@ -13,7 +13,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "service check failed: spawn failed: No such file or directory (os error 2)"
       ],
@@ -23,7 +23,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "module zairenkai_fas not installed"
       ],
@@ -33,7 +33,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "module zairenkai_fas not installed"
       ],
@@ -43,7 +43,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "/sys/class/power_supply/battery/capacity"
       ],
@@ -53,7 +53,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "/sys/class/power_supply/battery/temp"
       ],
@@ -63,7 +63,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "/sys/class/power_supply/battery/status"
       ],
@@ -73,7 +73,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "/proc/meminfo"
       ],
@@ -83,7 +83,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "dumpsys thermalservice"
       ],
@@ -93,7 +93,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 4636382,
+      "checked_at_ms": 6452913,
       "evidence": [
         "(not configured)",
         "paths.thermaltools_binary is not configured"

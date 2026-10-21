@@ -169,9 +169,13 @@
     <string name="licence_font">Tipografi: Google Sans Flex 5.000 (SIL Open Font License 1.1), dibundel dari Google Fonts. “Google Sans Flex” adalah merek dagang Google LLC; aplikasi ini tidak berafiliasi dengan atau didukung oleh Google.</string>
     <string name="licence_font_view">Lihat lisensi font</string>
     <string name="licence_font_trademarks">Lihat pemberitahuan merek dagang font</string>
-    <string name="licence_zart">zart (Zairenkai-ART) berisi tabel varian CPU dari AOSP ART (Apache-2.0); dependensi Rust serde dan serde_json berlisensi MIT OR Apache-2.0.</string>
+    <string name="licence_zart">zart (Zairenkai-ART) berlisensi Apache-2.0. Tabel varian CPU arm64-nya berasal dari AOSP ART (Hak cipta The Android Open Source Project, Apache-2.0); notice-nya mempertahankan atribusi tersebut.</string>
     <string name="licence_libs">AndroidX, Jetpack Compose, Kotlin coroutines, dan kotlinx.serialization: Apache-2.0.</string>
-    <string name="licence_project">Lisensi untuk repositori Zairenkai sendiri belum dipilih.</string>
+    <string name="licence_project">Zairenkai App berlisensi Apache License 2.0, begitu pula zart, zthermal, dan modul Core. Setiap komponen yang dibundel mempertahankan lisensi dan notice-nya sendiri.</string>
+    <string name="licence_app_view">Lihat lisensi aplikasi</string>
+    <string name="licence_app_notice">Lihat notice aplikasi</string>
+    <string name="licence_zart_view">Lihat lisensi zart</string>
+    <string name="licence_zart_notice">Lihat notice zart</string>
     <string name="licence_data">Data perangkat: %1$s. %2$s</string>
 
     <string name="settings_appearance">Tampilan</string>

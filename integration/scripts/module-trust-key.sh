@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 # Print the module-trust.json entry for a P-256 public key (PEM). Review it, then add it to
 # integration/module-trust.json in a pull request. Only the public key is read.
 #
