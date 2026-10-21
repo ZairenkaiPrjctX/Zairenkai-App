@@ -227,7 +227,9 @@ PY
 
 app() {
   local app_id=${1:-} pem=${2:-}
-  [ -n "$app_id" ] && [ -n "$pem" ] || die "usage: setup-actions-secrets.sh app <App ID> <private key PEM>"
+  if [ -z "$app_id" ] || [ -z "$pem" ]; then
+    die "usage: setup-actions-secrets.sh app <App ID> <private key PEM>"
+  fi
   [[ $app_id == Iv* ]] && die "$app_id is the Client ID; use the numeric App ID from the App's settings page"
   [[ $app_id =~ ^[0-9]+$ ]] || die "the App ID is a number (the App's settings page, 'App ID')"
   [ -r "$pem" ] || die "cannot read $pem"
