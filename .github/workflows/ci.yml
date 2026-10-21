@@ -43,5 +43,5 @@ jobs:
         with:
           persist-credentials: false
       - run: shellcheck integration/scripts/*.sh
-      - run: python3 -m py_compile integration/scripts/afid_asset.py
-      - run: python3 -c "import json; [json.load(open(f)) for f in ('integration/organization-repositories.json', 'integration/repository-lock.json')]"
+      - run: python3 -m py_compile integration/scripts/afid_asset.py integration/scripts/module_asset.py
+      - run: python3 -c "import json; [json.load(open(f)) for f in ('integration/organization-repositories.json', 'integration/repository-lock.json', 'integration/system-modules.json')]"

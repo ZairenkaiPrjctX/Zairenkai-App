@@ -3,8 +3,20 @@
   No permissions are requested. Every feature uses public APIs as the app's own uid, the packaged
   zart executable, packaged assets, or root through su after the user enables it in the app.
   The app has no network access (no INTERNET permission): no remote backend exists to talk to.
+  The root modules it can install are packaged in the APK (assets/system-modules/).
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Package visibility (API 30+) for the root-manager apps the module handoff can open. Ids are
+      the managers' own (Magisk app/apk, KernelSU manager, KernelSU-Next, APatch build files).
+    -->
+    <queries>
+        <package android:name="com.topjohnwu.magisk" />
+        <package android:name="me.weishu.kernelsu" />
+        <package android:name="com.rifsxd.ksunext" />
+        <package android:name="me.bmax.apatch" />
+    </queries>
 
     <application
         android:name=".ZairenkaiApplication"
@@ -24,5 +36,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Serves only the staged, verified module zip to a root-manager app on handoff. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.modules"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/module_paths" />
+        </provider>
     </application>
 </manifest>

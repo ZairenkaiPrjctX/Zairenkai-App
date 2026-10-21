@@ -4,7 +4,7 @@
 |---|---|---|---|
 | A: standard Android | Device identity, thermal status and headroom, battery-saver state, ART APEX version, `zart inspect`, `zthermal snapshot`, AFID lookup | Public APIs as the app uid; the packaged zart and zthermal run as the app uid | Implemented |
 | B: privileged bridge (Shizuku and similar) | – | No organization repository provides one | Not applicable |
-| C: root | Core (health, telemetry, modules, actions), FAS (status, control), dexopt status, `zthermal snapshot --framework` (on request) | `su -c` through `RootShell` | Implemented; not validated on a device |
+| C: root | Core (health, telemetry, modules, actions), FAS (status, control), dexopt status, `zthermal snapshot --framework` (on request), Zairenkai module install and removal through the root manager's own CLI (`docs/integration/system-module.md`) | `su -c` through `RootShell` | Implemented; not validated on a device |
 | D: remote service | – | No backend exists (License-Server is empty); the app has no INTERNET permission | Not applicable |
 
 ## Root rules (`integration-core/.../exec/RootShell.kt`)
@@ -24,6 +24,10 @@
 - **Fixed command set.** Commands go only to `zcored ctl`, `zfasd ctl`, the packaged zart and the
   packaged zthermal. zthermal is only ever run as `snapshot` (optionally with `--framework`):
   `ThermalToolsClient` has no path to `apply`, `rollback` or `backup-config`.
+- **Modules only through the manager.** `magisk --install-module`, `/data/adb/ksud module
+  install|uninstall` and `/data/adb/apd module install|uninstall`, each only after a
+  confirmation dialog. Module state is read with `cat` and `ls`. The app never writes into
+  `/data/adb` itself.
 - **Confirmation before changes.** Every action that changes the device shows a confirmation:
   Core's dry-run decision with all rule outcomes, or the direct-zfasd warning.
 

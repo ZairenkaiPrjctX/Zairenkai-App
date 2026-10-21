@@ -22,14 +22,15 @@ val verifyIntegrationComponents = tasks.register("verifyIntegrationComponents") 
         listOf(
             "assets/afid/device-candidates.json", "assets/components.json",
             "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE",
+            "assets/system-modules.json", "assets/system-modules/zairenkai_core.zip", "assets/system-modules/zairenkai_fas.zip",
         )
     val allow = allowMissingComponents
     doLast {
         val missing = required.filterNot { componentsDir.resolve(it).isFile }
         if (missing.isNotEmpty()) {
             val msg = "Integration components missing: $missing. Run integration/scripts/build-components.sh, " +
-                "or pass -Pzairenkai.allowMissingComponents=true to build an APK whose ART, thermal-sensor and " +
-                "device-database features report NATIVE_COMPONENT_UNAVAILABLE / INITIALIZATION_FAILED."
+                "or pass -Pzairenkai.allowMissingComponents=true to build an APK whose ART, thermal-sensor, " +
+                "system-module and device-database features report NATIVE_COMPONENT_UNAVAILABLE / INITIALIZATION_FAILED."
             if (allow.get()) logger.warn("WARNING: $msg") else throw GradleException(msg)
         }
     }

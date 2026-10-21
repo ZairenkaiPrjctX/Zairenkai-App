@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "modules": [
+    {
+      "id": "zairenkai_core",
+      "role": "base",
+      "lock_component": "zairenkai-core-module",
+      "name": "Zairenkai System Module (Core)",
+      "features": [
+        "core.health",
+        "core.actions",
+        "core.modules"
+      ],
+      "requirements": {
+        "arch": "arm64",
+        "abi": "arm64-v8a",
+        "min_api": 29,
+        "managers": {
+          "magisk": {
+            "min_version_code": 21200,
+            "evidence": "Magisk docs/changes.md v21.2: 'Fix the magisk --install-module command'; the module's update-binary needs v20.4+"
+          },
+          "kernelsu": {
+            "evidence": "ksud cli.rs: module install|uninstall|list (tiann/KernelSU 6d31a61, KernelSU-Next b427a3f)"
+          },
+          "apatch": {
+            "evidence": "apd cli.rs: module install|uninstall|list (bmax121/APatch e8e4651)"
+          }
+        },
+        "required_paths": [],
+        "depends_on": [],
+        "conflicts": []
+      },
+      "reboot_required": true,
+      "data_dir": "/data/adb/zairenkai-core",
+      "runtime_check": "core.health",
+      "validated_on": [],
+      "risks": [
+        "zcored starts at boot from service.sh and restarts at most 5 times in 10 minutes.",
+        "Removing the module stops zcored, which restores any temporary override it made, and deletes /data/adb/zairenkai-core."
+      ],
+      "file": "system-modules/zairenkai_core.zip",
+      "version": "v0.1.0",
+      "version_code": 100,
+      "size": 741218,
+      "sha256": "f7651bf70f4e58841a602b2925b27686343f8490a0c57316d8ffd196e8c75f41",
+      "source": {
+        "repository": "ZairenkaiPrjctX/Zairenkai-Core",
+        "commit": "34e93e34440efb90d64d4af1f9f10292d790575c"
+      },
+      "entries": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "META-INF/com/google/android/update-binary": "a3cd18357728f186eb4950a822b2d8cd175c846064daa65d40755c29ed56ffcd",
+        "META-INF/com/google/android/updater-script": "d2b8203193a083e43ad076fde01b9c7821e0aa521e1f8077b8628fb1cdb70c60",
+        "NOTICE": "217d7ee16694298d4936ff8e668d1fc8e67bf3e33a88f0a74d3d584c3efe5f70",
+        "THIRD_PARTY.md": "9ae51c85770506f0b12b5092a4d5b103b2f3f2cb55b5b58b5a48f5e10f1e7499",
+        "action.sh": "cb578ea20c13e39e214df909d3ceccd22c255cfb25a92c41813cf19d14f1094b",
+        "bin/zcored": "f9672a80a627ffe620d2b793800ad3a0788b53d76853221e8bd79a28019cfd81",
+        "customize.sh": "5e0d8bdbc2565fbde7a9aaf2f2b491e7e6ccac1ef409079920ac25042b795f50",
+        "module.prop": "6192156d72922a043f59745a6b9feca4282552bfc51521def7680f4678c196d4",
+        "service.sh": "fe32b58db88002bbcf88c72e61f06a15b77d8b69ccb5e243e28fdb68083a3013",
+        "uninstall.sh": "8549e5bc8c783cfbd69b3b6b867fd4ffe6640eaabf917e6b3198ff5368bb330c"
+      },
+      "source_matched": [
+        "META-INF/com/google/android/update-binary",
+        "META-INF/com/google/android/updater-script",
+        "action.sh",
+        "customize.sh",
+        "service.sh",
+        "uninstall.sh"
+      ]
+    },
+    {
+      "id": "zairenkai_fas",
+      "role": "optional",
+      "lock_component": "zairenkai-fas-module",
+      "name": "Zairenkai-FAS",
+      "features": [
+        "fas.status",
+        "fas.control"
+      ],
+      "requirements": {
+        "arch": "arm64",
+        "abi": "arm64-v8a",
+        "min_api": 29,
+        "managers": {
+          "magisk": {
+            "min_version_code": 21200,
+            "evidence": "as zairenkai_core; FAS docs/CAPABILITIES.md: Magisk v20.4+"
+          },
+          "kernelsu": {
+            "evidence": "ksud cli.rs: module install|uninstall|list"
+          },
+          "apatch": {
+            "evidence": "apd cli.rs: module install|uninstall|list"
+          }
+        },
+        "required_paths": [
+          "/sys/devices/system/cpu/cpufreq"
+        ],
+        "depends_on": [],
+        "conflicts": [
+          {
+            "id": "fas_rs",
+            "reason": "Another frame-aware scheduler writing the same cpufreq nodes (FAS docs/CAPABILITIES.md: running two FAS modules at once is not supported). Module id from shadow3aaa/fas-rs build.rs at 09ba876."
+          }
+        ]
+      },
+      "reboot_required": true,
+      "data_dir": "/data/adb/zairenkai-fas",
+      "runtime_check": "fas.status",
+      "validated_on": [],
+      "risks": [
+        "While running, zfasd raises cpufreq scaling_min_freq floors within [cpuinfo_min, scaling_max] and restores them when it stops (FAS docs/CAPABILITIES.md).",
+        "Vendor performance agents may write the same nodes; FAS backs off on contention but does not disable them."
+      ],
+      "file": "system-modules/zairenkai_fas.zip",
+      "version": "v0.1.0",
+      "version_code": 100,
+      "size": 622959,
+      "sha256": "bfec727aa6ebdee9f17678aa70837089c11d2036be1f22788f5255f2a833ffe1",
+      "source": {
+        "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
+        "commit": "3c83f0e1271f93ed85a456e8a65b1b719b41f8f1"
+      },
+      "entries": {
+        "META-INF/com/google/android/update-binary": "6b74ea5fb1e5abbd4188a551ba332743205cf54694a47ca5e4e742f823e92bc7",
+        "META-INF/com/google/android/updater-script": "d2b8203193a083e43ad076fde01b9c7821e0aa521e1f8077b8628fb1cdb70c60",
+        "THIRD_PARTY.md": "7de4789342565cd7416f94989681de634dfc310cb71d93121421a48ea51d2122",
+        "action.sh": "37ea2234574467f0a48218725ed956123140cf7514d5bc2f671ec813e81226e9",
+        "bin/zfasd": "fb0500774ce309381f868585bccefab0757e69b0893124253287b5f488188575",
+        "customize.sh": "af6ed7c5d4226eca9db8d17b15e34c0272b4c5eec584a5e5bc81a206983f2ae9",
+        "module.prop": "8797e6b9cc592b3b1af41e815958b2c551f6ec854d686742d9838fd9cd851fdd",
+        "service.sh": "6ecbadd64093ae4183ee212e0d94cd5f686bfd556003b93bf4054371527ceec2",
+        "uninstall.sh": "407157a36ce2139842b9d50777eb2d8f885d364b670ba0cd460c94e758f1fcb4",
+        "webroot/index.html": "90e01c7274cad0972cd9c04be1819addc4fe2ec3e4cadfa93c84de888cb1e069"
+      },
+      "source_matched": [
+        "META-INF/com/google/android/update-binary",
+        "META-INF/com/google/android/updater-script",
+        "action.sh",
+        "customize.sh",
+        "service.sh",
+        "uninstall.sh",
+        "webroot/index.html"
+      ]
+    }
+  ]
+}

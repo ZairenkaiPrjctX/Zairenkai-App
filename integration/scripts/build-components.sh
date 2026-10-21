@@ -6,6 +6,9 @@
 #   integration/out/jniLibs/<abi>/libzthermal.so  zthermal from Zairenkai-ThermalTools (scripts/build-android.sh)
 #   integration/out/assets/licenses/zthermal/     zthermal's LICENSE and NOTICE (Apache-2.0)
 #   integration/out/assets/afid/device-candidates.json   AFID asset (integration/scripts/afid_asset.py)
+#   integration/out/assets/system-modules/<id>.zip  root modules (Core, FAS) from their build-android.sh
+#   integration/out/assets/system-modules.json      module catalog: integration/system-modules.json plus
+#                                                   size, SHA-256 and per-entry digests (module_asset.py)
 #   integration/out/components.json               what was built, from which commit, with SHA-256
 #
 # Requires: git with read access to the private ZairenkaiPrjctX repositories, Rust with the
@@ -69,6 +72,27 @@ for abi in arm64-v8a armeabi-v7a x86_64; do
 done
 mkdir -p "$OUT/assets/licenses/zthermal"
 install -m 0644 "$OUT/src/zthermal/LICENSE" "$OUT/src/zthermal/NOTICE" "$OUT/assets/licenses/zthermal/"
+
+# --- root modules (Zairenkai-Core, Zairenkai-FAS) ------------------------------------------
+# Built by each repository's own script at the locked commit; module_asset.py checks every
+# script in the zip against that commit's module/ sources before the zip is packaged.
+mkdir -p "$OUT/assets/system-modules"
+build_module() { # build_module <lock component> <module id> <dist prefix>
+  local comp=$1 id=$2 prefix=$3 commit dir zip
+  commit=$(field "$comp" commit)
+  dir="$OUT/src/$comp"
+  fetch "$dir" "$(field "$comp" url)" "$commit"
+  (cd "$dir" && rm -rf dist && scripts/build-android.sh >/dev/null)
+  zip=$(ls "$dir"/dist/"$prefix"-v*.zip)
+  (cd "$dir" && sha256sum -c --quiet "dist/$(basename "$zip").sha256") # the .sha256 names dist/<zip>
+  python3 "$ROOT/integration/scripts/module_asset.py" --spec "$ROOT/integration/system-modules.json" \
+    --id "$id" --zip "$zip" --source "$dir" --commit "$commit" --repository "$(field "$comp" repository)" \
+    --out "$OUT/assets/system-modules.json"
+  install -m 0644 "$zip" "$OUT/assets/system-modules/$id.zip"
+}
+rm -f "$OUT/assets/system-modules.json"
+build_module zairenkai-core-module zairenkai_core zairenkai-core
+build_module zairenkai-fas-module zairenkai_fas zairenkai-fas
 
 # --- AFID device candidates (Zairenkai-Database-Source) ----------------------------------
 AFID_COMMIT=$(field afid-device-candidates commit)

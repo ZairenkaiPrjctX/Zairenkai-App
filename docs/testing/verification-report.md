@@ -1,5 +1,46 @@
 # Verification report
 
+## In-app system module installation (2026-10-21)
+
+Branch `ccr-63f8aa87-1b0paj`. Design and evidence: `docs/integration/system-module.md`.
+**Verdict: partially verified.** The logic is tested against a scripted su and Robolectric. No
+module was installed through a real root manager.
+
+| Check | Command | Result |
+|---|---|---|
+| Module zips at locked commits | `build-components.sh` (now includes Core `34e93e3` and FAS `3c83f0e` modules) | exit 0. `zairenkai_core` v0.1.0: 741,218 bytes, `f7651bf7…5f41`, 11 entries, 6 matched to source. `zairenkai_fas` v0.1.0: 622,959 bytes, `bfec727a…ffe1`, 10 entries, 7 matched |
+| integration-core tests | `./gradlew --rerun-tasks :integration-core:test` | 66 passed, 0 failed, 0 skipped (adds SystemModule 21, SystemModuleAdapter 1, SystemModuleCatalogContract 1) |
+| App tests (Robolectric) | `./gradlew --rerun-tasks :app:testDebugUnitTest` | 24 passed, 0 failed (adds ManagerHandoff 3, `AppUiTest.systemModuleScreenNeedsRootAndOffersNoInstallWithoutIt`) |
+| Lint | `./gradlew lint` | 0 errors, 24 warnings ("newer version available" only) |
+| APKs | `assembleDebug assembleRelease` | debug 37,980,802 bytes `c5711a26…3206`; release unsigned 30,831,987 bytes `69b5d5d7…b980` |
+| Packaged modules equal the build | SHA-256 of `assets/system-modules/*.zip` in the release APK | equal to the catalog for both modules |
+| Permissions | `aapt2 dump permissions` | unchanged: no INTERNET, no storage permission |
+| Secret scan | grep for private keys and tokens in both APKs | no matches |
+| Scripts, workflow, foundation | shellcheck, actionlint, `py_compile`, validator | clean |
+| Strings | key parity `values/` and `values-in/` | 276 translatable strings in both |
+
+Failure paths covered by `SystemModuleTest`:
+- root absent, not enabled, or refused;
+- unsupported and contradictory managers; Magisk too old, or old enough for handoff only; ksud
+  without `install`;
+- incompatible ABI, kernel architecture, API level, storage, manager or manager version;
+- missing path, missing dependency, conflicting module;
+- downgrade, staged version, pending removal, disabled module;
+- corrupted, truncated, wrong-checksum, non-zip, wrong module id, extra entry, path-traversal
+  and wrong-version packages; unmatched installer;
+- unreadable artifact (the equivalent of a network failure: no network is used);
+- installer exit 1, timeout, and exit 0 with nothing staged;
+- cancellation before installation; the experimental acknowledgement;
+- handoff without a CLI installer; pending reboot; ACTIVE vs DEGRADED by runtime;
+- uninstall success, failure, and success without the remove marker; Magisk removal handoff;
+- no command that changes the device during a failed preflight.
+
+Not verified: any install, state read or removal on a real Magisk, KernelSU, KernelSU-Next or
+APatch device; manager access to the app's cache file; MediaStore saving; post-reboot ACTIVE.
+Devices with a validated install: **none**.
+
+## zthermal integration (2026-10-21)
+
 - **Change:** branch `ccr-63f8aa87-1b0paj` restarted from dev `b288419` on 2026-10-21.
   zthermal (Zairenkai-ThermalTools) is integrated, and every locked revision is refreshed.
 - **Date:** 2026-10-21. The first report (2026-10-19) is summarised at the end.

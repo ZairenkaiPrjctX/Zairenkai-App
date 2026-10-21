@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import com.zairenkaiprjctx.app.design.ThemeMode
 import com.zairenkaiprjctx.app.design.ThemeSettings
 import com.zairenkaiprjctx.app.platform.AndroidPlatformInfo
+import com.zairenkaiprjctx.app.platform.ManagerHandoff
 import com.zairenkaiprjctx.app.platform.ThermalStatusMonitor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,17 @@ import com.zairenkaiprjctx.integration.registry.IntegrationRegistry
 import com.zairenkaiprjctx.integration.registry.PlatformSubsystem
 import com.zairenkaiprjctx.integration.registry.ThermalToolsSubsystem
 import com.zairenkaiprjctx.integration.registry.UpstreamGapSubsystem
+import com.zairenkaiprjctx.integration.core.CoreCall
+import com.zairenkaiprjctx.integration.fas.FasCall
+import com.zairenkaiprjctx.integration.systemmodule.ArtifactStore
+import com.zairenkaiprjctx.integration.systemmodule.DeviceFacts
+import com.zairenkaiprjctx.integration.systemmodule.ModuleCatalog
+import com.zairenkaiprjctx.integration.systemmodule.ModuleInstallController
+import com.zairenkaiprjctx.integration.systemmodule.ModuleStateReader
+import com.zairenkaiprjctx.integration.systemmodule.PreflightProbe
+import com.zairenkaiprjctx.integration.systemmodule.RootManagerDetector
+import com.zairenkaiprjctx.integration.systemmodule.RuntimeProbe
+import com.zairenkaiprjctx.integration.systemmodule.adapterFor
 import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsClient
 import com.zairenkaiprjctx.integration.zart.ZartClient
 import kotlinx.coroutines.Dispatchers
@@ -134,7 +146,85 @@ class AppContainer(private val app: Application) {
         Dispatchers.IO,
     )
 
+    /** Root modules packaged in this APK (assets/system-modules.json), or null if absent. */
+    val moduleCatalog: ModuleCatalog? by lazy {
+        runCatching { ModuleCatalog.parse(asset("system-modules.json")) }.getOrNull()
+    }
+
+    /** Copies a packaged module to the cache staging directory (served by the FileProvider). */
+    private val moduleStore = ArtifactStore { m ->
+        val dir = File(app.cacheDir, "system-modules").apply { mkdirs() }
+        File(dir, "${m.id}-${m.versionCode}.zip").also { out ->
+            app.assets.open(m.file).use { input -> out.outputStream().use { input.copyTo(it) } }
+        }
+    }
+
+    fun deviceFacts() = DeviceFacts(
+        manufacturer = platform.manufacturer,
+        brand = platform.brand,
+        model = platform.model,
+        codename = platform.deviceCodename,
+        socManufacturer = platform.socManufacturer,
+        socModel = platform.socModel,
+        sdkInt = platform.sdkInt,
+        supportedAbis = platform.supportedAbis,
+        kernelMachine = null,
+        kernelRelease = null,
+        freeDataBytes = android.os.StatFs(app.filesDir.path).availableBytes,
+    )
+
+    /** Whether the component a module provides answers: Core health or FAS status. */
+    private val moduleRuntime = RuntimeProbe { m ->
+        when (m.runtimeCheck) {
+            "core.health" -> when (val h = core.health()) {
+                is CoreCall.Ok -> null
+                CoreCall.NotInstalled -> "zcored was not found in the module"
+                is CoreCall.Unreachable -> "zcored is not answering: ${h.detail}"
+                is CoreCall.Error -> "Core error ${h.code}: ${h.message}"
+                is CoreCall.NoRoot -> h.detail
+                is CoreCall.Failed -> h.detail
+            }
+            "fas.status" -> when (val f = fas.status()) {
+                is FasCall.Ok -> null
+                FasCall.NotInstalled -> "zfasd was not found in the module"
+                is FasCall.Unreachable -> "zfasd is not answering: ${f.detail}"
+                is FasCall.Rejected -> f.message
+                is FasCall.NoRoot -> f.detail
+                is FasCall.Failed -> f.detail
+            }
+            else -> "no runtime check is defined for ${m.id}"
+        }
+    }
+
+    private val moduleState = ModuleStateReader(root)
+
+    /** One installer per packaged module, in catalog order (base first). */
+    val moduleInstallers: Map<String, ModuleInstallController> by lazy {
+        moduleCatalog?.modules.orEmpty().sortedBy { it.role != "base" }.associate { m ->
+            m.id to ModuleInstallController(
+                root = root,
+                catalog = { moduleCatalog },
+                detector = { RootManagerDetector(root).detect() },
+                facts = ::deviceFacts,
+                probe = PreflightProbe(root, moduleState),
+                store = moduleStore,
+                adapters = { adapterFor(it, root) },
+                runtime = moduleRuntime,
+            )
+        }
+    }
+
+    val handoff = ManagerHandoff(app)
+
+    /** The user said "not now" to the install offer; Settings can undo it. */
+    var moduleOfferDeclined: Boolean
+        get() = prefs.getBoolean(KEY_MODULE_DECLINED, false)
+        set(value) {
+            prefs.edit { putBoolean(KEY_MODULE_DECLINED, value) }
+        }
+
     private companion object {
         const val KEY_ROOT = "root_granted"
+        const val KEY_MODULE_DECLINED = "system_module_offer_declined"
     }
 }

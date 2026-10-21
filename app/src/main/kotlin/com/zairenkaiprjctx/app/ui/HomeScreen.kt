@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +28,8 @@ import com.zairenkaiprjctx.app.design.SectionCard
 import com.zairenkaiprjctx.app.design.Supporting
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.integration.afid.AfidCatalog
+import com.zairenkaiprjctx.integration.exec.RootState
+import com.zairenkaiprjctx.integration.systemmodule.InstallPhase
 import com.zairenkaiprjctx.integration.afid.AfidDevice
 
 @Composable
@@ -48,13 +52,30 @@ fun thermalStatusLabel(status: Int?): String = stringResource(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomeScreen(c: AppContainer, main: MainViewModel, padding: PaddingValues) {
+fun HomeScreen(c: AppContainer, main: MainViewModel, modules: SystemModuleViewModel, padding: PaddingValues, openModule: () -> Unit) {
     val snapshot by main.registry.collectAsStateWithLifecycle()
+    val root by main.rootState.collectAsStateWithLifecycle()
+    val declined by modules.declined.collectAsStateWithLifecycle()
+    val base = modules.modules.firstOrNull { it.role == "base" }
+    val baseState = base?.let { modules.state(it.id) }?.collectAsStateWithLifecycle()?.value
     val afid by main.afid.collectAsStateWithLifecycle()
     val p = c.platform
     val records = snapshot.records
     val ready = records.count { it.availability.usable }
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+        // Offered only after root works, the manager is identified and the preflight passed;
+        // never again once declined (Settings can show it again).
+        if (base != null && root == RootState.GRANTED && !declined && baseState?.phase == InstallPhase.MODULE_AVAILABLE) {
+            item {
+                SectionCard(stringResource(R.string.module_offer_title), emphasis = Emphasis.HIGH) {
+                    Supporting(stringResource(R.string.module_offer_body, baseState.manager?.family?.displayName ?: "", base.features.joinToString { snapshot.byId(it)?.name ?: it }))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                        Button(onClick = openModule) { Text(stringResource(R.string.module_offer_review)) }
+                        OutlinedButton(onClick = modules::decline) { Text(stringResource(R.string.module_not_now)) }
+                    }
+                }
+            }
+        }
         item {
             HeroStatusCard(
                 overline = stringResource(R.string.home_device),

@@ -8,7 +8,7 @@ reaches each one through the interface that component actually exposes. Reposito
 
 | Gradle module | Languages | Responsibility |
 |---|---|---|
-| `:integration-core` | Kotlin + Java | Pure JVM, no Android dependency. Integration facade and capability registry; typed clients for Core, FAS, zart, zthermal and AFID; the root shell; models and parsers. Unit-tested on the JVM. |
+| `:integration-core` | Kotlin + Java | Pure JVM, no Android dependency. Integration facade and capability registry; typed clients for Core, FAS, zart, zthermal and AFID; root-manager adapters and the module installer (`systemmodule/`); the root shell; models and parsers. Unit-tested on the JVM. |
 | `:app` | Kotlin + Java | Android application. Compose UI and the design system (Kotlin). Android platform adapters (Java). Dependency container, packaged components and assets. |
 
 **Why only two modules.** No other repository provides Android or JVM source to include. Each
@@ -101,7 +101,8 @@ The ecosystem prompt's state names map onto these:
 | Thermal | Android thermal service (listener plus headroom), zthermal sensors (read only), Core telemetry, FAS thermal cap |
 | Runtime | ART APEX version, zart inspection, dexopt status |
 | System | Root access, module inventory, device search, ecosystem, diagnostics, licences |
-| Settings (from the app bar) | Theme, dynamic colour, motion, language |
+| Settings (from the app bar) | Theme, dynamic colour, motion, language, the Zairenkai System Module entry |
+| Zairenkai System Module (from Home, System or Settings) | Root-manager detection, preflight, verified install, state after reboot, removal (`docs/integration/system-module.md`) |
 
 Tabs are shown only when their subsystems are registered. Phones get a `ShortNavigationBar`;
 widths of 600 dp and more get a `WideNavigationRail`.

@@ -11,6 +11,7 @@
 #     dry-run submit (Core writes no device nodes; its state stays in TMP);
 #   - zfasd run --observe-only --dir TMP (in-memory control backend: no cpufreq writes), then
 #     zfasd ctl status and profile.
+#   - the module catalog build-components.sh wrote from the real module zips (run it first).
 # Requires: git read access to the repositories, Rust (stable), python3.
 set -euo pipefail
 
@@ -43,7 +44,10 @@ fetch() {
 }
 wait_for() { for _ in $(seq 1 50); do [ -S "$1" ] && return 0; sleep 0.2; done; echo "no socket $1" >&2; exit 1; }
 
-mkdir -p "$SRC" "$DEST/zart" "$DEST/zthermal" "$DEST/core" "$DEST/fas"
+mkdir -p "$SRC" "$DEST/zart" "$DEST/zthermal" "$DEST/core" "$DEST/fas" "$DEST/system-modules"
+CATALOG="$ROOT/integration/out/assets/system-modules.json"
+[ -f "$CATALOG" ] || { echo "run integration/scripts/build-components.sh first ($CATALOG missing)" >&2; exit 1; }
+cp "$CATALOG" "$DEST/system-modules/catalog.json"
 fetch "$SRC/zart" "$(field zart url)" "$(field zart commit)"
 fetch "$SRC/zthermal" "$(field zthermal url)" "$(field zthermal commit)"
 fetch "$SRC/core" "$(field zcored-ctl-contract url)" "$(field zcored-ctl-contract commit)"

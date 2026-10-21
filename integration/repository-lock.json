@@ -74,6 +74,34 @@
       "license": "No project licence chosen (no LICENSE file); no code is copied into the app.",
       "note": "Merge commit of FAS PR #2; its tree is identical to 0877452, the commit audited on 2026-10-19.",
       "integration_status": "implemented"
+    },
+    {
+      "id": "zairenkai-core-module",
+      "repository": "ZairenkaiPrjctX/Zairenkai-Core",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core.git",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "34e93e34440efb90d64d4af1f9f10292d790575c",
+      "merged": false,
+      "packaging": "Magisk/KernelSU/APatch module zip built with the repository's scripts/build-android.sh (arm64-v8a), packaged as assets/system-modules/zairenkai_core.zip and installed only on the user's request through the root manager's own installer",
+      "abis": [
+        "arm64-v8a"
+      ],
+      "license": "Apache-2.0 (LICENSE and NOTICE inside the zip)",
+      "integration_status": "implemented"
+    },
+    {
+      "id": "zairenkai-fas-module",
+      "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
+      "branch": "dev",
+      "commit": "3c83f0e1271f93ed85a456e8a65b1b719b41f8f1",
+      "merged": true,
+      "packaging": "module zip built with the repository's scripts/build-android.sh (arm64-v8a), packaged as assets/system-modules/zairenkai_fas.zip; optional, installed only on the user's request",
+      "abis": [
+        "arm64-v8a"
+      ],
+      "license": "No project licence chosen (no LICENSE file at this commit); THIRD_PARTY.md inside the zip",
+      "integration_status": "implemented"
     }
   ]
 }

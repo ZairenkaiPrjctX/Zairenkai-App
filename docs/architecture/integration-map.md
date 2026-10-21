@@ -30,6 +30,8 @@
 | ART inspection | `libzart.so inspect` | `ZartParser.inspect` | zart `inspect.rs` (schema 1) | `contracts/zart/inspect-*.json` |
 | Dexopt status | `su -c '<libzart.so>' 'dexopt-status' '<pkg>'` | `ZartParser.dexoptStatus` | zart `dexopt.rs` | `contracts/zart/dexopt-*.json` |
 | Thermal snapshot | `libzthermal.so snapshot`; `su -c '<libzthermal.so>' 'snapshot' '--framework'` | `ThermalToolsParser.snapshot` | ThermalTools `schemas/snapshot.schema.json` (schema_version 1) | `contracts/zthermal/snapshot-*.json` |
+| Root manager | `su -v`, `su -V`; `magisk -V` or `<ksud\|apd> module list` and `module --help` | `RootManagerDetector` | manager sources (`docs/integration/system-module.md`) | scripted su in `SystemModuleTest` |
+| Module install / state / removal | `magisk --install-module`, `<ksud\|apd> module install\|uninstall`; `cat`/`ls` of `/data/adb/modules{,_update}/<id>` | `ManagerAdapter`, `ModuleStateReader` | same | `SystemModuleTest`, `contracts/system-modules/catalog.json` |
 | Device candidates | asset read | `AfidCatalog.parse` | `integration/scripts/afid_asset.py` | `fixtures/afid-two-devices.json` |
 
 Routing rule: while Core answers, every action goes through Core (policy, arbitration, audit).

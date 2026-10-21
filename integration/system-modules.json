@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "note": "Reviewed specification of the root modules the app can install. build-components.sh builds each zip at the commit of its lock component, checks that every script in the zip is byte-identical to the module/ source at that commit, and writes assets/system-modules.json (this file plus digests). Requirements below come from each module's own customize.sh, update-binary and docs.",
+  "modules": [
+    {
+      "id": "zairenkai_core",
+      "role": "base",
+      "lock_component": "zairenkai-core-module",
+      "name": "Zairenkai System Module (Core)",
+      "features": [
+        "core.health",
+        "core.actions",
+        "core.modules"
+      ],
+      "requirements": {
+        "arch": "arm64",
+        "abi": "arm64-v8a",
+        "min_api": 29,
+        "managers": {
+          "magisk": { "min_version_code": 21200, "evidence": "Magisk docs/changes.md v21.2: 'Fix the magisk --install-module command'; the module's update-binary needs v20.4+" },
+          "kernelsu": { "evidence": "ksud cli.rs: module install|uninstall|list (tiann/KernelSU 6d31a61, KernelSU-Next b427a3f)" },
+          "apatch": { "evidence": "apd cli.rs: module install|uninstall|list (bmax121/APatch e8e4651)" }
+        },
+        "required_paths": [],
+        "depends_on": [],
+        "conflicts": []
+      },
+      "reboot_required": true,
+      "data_dir": "/data/adb/zairenkai-core",
+      "runtime_check": "core.health",
+      "validated_on": [],
+      "risks": [
+        "zcored starts at boot from service.sh and restarts at most 5 times in 10 minutes.",
+        "Removing the module stops zcored, which restores any temporary override it made, and deletes /data/adb/zairenkai-core."
+      ]
+    },
+    {
+      "id": "zairenkai_fas",
+      "role": "optional",
+      "lock_component": "zairenkai-fas-module",
+      "name": "Zairenkai-FAS",
+      "features": [
+        "fas.status",
+        "fas.control"
+      ],
+      "requirements": {
+        "arch": "arm64",
+        "abi": "arm64-v8a",
+        "min_api": 29,
+        "managers": {
+          "magisk": { "min_version_code": 21200, "evidence": "as zairenkai_core; FAS docs/CAPABILITIES.md: Magisk v20.4+" },
+          "kernelsu": { "evidence": "ksud cli.rs: module install|uninstall|list" },
+          "apatch": { "evidence": "apd cli.rs: module install|uninstall|list" }
+        },
+        "required_paths": [
+          "/sys/devices/system/cpu/cpufreq"
+        ],
+        "depends_on": [],
+        "conflicts": [
+          {
+            "id": "fas_rs",
+            "reason": "Another frame-aware scheduler writing the same cpufreq nodes (FAS docs/CAPABILITIES.md: running two FAS modules at once is not supported). Module id from shadow3aaa/fas-rs build.rs at 09ba876."
+          }
+        ]
+      },
+      "reboot_required": true,
+      "data_dir": "/data/adb/zairenkai-fas",
+      "runtime_check": "fas.status",
+      "validated_on": [],
+      "risks": [
+        "While running, zfasd raises cpufreq scaling_min_freq floors within [cpuinfo_min, scaling_max] and restores them when it stops (FAS docs/CAPABILITIES.md).",
+        "Vendor performance agents may write the same nodes; FAS backs off on contention but does not disable them."
+      ]
+    }
+  ]
+}

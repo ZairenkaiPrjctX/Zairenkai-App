@@ -20,6 +20,9 @@ audited commit, instead of showing placeholders. Details: `integration/repositor
   (`docs/testing/verification-report.md`).
 - **Root is opt-in.** The app works without root; root features stay off until enabled in
   System › Root access.
+- **System module.** With root, the app can install the Zairenkai Core (and optional FAS)
+  module through the root manager's own installer, only after you confirm
+  (`docs/integration/system-module.md`). It has not been tested on a device.
 
 ## Build
 
@@ -38,6 +41,7 @@ Full instructions: `docs/build/building.md`.
 | Commands and contracts per component | `docs/architecture/integration-map.md` |
 | Repository capability matrix | `docs/integration/repository-capability-matrix.md` |
 | Root and data handling | `docs/integration/privilege-model.md` |
+| In-app module installation | `docs/integration/system-module.md` |
 | Device, API and ABI compatibility | `docs/integration/compatibility-matrix.md` |
 | Design system (Material 3 Expressive, Google Sans Flex) | `docs/design/design-system.md` |
 | What was verified | `docs/testing/verification-report.md` |

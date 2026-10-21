@@ -5,6 +5,8 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -14,6 +16,9 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.zairenkaiprjctx.integration.model.AvailabilityState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import com.zairenkaiprjctx.integration.systemmodule.InstallPhase
+import androidx.compose.ui.test.assertCountEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -83,6 +88,27 @@ class AppUiTest {
         compose.onNodeWithText("Thermal controls").assertIsDisplayed()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Thermal sensors"))
         compose.onNodeWithText("Thermal sensors").assertIsDisplayed()
+    }
+
+    @Test
+    fun systemModuleScreenNeedsRootAndOffersNoInstallWithoutIt() {
+        launch()
+        // No root granted: Home shows no install offer.
+        compose.onAllNodesWithText("System integrations available").assertCountEquals(0)
+        compose.onNodeWithContentDescription("Open settings").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Open"))
+        // The button can sit under the bottom bar on this 320 dp screen: invoke its click action.
+        compose.onNodeWithText("Open").performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        compose.onAllNodesWithText("Zairenkai System Module").onFirst().assertIsDisplayed() // the app-bar title
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Enable root integration"))
+        compose.onNodeWithText("Enable root integration").assertIsDisplayed()
+        compose.onAllNodesWithText("Install Zairenkai System Module").assertCountEquals(0)
+        for (s in container.moduleInstallers.values) {
+            val p = s.state.value.phase
+            assertTrue(p.name, p == InstallPhase.ROOT_PERMISSION_REQUIRED || p == InstallPhase.MANAGER_DETECTION)
+        }
     }
 
     @Test

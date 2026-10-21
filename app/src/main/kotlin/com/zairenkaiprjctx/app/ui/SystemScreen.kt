@@ -60,7 +60,7 @@ fun rootStateLabel(s: RootState): String = stringResource(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySnapshot, padding: PaddingValues) {
+fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySnapshot, padding: PaddingValues, openModule: () -> Unit) {
     val c = vm.container
     val root by main.rootState.collectAsStateWithLifecycle()
     val modules by vm.modules.collectAsStateWithLifecycle()
@@ -80,10 +80,13 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
             ) {
                 InfoRow(stringResource(R.string.key_state), rootStateLabel(root))
                 Supporting(stringResource(R.string.root_note))
-                if (root == RootState.GRANTED) {
-                    OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
-                } else {
-                    Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                    if (root == RootState.GRANTED) {
+                        OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
+                    } else {
+                        Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
+                    }
+                    OutlinedButton(onClick = openModule) { Text(stringResource(R.string.module_title)) }
                 }
             }
         }
