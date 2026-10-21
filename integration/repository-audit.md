@@ -1,5 +1,28 @@
 # Organization repository audit
 
+## Re-audit, 2026-10-21
+
+`list_repos` now returns 16 repositories in `ZairenkaiPrjctX`: the 15 below plus
+`anime-extensions` (public). Heads from `git ls-remote --heads`; content from `git ls-tree -r`.
+
+| Repository | Change since 2026-10-19 | Locked revision now |
+|---|---|---|
+| Zairenkai-Core | dev = `455368f` (merge of PR #1, the `ad0c195` work). Topic branch `34e93e3` adds the read-only ThermalTools adapter and Apache-2.0; not merged | `34e93e3` (contract fixtures re-captured) |
+| Zairenkai-FAS | dev = `3c83f0e` (merge of PR #2); tree identical to `0877452` | `3c83f0e` |
+| Zairenkai-ART | dev = `19f658d` (merge of PR #1); tree identical to `fc72192` | `19f658d` |
+| Zairenkai-Database-Source | dev = `d9c4290` (pipeline, workflows; 354 LineageOS candidates in staging) | `d9c4290` (asset regenerated) |
+| Zairenkai-ThermalTools | **Now has code**: zthermal 0.1.0 on dev (`5358d4d`); 0.2.0 with Apache-2.0 on the topic branch `9d4b310`, not merged | `9d4b310` (new component `zthermal`) |
+| Zairenkai-App | dev = `b288419` (merge of PR #1) | this repository |
+| Sdk, Modules, Intelligence-Engine, License-Server, Graphics-Platform, Release, Docs, ZairenkaiPrjctX.github.io | unchanged: foundation files only | – |
+| .github | topic branch `ee16385` (foundation tooling); no runtime capability | – |
+| anime-extensions | newly listed. Aniyomi extensions-lib 16 source extensions (Kotlin; Internet Archive, Jellyfin), Apache-2.0, only branch `ccr-97bcb73d-9x6z9h` @ `049e9b3`. A separate product with no relation to device diagnostics | not integrated (not applicable) |
+
+Pinning to unmerged topic-branch commits (Core, ThermalTools) is recorded as `"merged": false`
+in `repository-lock.json`. Those commits are reachable only from their topic branches until
+the pull requests merge.
+
+## First audit
+
 Surveyed 2026-10-19. The machine-readable form is `organization-repositories.json`. Revisions
 the app is built from are pinned in `repository-lock.json`.
 

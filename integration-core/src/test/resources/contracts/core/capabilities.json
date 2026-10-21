@@ -1,9 +1,9 @@
 {
-  "id": "cli-8185-2603694",
+  "id": "cli-22183-7496821",
   "ok": true,
   "result": [
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "Android API level unknown; battery saver control not assumed"
       ],
@@ -13,7 +13,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "service check failed: spawn failed: No such file or directory (os error 2)"
       ],
@@ -23,7 +23,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "module zairenkai_fas not installed"
       ],
@@ -33,7 +33,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "module zairenkai_fas not installed"
       ],
@@ -43,7 +43,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "/sys/class/power_supply/battery/capacity"
       ],
@@ -53,7 +53,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "/sys/class/power_supply/battery/temp"
       ],
@@ -63,7 +63,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "/sys/class/power_supply/battery/status"
       ],
@@ -73,7 +73,7 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "/proc/meminfo"
       ],
@@ -83,13 +83,24 @@
       "verified_on_device": false
     },
     {
-      "checked_at_ms": 2603486,
+      "checked_at_ms": 7496612,
       "evidence": [
         "dumpsys thermalservice"
       ],
       "id": "telemetry.thermal_status",
       "owner": "telemetry",
       "status": "temporarily_unavailable",
+      "verified_on_device": false
+    },
+    {
+      "checked_at_ms": 7496612,
+      "evidence": [
+        "(not configured)",
+        "paths.thermaltools_binary is not configured"
+      ],
+      "id": "thermaltools.diagnostics",
+      "owner": "thermaltools",
+      "status": "unsupported",
       "verified_on_device": false
     }
   ],

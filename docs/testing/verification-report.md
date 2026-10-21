@@ -1,7 +1,212 @@
 # Verification report
 
-- **Change:** branch `ccr-63f8aa87-1b0paj`, first application code in Zairenkai-App.
-- **Date:** 2026-10-19.
+## Licence basis: authorship, Anthropic terms, AOSP NOTICE (2026-10-21)
+
+**Verdict:** the licence declarations are consistent and audited. Signing, the full CI job and
+device validation are still open, so this is **not release-ready**. Licence completion says
+nothing about device compatibility. Nothing ran on a device.
+
+Evidence reviewed:
+- **Git history** of App, ART and FAS: every non-merge commit is by Claude Code sessions run by
+  the maintainer, signed off except the first agent-foundation commit; the merges are the
+  maintainer's; no other contributor.
+- **Anthropic's terms:** Consumer Terms §4 (effective 2025-10-08) and Commercial Terms §B
+  (effective 2025-06-17). Both assign Anthropic's rights in Outputs, "if any", to the user.
+- **AOSP:**
+  - `platform/art` `NOTICE` at `android-17.0.0_r1` (SHA-256 `613c3a67…405fd`) carries
+    "Copyright (c) 2005-2013, The Android Open Source Project". This line is now repeated in
+    ART's NOTICE, the app NOTICE and zart's attribution file.
+  - The header of `instruction_set_features_arm64.cc` was checked as well.
+- **Line comparison** of the App with Magisk `af8c256`, KernelSU `6d31a61`, KernelSU-Next
+  `b427a3f` and APatch `e8e4651` (all GPL-3.0), ignoring imports:
+  - 26, 29, 22 and 21 matching lines; no run of 3 or more;
+  - every match is a common Compose, Android or Gradle idiom.
+- **FAS comparison:** unchanged (0 runs).
+
+Commits:
+- ART `8c6cea2`: NOTICE and authorship record.
+- FAS `f6de6ee` and `333365e`: NOTICE wording and authorship record.
+
+None changes code. All three commits are signed and verified.
+
+| Check | Result |
+|---|---|
+| SPDX headers | every own Kotlin, Java, Gradle, Python, shell, Rust and HTML file in App, ART and FAS; none added to the Gradle wrapper |
+| Crate licences | zart 11, zthermal 25, Core 29, FAS 24 packages (incl. its 3 own crates): MIT OR Apache-2.0, MIT, Unlicense OR MIT, (MIT OR Apache-2.0) AND Unicode-3.0, Zlib. No copyleft |
+| Android libraries | 112, all Apache-2.0, none undeclared |
+| `build-components.sh` | internal exit 0 (FAS zip `9e3503a2…e7d5` with the new NOTICE); default exit 0; `verify_integration.py build` ok in both |
+| `capture-contracts.sh` | exit 0 |
+| `:integration-core:test` / `:app:testDebugUnitTest` | 74 / 24 passed, 0 failed |
+| Verifier tests, lint | 7 passed; 0 lint errors |
+| APKs | debug 37,993,601 bytes `ef9bb2ed…7a63`; release unsigned 30,314,996 bytes `d026533f…36eb`; no FAS zip |
+| `verify_integration.py` lock, access, build, apk | ok |
+| Release gate | **fails on 3**: APK unsigned; catalog unsigned; no trusted module key (unchanged; no gate was weakened, no key created) |
+
+Remaining legal uncertainty: `docs/integration/license-inventory.md`, "Authorship and rights".
+
+
+## Licences, component PRs, CI App input, Core-only device procedure (2026-10-21)
+
+**Verdict: partially verified.** The licence work and every host check passed. Signing, the
+full-integration CI job and device validation remain open, so this is **not release-ready**.
+Nothing ran on a device.
+
+CI evidence:
+
+| Run | Repository, commit | Result |
+|---|---|---|
+| 39622352061 | App f34246c (dispatch) | scripts ✓, reduced ✓, full-integration ✗ at "Require the CI GitHub App" |
+| 39623939493 | App b9ce39b (dispatch) | scripts ✓, reduced ✓, full-integration ✗ at the same step |
+| 39625331038 | Core PR #2, 34e93e3 | fmt/clippy/tests ✓, MSRV ✓, shellcheck ✓, Android arm64 module ✓ |
+| 39625349358 | ThermalTools PR #2, 9d4b310 | fmt/clippy/tests ✓, MSRV ✓, shellcheck ✓, Android binaries ✓ |
+
+No run of the full-integration job has built native components: the CI GitHub App does not
+exist yet. The reduced build proves nothing about the integrated APK.
+
+Component repositories (topic branch `ccr-63f8aa87-1b0paj`; every commit SSH-signed and
+verified):
+
+| Repository | Commit | What | Local checks |
+|---|---|---|---|
+| ART | `31caf46` on dev `19f658d` | Apache-2.0: LICENSE, NOTICE with the AOSP attribution (header checked in the AOSP file at `android-17.0.0_r1`), SPDX headers, Cargo licence; LICENSE and NOTICE in `dist/` | cargo 26 passed; tools tests OK; clippy, fmt, shellcheck clean; `art_upstream.py validate` ok; `build-android.sh` exit 0 |
+| FAS | `9d87236` on dev `3c83f0e` | Apache-2.0: LICENSE, NOTICE, SPDX headers, Cargo licence; LICENSE and NOTICE required in the zip | cargo 82 passed; clippy, fmt, shellcheck clean; zip `1c998502…7e2c` lists LICENSE, NOTICE, THIRD_PARTY.md |
+| Core | `34e93e3` (unchanged) | draft PR #2 into dev | cargo 65 passed; clippy and fmt clean |
+| ThermalTools | `9d4b310` (unchanged) | draft PR #2 into dev | cargo 109 passed; clippy and fmt clean |
+
+App, default (distributable) profile:
+
+| Check | Result |
+|---|---|
+| `build-components.sh` | exit 0; zart from `31caf46` with LICENSE and NOTICE; Core zip `f7651bf7…5f41`, unchanged and carrying LICENSE and NOTICE; catalog unsigned |
+| `ZAIRENKAI_INTERNAL_BUILD=1 build-components.sh` | exit 0; FAS zip from `9d87236` (`1c998502…7e2c`); `verify_integration.py build` ok |
+| `capture-contracts.sh` | exit 0; fixtures changed only in timestamps, process ids and the recorded source commits |
+| `:integration-core:test` | 74 passed, 0 failed |
+| `:app:testDebugUnitTest` | 24 passed, 0 failed |
+| Verifier tests | 7 passed (adds `test_a_module_zip_without_its_licence_and_notice_fails`) |
+| `lint` | 0 errors, 24 warnings |
+| APKs | debug 37,993,601 bytes `8fe1f6e5…cb1b`; release unsigned 30,314,568 bytes `6d3d2ed1…b7f`. Both contain `licenses/zairenkai-app/{LICENSE,NOTICE}` and `licenses/zart/{LICENSE,NOTICE}` |
+| `verify_integration.py` lock, access, build, apk | ok |
+| Release gate (`--release`) | **fails on 3**: APK unsigned; catalog unsigned; no trusted module-signing key. The licence checks pass |
+| shellcheck 0.10.0, actionlint 1.7.12 | clean |
+
+Not done, and why:
+- **CI GitHub App:** the maintainer must create it (`docs/build/ci.md`).
+- **Module-signing key and APK keystore:** maintainer-held keys (`docs/build/release.md`). No
+  agent may generate or handle the private halves, and no development key substitutes for them.
+- **Device validation:** no device. The Core-only procedure is in
+  `docs/testing/device-validation.md`.
+- **Merging the component PRs and re-pinning:** needs the maintainer.
+
+
+## Release gate, FAS provenance, first-hardware preparation (2026-10-21)
+
+**Verdict: partially verified.** Host checks passed. Nothing ran on a device.
+
+CI evidence:
+
+| Run | Commit | Jobs | What it shows |
+|---|---|---|---|
+| 39608170919 | **7fc9cb2** (not 4bd0dd2) | reduced build, scripts: success | the zthermal commit, built without native components or module zips |
+| 39617791701, 39618460955 | 4bd0dd2 | reduced build, scripts: success | the installer's JVM tests ran in `:integration-core:test`; no module zip was built or packaged |
+| 39622352061 | f34246c | scripts ✓, reduced ✓, **full-integration ✗** at "Require the CI GitHub App" | the designed failure: no CI GitHub App exists. No run has built native components or module zips |
+
+The push of f34246c triggered no `pull_request` run: PR #2 still lists 4bd0dd2 as its head.
+Run 39622352061 was dispatched by hand.
+
+Local results, default (distributable) profile:
+
+| Check | Result |
+|---|---|
+| `build-components.sh` | exit 0; Core module only (`zairenkai_core` v0.1.0, `f7651bf7…5f41`, 741,218 bytes, unchanged); catalog unsigned |
+| `ZAIRENKAI_INTERNAL_BUILD=1 build-components.sh` | exit 0; Core and FAS; `verify_integration.py build` ok; report labelled "internal development build (not for distribution)"; `apk --release` refuses it (internal build; module other than `zairenkai_core`) |
+| `capture-contracts.sh` | exit 0; the catalog fixture is byte-identical to the build |
+| `:integration-core:test` | 74 passed, 0 failed (adds `theSpecKeepsFasInternalWithItsConflict`, `anInternalModuleIsFlaggedInThePreflight`) |
+| `:app:testDebugUnitTest` | 24 passed, 0 failed |
+| Verifier tests | 6 passed |
+| `lint` | 0 errors, 24 warnings ("newer version available") |
+| APKs | debug 37,514,813 bytes `4d3f84d6…04e4`; release unsigned 30,300,624 bytes `ab1c0994…d074`; only `assets/system-modules/zairenkai_core.zip` (SHA-256 equal to the catalog) |
+| `verify_integration.py` lock, build, apk, report | ok |
+| Release gate (`--release`) | fails on 5: APK unsigned; catalog unsigned; no trusted module key; no licence for App, ART |
+| FAS provenance | no copied or adapted code found (`docs/integration/fas-provenance.md`) |
+
+
+## Signed module release, notices, full-integration CI (2026-10-21)
+
+**Verdict: partially verified.**
+- Every host check passed.
+- The engineering integration report passes.
+- The release gate fails on six real blockers (`docs/build/release.md`).
+- Nothing ran on a device or emulator.
+- The full-integration CI job has not run on GitHub: the CI GitHub App does not exist yet
+  (`docs/build/ci.md`).
+
+| Check | Command | Result |
+|---|---|---|
+| Components at locked commits | `build-components.sh` | exit 0. zart, zthermal (3 ABIs each), both module zips (reproducible: the catalog is byte-identical to the previous build before the lifecycle fields were added), AFID asset, crate notices for zart (11), zthermal (25), zairenkai_core (29), zairenkai_fas (21). Catalog left **unsigned**: no module-signing key |
+| Contracts re-captured | `capture-contracts.sh` | exit 0 |
+| integration-core tests | `./gradlew --rerun-tasks :integration-core:test` | 72 passed, 0 failed, 0 skipped (adds SystemModuleTrust 5, SystemModuleRegistry 1) |
+| App tests (Robolectric) | `./gradlew --rerun-tasks :app:testDebugUnitTest` | 24 passed, 0 failed |
+| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | 6 passed (incorrect lock ×7 cases, unfetchable repository, missing and tampered native component, APK without components or with key material) |
+| Lint | `./gradlew lint` | 0 errors, 24 warnings ("newer version available") |
+| Android notices | `generateAndroidNotices` | 112 libraries, all Apache-2.0 |
+| APKs | `assembleDebug assembleRelease` | debug 38,161,927 bytes `eaef2296…1505`; release unsigned 30,929,872 bytes `ef263c14…228e` |
+| Source lock | `verify_integration.py lock` | ok |
+| Repository access | `verify_integration.py access` | ok (with this session's credentials) |
+| Build artifacts | `verify_integration.py build` | ok |
+| APK contents | `verify_integration.py apk app-release-unsigned.apk` | ok: every component byte-identical, 3 ABIs, notices, trust list, no key material |
+| Engineering report | `verify_integration.py report …` | pass (`integration/out/integration-report.md`) |
+| Release gate | `verify_integration.py report … --release` | **fails, 6**: APK unsigned; catalog unsigned; no trusted module-signing key; no licence for App, zart (ART), FAS |
+| Scripts and workflows | shellcheck 0.10.0, actionlint 1.7.12, `py_compile` | clean |
+| Strings | key parity | 301 translatable strings in both languages |
+
+Not run: the `full-integration` job on GitHub, emulator tests, any physical device, any root
+manager.
+
+
+## In-app system module installation (2026-10-21)
+
+Branch `ccr-63f8aa87-1b0paj`. Design and evidence: `docs/integration/system-module.md`.
+**Verdict: partially verified.** The logic is tested against a scripted su and Robolectric. No
+module was installed through a real root manager.
+
+| Check | Command | Result |
+|---|---|---|
+| Module zips at locked commits | `build-components.sh` (now includes Core `34e93e3` and FAS `3c83f0e` modules) | exit 0. `zairenkai_core` v0.1.0: 741,218 bytes, `f7651bf7…5f41`, 11 entries, 6 matched to source. `zairenkai_fas` v0.1.0: 622,959 bytes, `bfec727a…ffe1`, 10 entries, 7 matched |
+| integration-core tests | `./gradlew --rerun-tasks :integration-core:test` | 66 passed, 0 failed, 0 skipped (adds SystemModule 21, SystemModuleAdapter 1, SystemModuleCatalogContract 1) |
+| App tests (Robolectric) | `./gradlew --rerun-tasks :app:testDebugUnitTest` | 24 passed, 0 failed (adds ManagerHandoff 3, `AppUiTest.systemModuleScreenNeedsRootAndOffersNoInstallWithoutIt`) |
+| Lint | `./gradlew lint` | 0 errors, 24 warnings ("newer version available" only) |
+| APKs | `assembleDebug assembleRelease` | debug 37,980,802 bytes `c5711a26…3206`; release unsigned 30,831,987 bytes `69b5d5d7…b980` |
+| Packaged modules equal the build | SHA-256 of `assets/system-modules/*.zip` in the release APK | equal to the catalog for both modules |
+| Permissions | `aapt2 dump permissions` | unchanged: no INTERNET, no storage permission |
+| Secret scan | grep for private keys and tokens in both APKs | no matches |
+| Scripts, workflow, foundation | shellcheck, actionlint, `py_compile`, validator | clean |
+| Strings | key parity `values/` and `values-in/` | 276 translatable strings in both |
+
+Failure paths covered by `SystemModuleTest`:
+- root absent, not enabled, or refused;
+- unsupported and contradictory managers; Magisk too old, or old enough for handoff only; ksud
+  without `install`;
+- incompatible ABI, kernel architecture, API level, storage, manager or manager version;
+- missing path, missing dependency, conflicting module;
+- downgrade, staged version, pending removal, disabled module;
+- corrupted, truncated, wrong-checksum, non-zip, wrong module id, extra entry, path-traversal
+  and wrong-version packages; unmatched installer;
+- unreadable artifact (the equivalent of a network failure: no network is used);
+- installer exit 1, timeout, and exit 0 with nothing staged;
+- cancellation before installation; the experimental acknowledgement;
+- handoff without a CLI installer; pending reboot; ACTIVE vs DEGRADED by runtime;
+- uninstall success, failure, and success without the remove marker; Magisk removal handoff;
+- no command that changes the device during a failed preflight.
+
+Not verified: any install, state read or removal on a real Magisk, KernelSU, KernelSU-Next or
+APatch device; manager access to the app's cache file; MediaStore saving; post-reboot ACTIVE.
+Devices with a validated install: **none**.
+
+## zthermal integration (2026-10-21)
+
+- **Change:** branch `ccr-63f8aa87-1b0paj` restarted from dev `b288419` on 2026-10-21.
+  zthermal (Zairenkai-ThermalTools) is integrated, and every locked revision is refreshed.
+- **Date:** 2026-10-21. The first report (2026-10-19) is summarised at the end.
 - **Verdict:** **Partially verified.**
   - Every check runnable without hardware passed.
   - Nothing has run on an Android device or emulator: there is no KVM in the build container.
@@ -10,26 +215,27 @@
 
 | Check | Command | Configured | Executed | Result |
 |---|---|---|---|---|
-| Components at locked commits | `integration/scripts/build-components.sh` | yes | yes | exit 0. zart 0.1.0 @ `fc72192` (3 ABIs, `SHA256SUMS` verified); AFID asset @ `6e3db46` (353 candidates) |
-| Contract capture from real binaries | `integration/scripts/capture-contracts.sh` | yes | yes | exit 0. zart, zcored @ `ad0c195`, zfasd @ `0877452` (observe-only) |
-| Kotlin and Java unit tests (integration-core) | `./gradlew :integration-core:test --rerun-tasks` | yes | yes | 37 passed, 0 failed, 0 skipped (CoreClient 5, Data 4, FasClient 4, JavaInterop 3, ProcessCommandRunner 6, Registry 3, RootShell 6, Zart 6) |
-| Compose UI, design-system and Java platform tests (Robolectric) | `./gradlew :app:testDebugUnitTest` | yes | yes | 19 passed, 0 failed (AppUi 5, DesignSystem 8, Language 3, PlatformJava 3) |
+| Components at locked commits | `integration/scripts/build-components.sh` | yes | yes | exit 0. zart 0.1.0 @ `19f658d`, zthermal 0.2.0 @ `9d4b310` (3 ABIs each, `SHA256SUMS` verified); AFID asset @ `d9c4290` (354 candidates) |
+| Contract capture from real binaries | `integration/scripts/capture-contracts.sh` | yes | yes | exit 0. zart; zthermal on four synthetic device fixtures and this host; zcored @ `34e93e3`; zfasd @ `3c83f0e` (observe-only) |
+| Kotlin and Java unit tests (integration-core) | `./gradlew --rerun-tasks :integration-core:test` | yes | yes | 43 passed, 0 failed, 0 skipped (CoreClient 5, Data 4, FasClient 4, JavaInterop 3, ProcessCommandRunner 6, Registry 4, RootShell 6, ThermalTools 5, Zart 6) |
+| Compose UI, design-system and Java platform tests (Robolectric) | `./gradlew --rerun-tasks :app:testDebugUnitTest` | yes | yes | 20 passed, 0 failed (AppUi 6, DesignSystem 8, Language 3, PlatformJava 3) |
 | Android lint | `./gradlew lint` | yes (`abortOnError`) | yes | 0 errors. 24 warnings, all "newer version available" (21 GradleDependency, 3 AndroidGradlePluginVersion) |
 | Debug APK | `./gradlew assembleDebug` | yes | yes | built |
 | Release APK | `./gradlew assembleRelease` | yes | yes | built, **unsigned** (no release key exists) |
-| Build without components | `assembleDebug` with and without `-Pzairenkai.allowMissingComponents=true` | yes | yes | fails without the flag (message names the missing files); builds with it (no `libzart.so` in the APK) |
+| Missing-component guard | `:app:verifyIntegrationComponents` with one `libzthermal.so` removed | yes | yes | fails and names `jniLibs/x86_64/libzthermal.so` |
 | Agent foundation | `validate_agent_setup.py .` | yes | yes | PASS, 0 errors, 0 warnings |
-| Shell scripts | `shellcheck integration/scripts/*.sh` | yes | yes | clean |
-| CI workflow | `actionlint .github/workflows/ci.yml` | yes | yes | clean. **Not run on GitHub**: no pull request exists |
-| 16 KB alignment | `llvm-readelf -lW` on packaged `.so` files | yes | yes | arm64-v8a and x86_64: LOAD align 0x4000 |
-| Secret scan of the APK | `grep` for private keys and tokens | yes | yes | no matches |
+| Shell scripts | `shellcheck integration/scripts/*.sh` (0.10.0) | yes | yes | clean |
+| CI workflow | `actionlint` (1.7.12) | yes | yes | clean locally; GitHub run below |
+| 16 KB alignment | `llvm-readelf -lW` on the packaged `.so` files | yes | yes | arm64-v8a and x86_64: every LOAD segment aligned to 0x4000 (zart, zthermal, AndroidX) |
+| Secret scan of the APKs | `unzip -p` piped to `grep` for private keys, GitHub and AWS tokens; file names for keys, keystores, scripts | yes | yes | no matches |
+| String parity | key comparison of `values/` and `values-in/` | yes | yes | 194 translatable strings in both, 3 plurals; the 3 extra in `values/` are `translatable="false"` |
 
 ## Artifacts
 
 | | Path | Size (bytes) | SHA-256 | Signing |
 |---|---|---|---|---|
-| Debug | `app/build/outputs/apk/debug/app-debug.apk` | 34,354,838 | `1ca1af3a3e62c77fca360097e23d3d839749c5967a545061541b790e5087d95b` | APK Signature Scheme v2, Android Debug certificate (SHA-256 `d651160e…bfef`); `apksigner verify` passes |
-| Release | `app/build/outputs/apk/release/app-release-unsigned.apk` | 27,401,212 | `0b916148d14c0403616b3b222780198b827695c59f51773177c71444db52add7` | unsigned (`apksigner verify` fails: no signature) |
+| Debug | `app/build/outputs/apk/debug/app-debug.apk` | 36,273,662 | `b71fcd29bb7a288a77b5d5db00961f848ba866dfc9ec1ac43c59986921f9201b` | APK Signature Scheme v2, Android Debug certificate (SHA-256 `d651160e…bfef`); `apksigner verify` passes |
+| Release | `app/build/outputs/apk/release/app-release-unsigned.apk` | 29,210,092 | `4046fe5acd7c98830a805cd554aa8e3aeefb6e9ee51d64bf703cb4f716ce40bc` | unsigned (`apksigner verify` fails: no signature) |
 
 These are build outputs, not committed. The hashes identify this build; a rebuild produces a new
 debug signature.
@@ -39,11 +245,13 @@ APK contents (`aapt2 dump badging`, `unzip -l`):
   targetSdk 35.
 - **Permissions:** only AndroidX's internal `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. No
   INTERNET permission.
-- **Native code:** arm64-v8a, armeabi-v7a, x86_64. `lib/<abi>/libzart.so` matches
-  `integration/out/components.json` byte for byte.
+- **Native code:** arm64-v8a, armeabi-v7a, x86_64. `lib/<abi>/libzart.so` and
+  `lib/<abi>/libzthermal.so` match `integration/out/components.json` byte for byte. zthermal is
+  a stripped PIE executable for `/system/bin/linker64` (arm64).
 - **Font:** `res/font/google_sans_flex.ttf` (SHA-256 `a9ac7707…77ba`, same as the Google Fonts
   file).
-- **Notices:** OFL and trademark notices in `assets/licenses/google-sans-flex/` (`OFL.txt`, `TRADEMARKS.md`).
+- **Notices:** OFL and trademark notices in `assets/licenses/google-sans-flex/` (`OFL.txt`, `TRADEMARKS.md`);
+  zthermal's Apache-2.0 `LICENSE` and `NOTICE` in `assets/licenses/zthermal/`.
 - **Assets:** AFID candidates, inventory, lock, components record.
 - **Manifest:** `allowBackup=false`, `extractNativeLibs=true`, `localeConfig` (en, in).
 
@@ -51,7 +259,9 @@ APK contents (`aapt2 dump badging`, `unzip -l`):
 
 | Criterion | Evidence |
 |---|---|
-| Every repository has a disposition | `integration/organization-repositories.json` (15), `DataTest.inventoryCoversTheOrganizationAndMatchesTheLock` |
+| zthermal runs only `snapshot`; no thermal write path | `ThermalToolsClient` has no other sub-command; `RegistryTest.thermalSnapshotStatesFollowWhatZthermalRead` asserts the exact argv; `ThermalToolsTest.qualcommFixtureWithFramework` asserts zthermal reports no writable control |
+| Thermal availability is honest | `RegistryTest.thermalSnapshotStatesFollowWhatZthermalRead` (AVAILABLE with readable zones, UNSUPPORTED_DEVICE on a host without zones), `AppUiTest.thermalScreenSaysWhyZthermalCannotRunAndOffersNoControl` |
+| Every repository has a disposition | `integration/organization-repositories.json` (16), `DataTest.inventoryCoversTheOrganizationAndMatchesTheLock` |
 | Integrations use real interfaces, with no mocks posing as integration | Fixtures captured from the real binaries; `CoreClientTest`, `FasClientTest`, `ZartTest` |
 | UI availability comes from the registry | `AppUiTest.homeShowsRealRegistryStates` (real container: Core shows ROOT_REQUIRED, ART shows NATIVE_COMPONENT_UNAVAILABLE in Robolectric) |
 | No su call without consent | `RootShellTest.nothingRunsBeforeTheUserAsks`, `RegistryTest.withoutRootPrivilegedCapabilitiesSayWhy` |
@@ -59,7 +269,7 @@ APK contents (`aapt2 dump badging`, `unzip -l`):
 | Material 3 Expressive theme | `ZairenkaiTheme` → `MaterialExpressiveTheme`; `DesignSystemTest.themeAppliesTypographyAndBrandColours`, `darkModeUsesTheDarkScheme` |
 | Google Sans Flex is the default face | `DesignSystemTest.everyTextStyleUsesGoogleSansFlex`, `bundledFontResourceLoads` |
 | Status not by colour alone | `DesignSystemTest.statusIsTextAndStateDescriptionNotColourAlone` |
-| Indonesian and English | `DesignSystemTest.indonesianStrings`; key parity script (182 strings, 3 plurals each) |
+| Indonesian and English | `DesignSystemTest.indonesianStrings`; key parity check (194 translatable strings, 3 plurals each) |
 | English by default, even on an Indonesian system | `LanguageTest.englishIsTheDefaultOnAnIndonesianSystem`, `choosingIndonesianSwitchesTheAppAndBack` (API 35, `LocaleManager`), `beforeAndroid13TheChoiceIsStoredAndTheActivityRecreated` (API 32) |
 | Reduced motion | `DesignSystemTest.reducedMotionFollowsTheSystemAnimatorScale` |
 | Adaptive layout, large font | `AppUiTest.wideScreensUseTheNavigationRail` (840 dp), `smallScreenWithLargeFontStillRenders` (320 dp, font scale 2) |
@@ -83,11 +293,19 @@ APK contents (`aapt2 dump badging`, `unzip -l`):
 - **No Android device or emulator was available.** Unverified as a result:
   - installing and launching the app;
   - root prompts in Magisk or KernelSU;
-  - executing `libzart.so` from `nativeLibraryDir` as the app and as root;
+  - executing `libzart.so` and `libzthermal.so` from `nativeLibraryDir` as the app and as root;
+  - which thermal zones SELinux lets the app uid read;
   - SELinux denials;
   - real thermal-listener behaviour;
   - rendering on real hardware.
 - **Compose UI tests ran under Robolectric**, not as instrumented tests. The Java Android
   components were tested the same way.
 - **Material 3 1.5.0-alpha18 is a pre-release.**
-- **CI has not run on GitHub.**
+- **Core and ThermalTools revisions are unmerged topic-branch commits** (`"merged": false` in
+  the lock).
+
+## First report (2026-10-19)
+
+Components zart @ `fc72192`, AFID @ `6e3db46` (353 candidates); contracts zcored @ `ad0c195`,
+zfasd @ `0877452`; 37 + 19 tests passed; lint 0 errors. The four defects listed above were
+found and fixed then.

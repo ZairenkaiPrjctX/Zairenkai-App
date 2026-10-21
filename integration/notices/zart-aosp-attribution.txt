@@ -1,0 +1,16 @@
+zart (Zairenkai-ART, crates/zart) contains arm64 CPU variant names and feature flags copied from
+the Android Open Source Project:
+
+  platform/art, runtime/arch/arm64/instruction_set_features_arm64.cc, tag android-17.0.0_r1
+  Copyright (C) 2014 The Android Open Source Project
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+  except in compliance with the License. You may obtain a copy of the License at
+  https://www.apache.org/licenses/LICENSE-2.0 (also in this APK: licenses/zart/LICENSE).
+  Unless required by applicable law or agreed to in writing, software distributed under the
+  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+
+Attribution from the NOTICE file of platform/art at android-17.0.0_r1 (Apache-2.0 section 4(d)):
+  Copyright (c) 2005-2013, The Android Open Source Project
+
+Source of this record: Zairenkai-ART docs/ART_LICENSES.md and crates/zart/src/isa.rs.
+Zairenkai-ART is Apache-2.0 (licenses/zart/LICENSE); its NOTICE repeats this attribution.

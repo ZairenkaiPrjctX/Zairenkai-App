@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
@@ -14,17 +16,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.R
 import com.zairenkaiprjctx.app.design.Emphasis
+import com.zairenkaiprjctx.app.design.ExpandableSection
 import com.zairenkaiprjctx.app.design.HeroStatusCard
 import com.zairenkaiprjctx.app.design.InfoRow
 import com.zairenkaiprjctx.app.design.MetricTile
 import com.zairenkaiprjctx.app.design.ProgressRow
 import com.zairenkaiprjctx.app.design.SectionCard
+import com.zairenkaiprjctx.app.design.StatusBadge
 import com.zairenkaiprjctx.app.design.Supporting
 import com.zairenkaiprjctx.app.design.UnavailableCard
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.integration.core.CoreCall
 import com.zairenkaiprjctx.integration.fas.FasCall
 import com.zairenkaiprjctx.integration.registry.RegistrySnapshot
+import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsResult
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -89,6 +94,52 @@ fun ThermalScreen(vm: ThermalViewModel, perf: PerformanceViewModel, snapshot: Re
                 }
             }
         }
-        item { UnavailableCard(snapshot.byId("thermaltools.config")) }
+        item { ThermalToolsCard(vm, snapshot) }
+        item { UnavailableCard(snapshot.byId("thermaltools.control")) }
+    }
+}
+
+private fun celsius(milli: Long): String = "%.1f °C".format(milli / 1000.0)
+
+/** zthermal's read-only snapshot: zones as zthermal read them, failed reads shown with their reason. */
+@Composable
+private fun ThermalToolsCard(vm: ThermalViewModel, snapshot: RegistrySnapshot) {
+    val result by vm.thermalTools.collectAsStateWithLifecycle()
+    val busy by vm.thermalToolsBusy.collectAsStateWithLifecycle()
+    val record = snapshot.byId("thermaltools.snapshot")
+    when (val r = result) {
+        null -> SectionCard(stringResource(R.string.thermaltools_title)) { ProgressRow(stringResource(R.string.loading)) }
+        is ThermalToolsResult.Failed -> UnavailableCard(record, r.detail)
+        is ThermalToolsResult.Ok -> {
+            val s = r.value
+            SectionCard(stringResource(R.string.thermaltools_title), trailing = { record?.let { StatusBadge(it.availability.state) } }) {
+                InfoRow(stringResource(R.string.thermaltools_zones), stringResource(R.string.thermaltools_zones_value, s.summary.zonesValid, s.summary.zones), numeric = true)
+                InfoRow(
+                    stringResource(R.string.thermaltools_hottest),
+                    s.summary.hottest?.let { "${it.name ?: it.source}: ${celsius(it.millicelsius)}" },
+                    numeric = true,
+                )
+                InfoRow(stringResource(R.string.thermaltools_framework), s.summary.frameworkStatus ?: s.sources.firstOrNull { it.source == "dumpsys thermalservice" }?.status)
+                s.summary.batteryMillicelsius?.let { InfoRow(stringResource(R.string.thermaltools_battery), celsius(it), numeric = true) }
+                if (s.accessDenied) Supporting(stringResource(R.string.thermaltools_denied))
+                ExpandableSection(stringResource(R.string.thermaltools_zone_list, s.zones.size)) {
+                    s.zones.sortedByDescending { it.temperature.millicelsius ?: Long.MIN_VALUE }.forEach { z ->
+                        InfoRow(
+                            z.type ?: z.path.substringAfterLast('/'),
+                            z.temperature.millicelsius?.let(::celsius) ?: "${z.temperature.status}: ${z.temperature.reason.orEmpty()}",
+                            numeric = true,
+                        )
+                    }
+                }
+                Supporting(stringResource(R.string.thermaltools_source, s.toolVersion))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                    OutlinedButton(onClick = { vm.loadThermalTools() }, enabled = !busy) { Text(stringResource(R.string.action_refresh)) }
+                    if (vm.rootGranted) {
+                        OutlinedButton(onClick = { vm.loadThermalTools(withRoot = true) }, enabled = !busy) { Text(stringResource(R.string.thermaltools_with_root)) }
+                    }
+                }
+                if (busy) ProgressRow(stringResource(R.string.loading))
+            }
+        }
     }
 }

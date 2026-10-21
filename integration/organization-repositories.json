@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "organization": "ZairenkaiPrjctX",
-  "surveyed": "2026-10-19",
-  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit",
-  "discovered": 15,
+  "surveyed": "2026-10-21",
+  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit; re-audited 2026-10-21",
+  "discovered": 16,
   "inaccessible": [],
   "outside_organization_not_inspected": [
     {
@@ -29,7 +29,7 @@
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "ad0c1954eb340e51f194e7c2dd33ed9186ce95cb",
+      "audited_commit": "34e93e34440efb90d64d4af1f9f10292d790575c",
       "code_present": true,
       "languages": [
         "Rust",
@@ -51,8 +51,8 @@
       ],
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_core/bin/zcored ctl (protocol v1 JSON)",
       "runtime_requirements": "root (Magisk/KernelSU) and the zairenkai_core module installed and running; ADR-0005 limits the socket to root clients",
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged)"
+      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (455368f) has no LICENSE yet",
+      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev."
     },
     {
       "name": "Zairenkai-FAS",
@@ -65,7 +65,7 @@
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "0877452636a6ad960a7f90834e0a0228f322f3c1",
+      "audited_commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
       "code_present": true,
       "languages": [
         "Rust",
@@ -85,8 +85,8 @@
       ],
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_fas/bin/zfasd ctl (docs/INTEGRATION.md)",
       "runtime_requirements": "root and the zairenkai_fas module; telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status"
+      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (3c83f0e) has no LICENSE yet",
+      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md."
     },
     {
       "name": "Zairenkai-ART",
@@ -99,7 +99,7 @@
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "fc72192cfceb7068ad71ddc8d461f1dba6238dd5",
+      "audited_commit": "8c6cea27a9c78fb9782dad7bb7f81872a9540f84",
       "code_present": true,
       "languages": [
         "Rust",
@@ -118,26 +118,22 @@
       ],
       "integration_mechanism": "native executable lib/<abi>/libzart.so built by the repository's scripts/build-android.sh; JSON over stdout",
       "runtime_requirements": "inspect: none (runs as the app uid; some inputs may be denied by SELinux); dexopt-status: root",
-      "license": "none chosen; Apache-2.0 data from AOSP ART in crates/zart/src/isa.rs",
-      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files"
+      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE with the AOSP attribution for crates/zart/src/isa.rs); dev (19f658d) has no LICENSE yet",
+      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 8c6cea2: the two licence commits (31caf46, 8c6cea2) on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev."
     },
     {
       "name": "Zairenkai-Database-Source",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Database-Source",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Database-Source",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
-        "ccr-63f8aa87-1b0paj",
-        "ccr-63f8aa87-1b0paj-snapshot-shards",
-        "afid/discovery-20261018-201940",
-        "afid/dumps-discovery-20261019-024916",
-        "afid/dumps-discovery-20261019-053037",
-        "afid/updates-20261019-090445"
+        "afid/updates",
+        "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "dev",
-      "audited_commit": "6e3db46b62bf6ac7fae484e379067d78b238ee68",
+      "audited_commit": "d9c4290ae0c4503b30449edf636b865c51a96f15",
       "code_present": true,
       "languages": [
         "Python",
@@ -194,46 +190,63 @@
       "visibility": "private",
       "default_branch": "dev",
       "branches": [
-        "dev"
+        "dev",
+        "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "dev",
-      "audited_commit": "8aad1f6d88675f8be52fe5589394d9116f5be421",
-      "code_present": false,
-      "languages": [],
-      "categories": [
-        "documentation_only"
+      "audited_commit": "b288419a45fb1e46a702e448033e33b546617f03",
+      "code_present": true,
+      "languages": [
+        "Kotlin",
+        "Java",
+        "Shell",
+        "Python"
       ],
-      "disposition": "not_applicable: no implementation exists yet",
+      "categories": [
+        "android_application"
+      ],
+      "disposition": "this repository: the unified Android app",
       "integration_status": "not_applicable",
       "app_capabilities": [],
       "integration_mechanism": null,
       "runtime_requirements": null,
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): application architecture, UI, build system (this repository)"
+      "license": "Apache-2.0 on the topic branch ccr-63f8aa87-1b0paj (LICENSE, NOTICE, SPDX headers; maintainer decision 2026-10-21); dev has no LICENSE yet",
+      "evidence": "app/, integration-core/, integration/ (merged PR #1, b288419)."
     },
     {
       "name": "Zairenkai-ThermalTools",
       "full_name": "ZairenkaiPrjctX/Zairenkai-ThermalTools",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ThermalTools",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
-        "dev"
+        "dev",
+        "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "dev",
-      "audited_commit": "6ff95424dcf48c7b1b2b260ec92042375cf70523",
-      "code_present": false,
-      "languages": [],
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "9d4b31017ea1c679ee155aa2df978752e1683fd6",
+      "code_present": true,
+      "languages": [
+        "Rust",
+        "Shell",
+        "Python"
+      ],
       "categories": [
-        "documentation_only"
+        "thermal_and_performance_engine",
+        "native_library",
+        "diagnostics"
       ],
-      "disposition": "not_applicable: no implementation exists yet",
-      "integration_status": "not_applicable",
-      "app_capabilities": [],
-      "integration_mechanism": null,
-      "runtime_requirements": null,
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): thermal tooling"
+      "disposition": "integrated: zthermal packaged as a native executable; the app runs only `zthermal snapshot` (read only)",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "thermaltools.snapshot",
+        "thermaltools.snapshot_root",
+        "thermaltools.control"
+      ],
+      "integration_mechanism": "lib/<abi>/libzthermal.so executed as the app uid (`snapshot`), or through root on request (`snapshot --framework`); JSON schema_version 1",
+      "runtime_requirements": "Read access to /sys/class/thermal (SELinux may deny the app uid); dumpsys needs shell or root. No writes: the validated control list is empty.",
+      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (5358d4d) has no LICENSE yet",
+      "evidence": "crates/zthermal (CLI), crates/zthermal-platform/src/snapshot.rs, schemas/snapshot.schema.json, policy::VALIDATED_CONTROLS empty; 0.2.0 at 9d4b310 (not merged into dev, which holds 0.1.0 at 5358d4d)."
     },
     {
       "name": "Zairenkai-Sdk",
@@ -257,7 +270,7 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): public APIs and SDK"
+      "evidence": "Re-audited 2026-10-21: dev @ d482afebb6d3 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
     },
     {
       "name": "Zairenkai-Modules",
@@ -281,7 +294,7 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): modules"
+      "evidence": "Re-audited 2026-10-21: dev @ f226502613e6 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
     },
     {
       "name": "Zairenkai-Intelligence-Engine",
@@ -305,7 +318,7 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): AI / inference"
+      "evidence": "Re-audited 2026-10-21: dev @ 0191e36365b8 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
     },
     {
       "name": "Zairenkai-License-Server",
@@ -329,7 +342,7 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): licensing backend"
+      "evidence": "Re-audited 2026-10-21: dev @ d563033d4e06 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
     },
     {
       "name": "Zairenkai-Graphics-Platform",
@@ -353,7 +366,7 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): GPU tweaks"
+      "evidence": "Re-audited 2026-10-21: dev @ b3dcca4457f3 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
     },
     {
       "name": "Zairenkai-Release",
@@ -377,7 +390,7 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): release automation"
+      "evidence": "Re-audited 2026-10-21: dev @ 0d804278b742 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
     },
     {
       "name": "Zairenkai-Docs",
@@ -401,7 +414,7 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): documentation"
+      "evidence": "Re-audited 2026-10-21: dev @ 068bf87d02d0 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
     },
     {
       "name": "ZairenkaiPrjctX.github.io",
@@ -425,7 +438,33 @@
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Only agent foundation files (AGENT/, .claude/, AGENTS.md, CLAUDE.md, .gitignore) on dev; `git ls-tree -r origin/dev`, 2026-10-19. Role hint (unverified): organization website"
+      "evidence": "Re-audited 2026-10-21: dev @ 27362a46141c contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
+    },
+    {
+      "name": "anime-extensions",
+      "full_name": "ZairenkaiPrjctX/anime-extensions",
+      "url": "https://github.com/ZairenkaiPrjctX/anime-extensions",
+      "visibility": "public",
+      "default_branch": "ccr-97bcb73d-9x6z9h",
+      "branches": [
+        "ccr-97bcb73d-9x6z9h"
+      ],
+      "audited_branch": "ccr-97bcb73d-9x6z9h",
+      "audited_commit": "049e9b324bc684283618e35c64c7834ccaa8347a",
+      "code_present": true,
+      "languages": [
+        "Kotlin"
+      ],
+      "categories": [
+        "separate_product"
+      ],
+      "disposition": "not_applicable: Aniyomi extensions-lib 16 source extensions (Internet Archive, Jellyfin) for third-party media apps; no relation to device diagnostics or the Zairenkai components",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": null,
+      "runtime_requirements": null,
+      "license": "Apache-2.0 (LICENSE, NOTICE: 'The Anime Source Extensions contributors')",
+      "evidence": "README.md, settings.gradle.kts, src/all/{internetarchive,jellyfin}, sources/registry.json at 049e9b3 (shallow clone through the session's read-only git proxy; the only branch)."
     }
   ]
 }

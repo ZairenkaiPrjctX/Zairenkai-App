@@ -1,21 +1,40 @@
 {
   "schema_version": 1,
-  "locked_at": "2026-10-19",
-  "note": "Exact source revisions this app integrates. Branch names are recorded for context only; builds resolve the commit. Topic-branch revisions are not merged into their repository's default branch yet.",
+  "locked_at": "2026-10-21",
+  "note": "Exact source revisions this app integrates. Branch names are recorded for context only; builds resolve the commit. Components with \"merged\": false are pinned to a topic-branch commit that is not in the repository's default branch yet.",
   "components": [
     {
       "id": "zart",
       "repository": "ZairenkaiPrjctX/Zairenkai-ART",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ART.git",
       "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "fc72192cfceb7068ad71ddc8d461f1dba6238dd5",
+      "commit": "8c6cea27a9c78fb9782dad7bb7f81872a9540f84",
+      "merged": false,
       "packaging": "native executable, built with the repository's scripts/build-android.sh and packaged as lib/<abi>/libzart.so",
       "abis": [
         "arm64-v8a",
         "armeabi-v7a",
         "x86_64"
       ],
-      "license": "No project licence chosen (no LICENSE file). Contains Apache-2.0 data derived from AOSP ART (crates/zart/src/isa.rs); Rust dependencies serde/serde_json are MIT OR Apache-2.0.",
+      "license": "Apache-2.0 (LICENSE, NOTICE at this commit; packaged in assets/licenses/zart/). NOTICE carries the AOSP Apache-2.0 attribution for the arm64 variant tables in crates/zart/src/isa.rs. 11 statically linked Rust crates, all permissive.",
+      "note": "Licence commits 31caf46 and 8c6cea2 on top of dev 19f658d (the merge of ART PR #1); they add LICENSE, NOTICE and SPDX headers and changes no code. Not merged into dev yet.",
+      "integration_status": "implemented"
+    },
+    {
+      "id": "zthermal",
+      "repository": "ZairenkaiPrjctX/Zairenkai-ThermalTools",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ThermalTools.git",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "9d4b31017ea1c679ee155aa2df978752e1683fd6",
+      "merged": false,
+      "packaging": "native executable, built with the repository's scripts/build-android.sh and packaged as lib/<abi>/libzthermal.so; the app runs only `zthermal snapshot` (schema_version 1)",
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "license": "Apache-2.0 (LICENSE, NOTICE at this commit; packaged in assets/licenses/zthermal/). Statically linked Rust dependencies: MIT OR Apache-2.0, plus foldhash (Zlib), memchr (Unlicense OR MIT), generic-array and zmij (MIT); see the repository's docs/LICENSING.md.",
+      "note": "zthermal 0.2.0 is read-only: its validated control list is empty and apply/rollback/backup-config are never invoked by the app.",
       "integration_status": "implemented"
     },
     {
@@ -23,7 +42,8 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-Database-Source",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Database-Source.git",
       "branch": "dev",
-      "commit": "6e3db46b62bf6ac7fae484e379067d78b238ee68",
+      "commit": "d9c4290ae0c4503b30449edf636b865c51a96f15",
+      "merged": true,
       "paths": [
         "database/staging/unresolved/lineageos_wiki"
       ],
@@ -36,9 +56,11 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-Core",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core.git",
       "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "ad0c1954eb340e51f194e7c2dd33ed9186ce95cb",
+      "commit": "34e93e34440efb90d64d4af1f9f10292d790575c",
+      "merged": false,
       "packaging": "not packaged; the app calls the installed Magisk/KernelSU module (zairenkai_core) through root: zcored ctl, protocol v1",
-      "license": "No project licence chosen (no LICENSE file); no code is copied into the app.",
+      "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
+      "note": "Adds the read-only ThermalTools capabilities (thermaltools.diagnostics, thermaltools.sensors) to discovery. dev holds 455368f, without them.",
       "integration_status": "implemented"
     },
     {
@@ -46,9 +68,39 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
       "branch": "ccr-63f8aa87-1b0paj",
-      "commit": "0877452636a6ad960a7f90834e0a0228f322f3c1",
+      "commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
+      "merged": false,
       "packaging": "not packaged; the app calls the installed module (zairenkai_fas) through root: zfasd ctl (status schema 1, docs/INTEGRATION.md)",
-      "license": "No project licence chosen (no LICENSE file); no code is copied into the app.",
+      "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
+      "note": "Licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (the merge of FAS PR #2); they add LICENSE, NOTICE and SPDX headers and changes no code. Not merged into dev yet.",
+      "integration_status": "implemented"
+    },
+    {
+      "id": "zairenkai-core-module",
+      "repository": "ZairenkaiPrjctX/Zairenkai-Core",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core.git",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "34e93e34440efb90d64d4af1f9f10292d790575c",
+      "merged": false,
+      "packaging": "Magisk/KernelSU/APatch module zip built with the repository's scripts/build-android.sh (arm64-v8a), packaged as assets/system-modules/zairenkai_core.zip and installed only on the user's request through the root manager's own installer",
+      "abis": [
+        "arm64-v8a"
+      ],
+      "license": "Apache-2.0 (LICENSE and NOTICE inside the zip)",
+      "integration_status": "implemented"
+    },
+    {
+      "id": "zairenkai-fas-module",
+      "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
+      "merged": false,
+      "packaging": "module zip built with the repository's scripts/build-android.sh (arm64-v8a); packaged as assets/system-modules/zairenkai_fas.zip ONLY in internal development builds (ZAIRENKAI_INTERNAL_BUILD=1), never in distributable builds",
+      "abis": [
+        "arm64-v8a"
+      ],
+      "license": "Apache-2.0 (LICENSE and NOTICE inside the zip at this commit); provenance audit: docs/integration/fas-provenance.md",
       "integration_status": "implemented"
     }
   ]

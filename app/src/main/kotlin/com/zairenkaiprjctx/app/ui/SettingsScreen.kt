@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.app.ui
 
 import android.app.Activity
@@ -40,7 +42,8 @@ import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SettingsScreen(vm: SettingsViewModel, padding: PaddingValues) {
+fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, padding: PaddingValues, openModule: () -> Unit) {
+    val declined by modules.declined.collectAsStateWithLifecycle()
     val theme by vm.theme.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val dynamicSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -70,6 +73,15 @@ fun SettingsScreen(vm: SettingsViewModel, padding: PaddingValues) {
                     )
                 }
                 Supporting(stringResource(if (dynamicSupported) R.string.settings_dynamic_on else R.string.settings_dynamic_unsupported))
+            }
+        }
+        item {
+            SectionCard(stringResource(R.string.module_title)) {
+                Supporting(stringResource(if (declined) R.string.module_settings_declined else R.string.module_settings_note))
+                Row(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                    OutlinedButton(onClick = openModule) { Text(stringResource(R.string.module_settings_open)) }
+                    if (declined) OutlinedButton(onClick = modules::reconsider) { Text(stringResource(R.string.module_settings_reoffer)) }
+                }
             }
         }
         item {

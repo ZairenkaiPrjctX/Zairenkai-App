@@ -7,8 +7,9 @@
 | SoC fields, dynamic colour | API 31+ | `AndroidPlatformInfo`, `ZairenkaiTheme` | No |
 | App language (English default, Indonesian on request) | API 29–32: in-app choice stored in preferences; API 33+: per-app language via `LocaleManager` (generated `localeConfig`: en, in) | `AppLanguage`, `LanguageTest` (SDK 32 and 35) | No |
 | ABIs packaged | arm64-v8a, armeabi-v7a, x86_64 | `aapt2 dump badging`: native-code | No |
-| 16 KB page size | zart arm64-v8a and x86_64 LOAD segments aligned to 0x4000; AndroidX's own library 0x4000 | `llvm-readelf -lW` | No |
+| 16 KB page size | zart and zthermal arm64-v8a and x86_64 LOAD segments aligned to 0x4000; AndroidX's own library 0x4000 | `llvm-readelf -lW` | No |
 | zart inspect | Any of the ABIs above, as the app uid | `ZartTest` (host and fixture output) | No |
+| zthermal snapshot | Any of the ABIs above, as the app uid. Thermal zone reads depend on SELinux policy for `untrusted_app`; a denied read is reported as `permission_denied`, never replaced. | `ThermalToolsTest`, ThermalTools `docs/COMPATIBILITY_MATRIX.md` | No |
 | Dexopt status | Root, and ART Service's `art` shell command (zart's tested format: android-17) | Zart `docs/COMPATIBILITY_MATRIX.md` | No |
 | Core / FAS | Root plus the installed modules at the locked revisions | contract tests | No |
 | Root managers | Any `su` that supports `-c` and returns `uid=0` from `id` (Magisk and KernelSU provide one). KernelSU `su` may not exist as a file; absence is detected when spawning it. | `RootShell` tests | No |

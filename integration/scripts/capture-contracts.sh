@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 # Capture real outputs of the locked component revisions as contract fixtures for the parser
 # tests (integration-core/src/test/resources/contracts/).
 #
-# Builds zart, zcored and zfasd for the host at the commits in integration/repository-lock.json
+# Builds zart, zthermal, zcored and zfasd for the host at the commits in integration/repository-lock.json
 # and runs them in temporary directories:
 #   - zart inspect / dexopt-status (host: Android inputs report "unavailable");
+#   - zthermal snapshot against ThermalTools' own synthetic device fixtures (--root, read only)
+#     and against this host (no thermal zones, no getprop: every source reports unsupported);
 #   - zcored run --dir TMP, then zcored ctl health|capabilities|context|modules|leases|audit and a
 #     dry-run submit (Core writes no device nodes; its state stays in TMP);
 #   - zfasd run --observe-only --dir TMP (in-memory control backend: no cpufreq writes), then
 #     zfasd ctl status and profile.
+#   - the module catalog build-components.sh wrote from the real module zips (run it first).
 # Requires: git read access to the repositories, Rust (stable), python3.
 set -euo pipefail
 
@@ -41,11 +46,16 @@ fetch() {
 }
 wait_for() { for _ in $(seq 1 50); do [ -S "$1" ] && return 0; sleep 0.2; done; echo "no socket $1" >&2; exit 1; }
 
-mkdir -p "$SRC" "$DEST/zart" "$DEST/core" "$DEST/fas"
+mkdir -p "$SRC" "$DEST/zart" "$DEST/zthermal" "$DEST/core" "$DEST/fas" "$DEST/system-modules"
+CATALOG="$ROOT/integration/out/assets/system-modules.json"
+[ -f "$CATALOG" ] || { echo "run integration/scripts/build-components.sh first ($CATALOG missing)" >&2; exit 1; }
+cp "$CATALOG" "$DEST/system-modules/catalog.json"
 fetch "$SRC/zart" "$(field zart url)" "$(field zart commit)"
+fetch "$SRC/zthermal" "$(field zthermal url)" "$(field zthermal commit)"
 fetch "$SRC/core" "$(field zcored-ctl-contract url)" "$(field zcored-ctl-contract commit)"
 fetch "$SRC/fas" "$(field zfasd-ctl-contract url)" "$(field zfasd-ctl-contract commit)"
 (cd "$SRC/zart" && cargo build -q --locked --release -p zart)
+(cd "$SRC/zthermal" && cargo build -q --locked --release -p zthermal)
 (cd "$SRC/core" && cargo build -q --locked --release -p zcored)
 (cd "$SRC/fas" && cargo build -q --locked --release -p zfasd)
 
@@ -70,6 +80,12 @@ TOML
 cp "$ROOT/integration/scripts/zart_fixture_main.rs" "$TMP/zart-fixture/src/main.rs"
 cp "$SRC/zart/Cargo.lock" "$TMP/zart-fixture/Cargo.lock"
 (cd "$TMP/zart-fixture" && cargo run -q --release -- "$TMP/zart-root" "$DEST/zart")
+
+ZT="$SRC/zthermal/target/release/zthermal"
+for dev in synthetic-qcom synthetic-pixel synthetic-mtk empty-host; do
+  "$ZT" snapshot --framework --root "$SRC/zthermal/tests/fixtures/devices/$dev" >"$DEST/zthermal/snapshot-$dev.json"
+done
+"$ZT" snapshot >"$DEST/zthermal/snapshot-host.json"
 
 CORE="$SRC/core/target/release/zcored"
 "$CORE" run --dir "$TMP/core" >"$TMP/core.log" 2>&1 &
@@ -97,7 +113,7 @@ rev = {c["id"]: c["commit"] for c in lock["components"]}
 (dest / "PROVENANCE.json").write_text(json.dumps({
     "captured_by": "integration/scripts/capture-contracts.sh",
     "host": "Linux container (no Android services: device inputs report unavailable)",
-    "zart": rev["zart"], "zcored": rev["zcored-ctl-contract"], "zfasd": rev["zfasd-ctl-contract"],
+    "zart": rev["zart"], "zthermal": rev["zthermal"], "zcored": rev["zcored-ctl-contract"], "zfasd": rev["zfasd-ctl-contract"],
 }, indent=2) + "\n")
 PY
 ls -R "$DEST"

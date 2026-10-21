@@ -13,12 +13,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NDK_VERSION: r27d
+  NDK_SHA256: 601246087a682d1944e1e16dd85bc6e49560fe8b6d61255be2829178c8ed15d9
+
 jobs:
-  # Runs without access to the other (private) Zairenkai repositories. The APK built here has no
-  # integration components (zart, AFID asset): their features report NATIVE_COMPONENT_UNAVAILABLE.
-  # A complete APK needs integration/scripts/build-components.sh first (docs/build/building.md).
-  android:
-    name: unit and UI tests, lint, debug APK (no components)
+  # REDUCED BUILD. No access to the other repositories and no native components: zart, zthermal,
+  # the module zips and the device asset are absent, and their features report
+  # NATIVE_COMPONENT_UNAVAILABLE. Fast feedback only; it is not the integrated app.
+  reduced:
+    name: reduced build (no native components) - unit and UI tests, lint, debug APK
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -29,13 +33,11 @@ jobs:
         run: |
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-      # Kotlin and Java unit tests (integration-core), Robolectric Compose UI tests and Java
-      # platform tests (app). No emulator is used.
       - run: ./gradlew --no-daemon :integration-core:test :app:testDebugUnitTest
       - run: ./gradlew --no-daemon lint assembleDebug -Pzairenkai.allowMissingComponents=true
 
   scripts:
-    name: integration scripts
+    name: integration scripts and source lock
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -43,5 +45,89 @@ jobs:
         with:
           persist-credentials: false
       - run: shellcheck integration/scripts/*.sh
-      - run: python3 -m py_compile integration/scripts/afid_asset.py
-      - run: python3 -c "import json; [json.load(open(f)) for f in ('integration/organization-repositories.json', 'integration/repository-lock.json')]"
+      - run: python3 -m py_compile integration/scripts/*.py
+      - run: python3 -c "import json; [json.load(open(f)) for f in ('integration/organization-repositories.json', 'integration/repository-lock.json', 'integration/system-modules.json', 'integration/module-trust.json')]"
+      - run: python3 integration/scripts/verify_integration.py lock
+      - run: python3 -m unittest discover -s integration/scripts/tests
+
+  # FULL INTEGRATION BUILD. Every component from its locked commit, the app with native
+  # components required (no allowMissingComponents), then the integration report. The other
+  # repositories are private: a GitHub App installation token, read-only and limited to them,
+  # fetches them. Without that App this job FAILS (it does not skip), because a green reduced
+  # build is not evidence that the integrated app builds.
+  full-integration:
+    name: full integration build (locked sources, native components)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # Secrets are not given to pull requests from forks; such PRs cannot run this job.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate the source lock
+        run: python3 integration/scripts/verify_integration.py lock
+      - name: Require the CI GitHub App
+        env:
+          APP_ID: ${{ vars.ZAIRENKAI_CI_APP_ID }}
+          HAS_KEY: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY != '' }}
+        run: |
+          if [ -z "$APP_ID" ] || [ "$HAS_KEY" != "true" ]; then
+            echo "::error::Full integration build blocked: the CI GitHub App is not configured (variable ZAIRENKAI_CI_APP_ID, secret ZAIRENKAI_CI_APP_PRIVATE_KEY). See docs/build/ci.md."
+            exit 1
+          fi
+      - name: Read-only token for the component repositories
+        id: token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.ZAIRENKAI_CI_APP_ID }} # the numeric App ID, not the OAuth Client ID (v3.3.0 marks app-id deprecated but still reads it)
+          private-key: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY }}
+          owner: ZairenkaiPrjctX
+          repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source
+          permission-contents: read
+      - name: Let git use the token (header only; never in a URL or a file in the workspace)
+        env:
+          TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          git config --global "http.https://github.com/.extraheader" "AUTHORIZATION: basic $auth"
+      - name: Every locked repository can be fetched
+        run: python3 integration/scripts/verify_integration.py access
+      - name: Rust, Android targets and NDK (checksum verified)
+        run: |
+          rustup toolchain install stable --profile minimal -t aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+          rustup default stable
+          curl -fsSL -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip"
+          echo "${NDK_SHA256}  /tmp/ndk.zip" | sha256sum -c -
+          unzip -q /tmp/ndk.zip -d /tmp
+          rm /tmp/ndk.zip
+          echo "ANDROID_NDK_HOME=/tmp/android-ndk-${NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - name: Build every component at its locked commit
+        run: integration/scripts/build-components.sh
+      - name: Verify checkouts, artifacts, notices and module catalog
+        run: python3 integration/scripts/verify_integration.py build
+      - name: Re-capture contracts from the real binaries (schema compatibility)
+        run: integration/scripts/capture-contracts.sh
+      - name: Tests, lint and APKs with native components required
+        run: ./gradlew --no-daemon :integration-core:test :app:testDebugUnitTest lint assembleDebug assembleRelease
+      - name: Drop the token from git
+        if: always()
+        run: git config --global --unset-all "http.https://github.com/.extraheader" || true
+      - name: Inspect the APK and write the integration report
+        run: |
+          python3 integration/scripts/verify_integration.py apk app/build/outputs/apk/release/app-release-unsigned.apk
+          python3 integration/scripts/verify_integration.py report app/build/outputs/apk/release/app-release-unsigned.apk
+          cat integration/out/integration-report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: engineering-build-unsigned-not-for-distribution
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/release/app-release-unsigned.apk
+            integration/out/components.json
+            integration/out/integration-report.json
+            integration/out/integration-report.md
+          if-no-files-found: error

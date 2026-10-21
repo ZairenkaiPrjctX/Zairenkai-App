@@ -8,21 +8,28 @@ The Android app for the Zairenkai ecosystem. One APK reaches the components that
 | Control plane | Zairenkai-Core | root: `zcored ctl` (protocol v1). Health, telemetry, module inventory, and policy-checked actions with a dry-run preview |
 | Frame-aware scheduling | Zairenkai-FAS | root: `zfasd ctl`. Status (frame statistics, decision, thermal cap) and control when Core is not running |
 | ART inspection | Zairenkai-ART | packaged `zart` executable. ART module, ART/dexopt properties, ISA config vs CPU; dexopt status via root |
-| Device database | Zairenkai-Database-Source | packaged offline asset: 353 unverified community device candidates (CC BY-SA 3.0) |
+| Thermal diagnostics | Zairenkai-ThermalTools | packaged `zthermal` executable, read only: thermal zones, trip points, cooling devices; framework thermal status via root on request. No thermal controls exist |
+| Device database | Zairenkai-Database-Source | packaged offline asset: 354 unverified community device candidates (CC BY-SA 3.0) |
 | Android platform | – | public APIs: identity, thermal status and headroom, battery saver, ART APEX version |
 
-The other repositories contain no implementation yet. The app says so, citing each one's
+The other Zairenkai repositories contain no implementation yet (anime-extensions, also in the
+organization, is a separate product). The app says so, citing each one's
 audited commit, instead of showing placeholders. Details: `integration/repository-audit.md`.
 
 - **No device validation yet.** Nothing has run on an Android device
   (`docs/testing/verification-report.md`).
 - **Root is opt-in.** The app works without root; root features stay off until enabled in
   System › Root access.
+- **System module.** With root, the app can install the Zairenkai Core module (FAS only in
+  internal development builds) through the root manager's own installer, only after you confirm
+  (`docs/integration/system-module.md`). Installation stays blocked until the module catalog is
+  signed by a trusted module-signing key, and none exists yet. It has not been tested on a
+  device.
 
 ## Build
 
 ```sh
-ANDROID_NDK_HOME=/path/to/ndk integration/scripts/build-components.sh   # zart + AFID asset at locked commits
+ANDROID_NDK_HOME=/path/to/ndk integration/scripts/build-components.sh   # zart, zthermal + AFID asset at locked commits
 ./gradlew :integration-core:test :app:testDebugUnitTest lint assembleDebug
 ```
 
@@ -36,6 +43,10 @@ Full instructions: `docs/build/building.md`.
 | Commands and contracts per component | `docs/architecture/integration-map.md` |
 | Repository capability matrix | `docs/integration/repository-capability-matrix.md` |
 | Root and data handling | `docs/integration/privilege-model.md` |
+| In-app module installation | `docs/integration/system-module.md` |
+| CI and the full integration build | `docs/build/ci.md` |
+| Release and signing (blocked) | `docs/build/release.md` |
+| Device validation procedure | `docs/testing/device-validation.md` |
 | Device, API and ABI compatibility | `docs/integration/compatibility-matrix.md` |
 | Design system (Material 3 Expressive, Google Sans Flex) | `docs/design/design-system.md` |
 | What was verified | `docs/testing/verification-report.md` |
@@ -43,7 +54,11 @@ Full instructions: `docs/build/building.md`.
 
 ## Licences
 
-- **This repository:** no licence has been chosen yet.
+- **This repository:** Apache-2.0 (`LICENSE`, `NOTICE`), as are the bundled zart, zthermal and
+  Core module. Each bundled component keeps its own licence and notices.
 - **Bundled font:** Google Sans Flex, SIL OFL 1.1. "Google Sans Flex" is a trademark of
   Google LLC, and this app is not affiliated with Google.
 - **Device data:** CC BY-SA 3.0 (LineageOS Wiki via AFID).
+- **zart and zthermal:** Apache-2.0; their `LICENSE` and `NOTICE` are packaged in
+  `assets/licenses/zart/` (with the AOSP attribution) and `assets/licenses/zthermal/`. Full
+  inventory: `docs/integration/license-inventory.md`.

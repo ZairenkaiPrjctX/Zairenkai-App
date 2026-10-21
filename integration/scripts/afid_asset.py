@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 """Generate the app's compact AFID device-candidate asset.
 
 Input: a checkout of Zairenkai-Database-Source at the commit locked in

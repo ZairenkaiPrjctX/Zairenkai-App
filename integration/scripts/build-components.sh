@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 ZairenkaiPrjctX contributors
 # Build the packaged components at the exact commits in integration/repository-lock.json.
 #
 # Produces (git-ignored):
 #   integration/out/jniLibs/<abi>/libzart.so      zart from Zairenkai-ART (scripts/build-android.sh)
+#   integration/out/jniLibs/<abi>/libzthermal.so  zthermal from Zairenkai-ThermalTools (scripts/build-android.sh)
+#   integration/out/assets/licenses/zthermal/     zthermal's LICENSE and NOTICE (Apache-2.0)
+#   integration/out/assets/licenses/zart/         zart's LICENSE and NOTICE (Apache-2.0, with the AOSP attribution)
+#   integration/out/assets/licenses/<component>/THIRD_PARTY_NOTICES.txt  licences of every Rust
+#                                                   crate compiled into each binary (rust_notices.py)
 #   integration/out/assets/afid/device-candidates.json   AFID asset (integration/scripts/afid_asset.py)
+#   integration/out/assets/system-modules/<id>.zip  root modules (Core, FAS) from their build-android.sh
+#   integration/out/assets/system-modules.json      module catalog: integration/system-modules.json plus
+#                                                   size, SHA-256 and per-entry digests (module_asset.py)
 #   integration/out/components.json               what was built, from which commit, with SHA-256
 #
 # Requires: git with read access to the private ZairenkaiPrjctX repositories, Rust with the
@@ -54,6 +64,67 @@ for abi in arm64-v8a armeabi-v7a x86_64; do
   install -m 0755 "$OUT/src/zart/dist/zart-$ZART_VERSION-$abi" "$OUT/jniLibs/$abi/libzart.so"
 done
 (cd "$OUT/src/zart/dist" && sha256sum -c --quiet SHA256SUMS)
+notices() { # notices <workspace> <package> <component>
+  python3 "$ROOT/integration/scripts/rust_notices.py" --workspace "$1" --package "$2" \
+    --target aarch64-linux-android --component "$3" --out "$OUT/assets/licenses/$3/THIRD_PARTY_NOTICES.txt"
+}
+notices "$OUT/src/zart" zart zart
+install -m 0644 "$OUT/src/zart/LICENSE" "$OUT/src/zart/NOTICE" "$OUT/assets/licenses/zart/" # NOTICE: AOSP attribution
+install -m 0644 "$ROOT/integration/notices/zart-aosp-attribution.txt" "$OUT/assets/licenses/zart/AOSP-ATTRIBUTION.txt"
+
+# --- zthermal (Zairenkai-ThermalTools) ---------------------------------------------------
+ZT_COMMIT=$(field zthermal commit)
+fetch "$OUT/src/zthermal" "$(field zthermal url)" "$ZT_COMMIT"
+(cd "$OUT/src/zthermal" && rm -rf dist && scripts/build-android.sh)
+ZT_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' "$OUT/src/zthermal/Cargo.toml" | head -n1)
+(cd "$OUT/src/zthermal/dist" && sha256sum -c --quiet SHA256SUMS)
+for abi in arm64-v8a armeabi-v7a x86_64; do
+  mkdir -p "$OUT/jniLibs/$abi"
+  install -m 0755 "$OUT/src/zthermal/dist/zthermal-$ZT_VERSION-$abi" "$OUT/jniLibs/$abi/libzthermal.so"
+done
+mkdir -p "$OUT/assets/licenses/zthermal"
+install -m 0644 "$OUT/src/zthermal/LICENSE" "$OUT/src/zthermal/NOTICE" "$OUT/assets/licenses/zthermal/"
+notices "$OUT/src/zthermal" zthermal zthermal
+
+# --- root modules (Zairenkai-Core, Zairenkai-FAS) ------------------------------------------
+# Built by each repository's own script at the locked commit; module_asset.py checks every
+# script in the zip against that commit's module/ sources before the zip is packaged.
+mkdir -p "$OUT/assets/system-modules"
+build_module() { # build_module <lock component> <module id> <dist prefix> <cargo package>
+  local comp=$1 id=$2 prefix=$3 commit dir zip
+  commit=$(field "$comp" commit)
+  dir="$OUT/src/$comp"
+  fetch "$dir" "$(field "$comp" url)" "$commit"
+  (cd "$dir" && rm -rf dist && scripts/build-android.sh >/dev/null)
+  zip=$(ls "$dir"/dist/"$prefix"-v*.zip)
+  (cd "$dir" && sha256sum -c --quiet "dist/$(basename "$zip").sha256") # the .sha256 names dist/<zip>
+  python3 "$ROOT/integration/scripts/module_asset.py" --spec "$ROOT/integration/system-modules.json" \
+    --id "$id" --zip "$zip" --source "$dir" --commit "$commit" --repository "$(field "$comp" repository)" \
+    --out "$OUT/assets/system-modules.json"
+  install -m 0644 "$zip" "$OUT/assets/system-modules/$id.zip"
+  notices "$dir" "$4" "$id"
+}
+rm -f "$OUT/assets/system-modules.json"
+rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai_fas"
+mkdir -p "$OUT/assets/system-modules"
+build_module zairenkai-core-module zairenkai_core zairenkai-core zcored
+# FAS is an internal module (integration/system-modules.json, docs/integration/fas-provenance.md):
+# built only for an explicitly labelled internal development build and never for distribution.
+PROFILE=distributable
+if [ "${ZAIRENKAI_INTERNAL_BUILD:-0}" = 1 ]; then
+  PROFILE=internal
+  echo "INTERNAL DEVELOPMENT BUILD: including zairenkai_fas (not for distribution)" >&2
+  build_module zairenkai-fas-module zairenkai_fas zairenkai-fas zfasd
+fi
+# The catalog is signed only when the module-signing key is provided (release builds); the
+# key's public half must be in integration/module-trust.json. Without it the catalog stays
+# unsigned and the app refuses to install modules from this build.
+rm -f "$OUT/assets/system-modules.json.sig"
+if [ -n "${ZAIRENKAI_MODULE_SIGNING_KEY_FILE:-}" ]; then
+  "$ROOT/integration/scripts/sign-module-catalog.sh" "$ZAIRENKAI_MODULE_SIGNING_KEY_FILE"
+else
+  echo "module catalog left unsigned (ZAIRENKAI_MODULE_SIGNING_KEY_FILE not set): module installation is blocked in this build" >&2
+fi
 
 # --- AFID device candidates (Zairenkai-Database-Source) ----------------------------------
 AFID_COMMIT=$(field afid-device-candidates commit)
@@ -63,14 +134,16 @@ python3 "$ROOT/integration/scripts/afid_asset.py" --source "$OUT/src/afid" --com
   --out "$OUT/assets/afid/device-candidates.json"
 
 # --- record what was built ----------------------------------------------------------------
-python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$AFID_COMMIT" <<'PY'
+python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$ZT_COMMIT" "$ZT_VERSION" "$AFID_COMMIT" "$PROFILE" <<'PY'
 import hashlib, json, pathlib, sys
-out, zart_commit, zart_version, afid_commit = pathlib.Path(sys.argv[1]), *sys.argv[2:]
+out, zart_commit, zart_version, zt_commit, zt_version, afid_commit, profile = pathlib.Path(sys.argv[1]), *sys.argv[2:]
 files = sorted(p for p in (out / "jniLibs").rglob("*") if p.is_file()) + \
         sorted(p for p in (out / "assets").rglob("*") if p.is_file())
 rec = {
     "schema": 1,
+    "profile": profile,
     "zart": {"commit": zart_commit, "version": zart_version},
+    "zthermal": {"commit": zt_commit, "version": zt_version},
     "afid": {"commit": afid_commit},
     "files": {str(p.relative_to(out)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
 }

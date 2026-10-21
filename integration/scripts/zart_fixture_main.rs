@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 //! Serialise zart reports for fixture inputs (used by capture-contracts.sh). The inputs mirror
 //! zart's own tests: a fixture root and canned getprop / `cmd package art dump` output.
 

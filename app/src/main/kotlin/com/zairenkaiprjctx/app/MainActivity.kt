@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.app
 
 import android.content.Context
@@ -66,6 +68,8 @@ import com.zairenkaiprjctx.app.ui.RuntimeScreen
 import com.zairenkaiprjctx.app.ui.RuntimeViewModel
 import com.zairenkaiprjctx.app.ui.SettingsScreen
 import com.zairenkaiprjctx.app.ui.SettingsViewModel
+import com.zairenkaiprjctx.app.ui.SystemModuleScreen
+import com.zairenkaiprjctx.app.ui.SystemModuleViewModel
 import com.zairenkaiprjctx.app.ui.SystemScreen
 import com.zairenkaiprjctx.app.ui.SystemViewModel
 import com.zairenkaiprjctx.app.ui.ThermalScreen
@@ -75,10 +79,13 @@ import com.zairenkaiprjctx.app.ui.ThermalViewModel
 enum class Tab(@StringRes val title: Int, val icon: ImageVector, val subsystems: List<String>) {
     HOME(R.string.nav_home, ZairenkaiIcons.home, listOf("android", "afid")),
     PERFORMANCE(R.string.nav_performance, ZairenkaiIcons.performance, listOf("core", "fas")),
-    THERMAL(R.string.nav_thermal, ZairenkaiIcons.thermal, listOf("android", "core", "fas")),
+    THERMAL(R.string.nav_thermal, ZairenkaiIcons.thermal, listOf("android", "thermaltools", "core", "fas")),
     RUNTIME(R.string.nav_runtime, ZairenkaiIcons.runtime, listOf("art")),
     SYSTEM(R.string.nav_system, ZairenkaiIcons.system, listOf("core", "afid", "upstream")),
 }
+
+/** Destinations shown over the tabs, from the app bar or a link. */
+enum class Overlay { NONE, SETTINGS, SYSTEM_MODULE }
 
 class MainActivity : ComponentActivity() {
     /** English unless the user chose another language: see [AppLanguage]. */
@@ -122,20 +129,32 @@ private fun App(c: AppContainer) {
     val runtime: RuntimeViewModel = viewModel(factory = viewModelFactory { initializer { RuntimeViewModel(c) } })
     val system: SystemViewModel = viewModel(factory = viewModelFactory { initializer { SystemViewModel(c) } })
     val settingsVm: SettingsViewModel = viewModel(factory = viewModelFactory { initializer { SettingsViewModel(c) } })
+    val modulesVm: SystemModuleViewModel = viewModel(factory = viewModelFactory { initializer { SystemModuleViewModel(c) } })
     val snapshot by main.registry.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
-    var showSettings by rememberSaveable { mutableStateOf(false) }
-    BackHandler(enabled = showSettings) { showSettings = false }
+    var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
+    val showSettings = overlay != Overlay.NONE
+    BackHandler(enabled = showSettings) { overlay = Overlay.NONE }
+
+    // Compatibility checks run only when the user opens the System Module screen: granting root
+    // alone neither checks nor installs anything.
+    val openModule = { overlay = Overlay.SYSTEM_MODULE }
 
     val registered = c.registry.subsystems.map { it.id }.toSet()
     val tabs = Tab.entries.filter { t -> t.subsystems.any { it in registered } }
     val select: (Tab) -> Unit = {
         tab = it
-        showSettings = false
+        overlay = Overlay.NONE
     }
 
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val title = if (showSettings) stringResource(R.string.nav_settings) else stringResource(tab.title)
+    val title = stringResource(
+        when (overlay) {
+            Overlay.SETTINGS -> R.string.nav_settings
+            Overlay.SYSTEM_MODULE -> R.string.module_title
+            Overlay.NONE -> tab.title
+        },
+    )
 
     BoxWithConstraints(Modifier.semantics { testTagsAsResourceId = true }) {
         val wide = maxWidth >= 600.dp
@@ -160,7 +179,7 @@ private fun App(c: AppContainer) {
                         title = { Text(title, style = MaterialTheme.typography.headlineMedium) },
                         navigationIcon = {
                             if (showSettings) {
-                                IconButton(onClick = { showSettings = false }) {
+                                IconButton(onClick = { overlay = Overlay.NONE }) {
                                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                                 }
                             }
@@ -170,7 +189,7 @@ private fun App(c: AppContainer) {
                                 IconButton(onClick = main::refresh, enabled = !snapshot.refreshing) {
                                     Icon(ZairenkaiIcons.refresh, contentDescription = stringResource(R.string.action_refresh))
                                 }
-                                IconButton(onClick = { showSettings = true }) {
+                                IconButton(onClick = { overlay = Overlay.SETTINGS }) {
                                     Icon(ZairenkaiIcons.settings, contentDescription = stringResource(R.string.action_open_settings))
                                 }
                             }
@@ -204,17 +223,19 @@ private fun App(c: AppContainer) {
                 val spatial = ZairenkaiMotion.spatial<IntOffset>()
                 val effects = ZairenkaiMotion.effects<Float>()
                 AnimatedContent(
-                    targetState = if (showSettings) null else tab,
+                    targetState = if (showSettings) overlay else tab,
                     transitionSpec = { (fadeIn(effects) + slideInVertically(spatial) { it / 16 }) togetherWith fadeOut(effects) },
                     label = "destination",
                 ) { destination ->
                     when (destination) {
-                        null -> SettingsScreen(settingsVm, padding)
-                        Tab.HOME -> HomeScreen(c, main, padding)
+                        Overlay.SETTINGS -> SettingsScreen(settingsVm, modulesVm, padding, openModule)
+                        Overlay.SYSTEM_MODULE -> SystemModuleScreen(modulesVm, main, snapshot, padding)
+                        Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule)
                         Tab.PERFORMANCE -> PerformanceScreen(perf, snapshot, padding, goToRoot)
                         Tab.THERMAL -> ThermalScreen(thermal, perf, snapshot, padding)
                         Tab.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
-                        Tab.SYSTEM -> SystemScreen(system, main, snapshot, padding)
+                        Tab.SYSTEM -> SystemScreen(system, main, snapshot, padding, openModule)
+                        else -> Unit
                     }
                 }
             }

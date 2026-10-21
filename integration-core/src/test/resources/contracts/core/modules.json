@@ -1,10 +1,10 @@
 {
-  "id": "cli-8187-2603700",
+  "id": "cli-22185-7496828",
   "ok": true,
   "result": [
     {
       "compatible": false,
-      "detail": "Zairenkai-ThermalTools: no released component; Core has no adapter for it yet",
+      "detail": "Zairenkai-ThermalTools: paths.thermaltools_binary is not configured",
       "health": "not_installed",
       "id": "zairenkai_thermaltools",
       "owns": [],

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.integration.zart
 
 import com.zairenkaiprjctx.integration.exec.CommandOutcome

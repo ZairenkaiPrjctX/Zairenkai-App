@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.app.ui
 
 import android.content.Intent
@@ -60,7 +62,7 @@ fun rootStateLabel(s: RootState): String = stringResource(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySnapshot, padding: PaddingValues) {
+fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySnapshot, padding: PaddingValues, openModule: () -> Unit) {
     val c = vm.container
     val root by main.rootState.collectAsStateWithLifecycle()
     val modules by vm.modules.collectAsStateWithLifecycle()
@@ -80,10 +82,13 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
             ) {
                 InfoRow(stringResource(R.string.key_state), rootStateLabel(root))
                 Supporting(stringResource(R.string.root_note))
-                if (root == RootState.GRANTED) {
-                    OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
-                } else {
-                    Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                    if (root == RootState.GRANTED) {
+                        OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
+                    } else {
+                        Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
+                    }
+                    OutlinedButton(onClick = openModule) { Text(stringResource(R.string.module_title)) }
                 }
             }
         }
@@ -145,8 +150,40 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
                 }
                 afid?.getOrNull()?.let { Supporting(stringResource(R.string.licence_data, it.license.spdx, it.license.attribution)) }
                 Supporting(stringResource(R.string.licence_zart))
+                Supporting(stringResource(R.string.licence_zthermal))
+                if (c.components?.zthermalCommit != null) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                        TextButton(onClick = { licence = "licenses/zthermal/LICENSE" }) { Text(stringResource(R.string.licence_zthermal_view)) }
+                        TextButton(onClick = { licence = "licenses/zthermal/NOTICE" }) { Text(stringResource(R.string.licence_zthermal_notice)) }
+                    }
+                }
                 Supporting(stringResource(R.string.licence_libs))
+                // Generated notices: Android libraries, and the Rust crates in each packaged binary.
+                val notices = listOf(
+                    "licenses/android/NOTICES.txt" to R.string.licence_notices_android,
+                    "licenses/zart/LICENSE" to R.string.licence_zart_view,
+                    "licenses/zart/NOTICE" to R.string.licence_zart_notice,
+                    "licenses/zart/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zart,
+                    "licenses/zart/AOSP-ATTRIBUTION.txt" to R.string.licence_notices_zart_aosp,
+                    "licenses/zthermal/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zthermal,
+                    "licenses/zairenkai_core/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_core,
+                    "licenses/zairenkai_fas/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_fas,
+                ).filter { c.assetExists(it.first) }
+                if (notices.isNotEmpty()) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                        notices.forEach { (path, label) -> TextButton(onClick = { licence = path }) { Text(stringResource(label)) } }
+                    }
+                }
                 Supporting(stringResource(R.string.licence_project))
+                val own = listOf(
+                    "licenses/zairenkai-app/LICENSE" to R.string.licence_app_view,
+                    "licenses/zairenkai-app/NOTICE" to R.string.licence_app_notice,
+                ).filter { c.assetExists(it.first) }
+                if (own.isNotEmpty()) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                        own.forEach { (path, label) -> TextButton(onClick = { licence = path }) { Text(stringResource(label)) } }
+                    }
+                }
             }
         }
     }
@@ -170,6 +207,8 @@ private fun Diagnostics(vm: SystemViewModel, snapshot: RegistrySnapshot, root: R
         InfoRow(stringResource(R.string.key_app), "${c.versionName} (${c.packageName})", code = true)
         InfoRow(stringResource(R.string.key_zart), comp?.let { "${it.zartVersion} @ ${it.zartCommit?.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
         InfoRow(stringResource(R.string.key_zart_exe), stringResource(if (c.zartPath != null) R.string.present else R.string.missing_abi))
+        InfoRow(stringResource(R.string.key_zthermal), comp?.zthermalCommit?.let { "${comp.zthermalVersion} @ ${it.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
+        InfoRow(stringResource(R.string.key_zthermal_exe), stringResource(if (c.zthermalPath != null) R.string.present else R.string.missing_abi))
         InfoRow(stringResource(R.string.key_afid_data), comp?.afidCommit?.take(12) ?: stringResource(R.string.not_packaged), code = true)
         val chooserTitle = stringResource(R.string.diagnostics_share)
         Button(onClick = {
@@ -178,6 +217,7 @@ private fun Diagnostics(vm: SystemViewModel, snapshot: RegistrySnapshot, root: R
                 put("api_level", c.platform.sdkInt)
                 put("abis", JsonArray(c.platform.supportedAbis.map { JsonPrimitive(it) }))
                 put("zart_commit", comp?.zartCommit)
+                put("zthermal_commit", comp?.zthermalCommit)
                 put("afid_commit", comp?.afidCommit)
                 put("root_state", root.name)
                 put(
