@@ -1,0 +1,107 @@
+name: Release
+
+# Manual only. Builds the integrated app exactly as CI's full integration job, then signs the
+# module catalog and the APK with keys held in the protected "release" environment, and runs the
+# release gate (verify_integration.py report --release). The gate fails while any prerequisite
+# is missing: signing keys, a trusted module-signing key in integration/module-trust.json, or a
+# licence for every distributed component. No signing key is ever written to the workspace
+# outside $RUNNER_TEMP, printed, or uploaded.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NDK_VERSION: r27d
+  NDK_SHA256: 601246087a682d1944e1e16dd85bc6e49560fe8b6d61255be2829178c8ed15d9
+
+jobs:
+  release:
+    name: signed release build and release gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate the source lock
+        run: python3 integration/scripts/verify_integration.py lock
+      - name: Require every release secret
+        env:
+          CLIENT_ID: ${{ vars.ZAIRENKAI_CI_APP_CLIENT_ID }}
+          HAS_APP_KEY: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY != '' }}
+          HAS_MODULE_KEY: ${{ secrets.ZAIRENKAI_MODULE_SIGNING_KEY != '' }}
+          HAS_KEYSTORE: ${{ secrets.ZAIRENKAI_RELEASE_KEYSTORE_BASE64 != '' }}
+        run: |
+          missing=""
+          [ -n "$CLIENT_ID" ] && [ "$HAS_APP_KEY" = "true" ] || missing="$missing CI-GitHub-App"
+          [ "$HAS_MODULE_KEY" = "true" ] || missing="$missing ZAIRENKAI_MODULE_SIGNING_KEY"
+          [ "$HAS_KEYSTORE" = "true" ] || missing="$missing ZAIRENKAI_RELEASE_KEYSTORE_BASE64"
+          if [ -n "$missing" ]; then
+            echo "::error::Release blocked: missing$missing (docs/build/release.md)."
+            exit 1
+          fi
+      - id: token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.ZAIRENKAI_CI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY }}
+          owner: ZairenkaiPrjctX
+          repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source
+          permission-contents: read
+      - name: Let git use the token
+        env:
+          TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          git config --global "http.https://github.com/.extraheader" "AUTHORIZATION: basic $auth"
+      - name: Rust, Android targets and NDK (checksum verified)
+        run: |
+          rustup toolchain install stable --profile minimal -t aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+          rustup default stable
+          curl -fsSL -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip"
+          echo "${NDK_SHA256}  /tmp/ndk.zip" | sha256sum -c -
+          unzip -q /tmp/ndk.zip -d /tmp
+          rm /tmp/ndk.zip
+          echo "ANDROID_NDK_HOME=/tmp/android-ndk-${NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - name: Write the signing keys to the runner's temporary directory
+        env:
+          MODULE_KEY: ${{ secrets.ZAIRENKAI_MODULE_SIGNING_KEY }}
+          KEYSTORE: ${{ secrets.ZAIRENKAI_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          umask 077
+          printf '%s\n' "$MODULE_KEY" > "$RUNNER_TEMP/module-signing.pem"
+          printf '%s' "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "ZAIRENKAI_MODULE_SIGNING_KEY_FILE=$RUNNER_TEMP/module-signing.pem" >> "$GITHUB_ENV"
+          echo "ZAIRENKAI_RELEASE_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      - name: Build every component and sign the module catalog
+        run: integration/scripts/build-components.sh
+      - run: python3 integration/scripts/verify_integration.py build
+      - name: Tests, lint, signed release APK
+        env:
+          ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD }}
+          ZAIRENKAI_RELEASE_KEY_ALIAS: ${{ secrets.ZAIRENKAI_RELEASE_KEY_ALIAS }}
+          ZAIRENKAI_RELEASE_KEY_PASSWORD: ${{ secrets.ZAIRENKAI_RELEASE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :integration-core:test :app:testDebugUnitTest lint assembleRelease
+      - name: Remove keys and token
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/module-signing.pem" "$RUNNER_TEMP/release.jks"
+          git config --global --unset-all "http.https://github.com/.extraheader" || true
+      - name: Release gate
+        run: |
+          python3 integration/scripts/verify_integration.py report app/build/outputs/apk/release/app-release.apk --release
+          cat integration/out/integration-report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            integration/out/integration-report.json
+            integration/out/integration-report.md
+          if-no-files-found: error

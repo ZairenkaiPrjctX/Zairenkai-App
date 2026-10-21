@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "algorithm": "ECDSA_P256_SHA256",
+  "note": "Public keys allowed to sign the module catalog (assets/system-modules.json). Reviewed in Git and copied into the APK. Separate from the APK signing key. The private keys never enter Git, the APK, a device or a CI log. Empty: no module-signing key has been created, so the app refuses to install modules. Add a key with integration/scripts/module-trust-key.sh <public key PEM> after a maintainer creates it.",
+  "keys": []
+}

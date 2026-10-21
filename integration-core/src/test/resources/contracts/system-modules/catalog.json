@@ -39,6 +39,19 @@
         "zcored starts at boot from service.sh and restarts at most 5 times in 10 minutes.",
         "Removing the module stops zcored, which restores any temporary override it made, and deletes /data/adb/zairenkai-core."
       ],
+      "lifecycle": {
+        "destinations": {
+          "staged": "/data/adb/modules_update/zairenkai_core (by the root manager)",
+          "active": "/data/adb/modules/zairenkai_core (after reboot)",
+          "data": "/data/adb/zairenkai-core (customize.sh creates it 0700; config.toml there is kept across installs)"
+        },
+        "startup": "service.sh waits for sys.boot_completed, then runs bin/zcored run --dir /data/adb/zairenkai-core under a supervisor: exponential backoff, at most 5 starts in 10 minutes, then it stops and writes /data/adb/zairenkai-core/failed",
+        "shutdown": "the supervisor stops when the manager's disable or remove marker exists; zcored restores temporary overrides on SIGTERM",
+        "uninstall": "uninstall.sh sends SIGTERM to zcored, waits up to 30 s, then deletes /data/adb/zairenkai-core",
+        "recovery": "disable or remove the module in the root manager (or its safe mode); /data/adb/zairenkai-core/failed and zcored.log record start failures",
+        "kernel": "none beyond Android 10+ arm64 (customize.sh checks ARCH and API)",
+        "action": "action.sh prints zcored ctl health (the manager's Action button)"
+      },
       "file": "system-modules/zairenkai_core.zip",
       "version": "v0.1.0",
       "version_code": 100,
@@ -114,6 +127,19 @@
         "While running, zfasd raises cpufreq scaling_min_freq floors within [cpuinfo_min, scaling_max] and restores them when it stops (FAS docs/CAPABILITIES.md).",
         "Vendor performance agents may write the same nodes; FAS backs off on contention but does not disable them."
       ],
+      "lifecycle": {
+        "destinations": {
+          "staged": "/data/adb/modules_update/zairenkai_fas (by the root manager)",
+          "active": "/data/adb/modules/zairenkai_fas (after reboot)",
+          "data": "/data/adb/zairenkai-fas (customize.sh creates it 0700; config.toml there is kept)"
+        },
+        "startup": "service.sh waits for sys.boot_completed plus 10 s, then supervises zfasd run --dir /data/adb/zairenkai-fas with exponential backoff; after every exit it runs zfasd restore so nothing stays boosted",
+        "shutdown": "zfasd restores every cpufreq floor it raised when it stops (FAS docs/CAPABILITIES.md)",
+        "uninstall": "uninstall.sh sends SIGTERM to zfasd, runs zfasd restore, and deletes /data/adb/zairenkai-fas only if the restore succeeded (otherwise it keeps restore.json and logs to /cache)",
+        "recovery": "disable or remove the module in the root manager; zfasd restore restores recorded floors",
+        "kernel": "cpufreq policy directories under /sys/devices/system/cpu/cpufreq (required_paths)",
+        "action": "action.sh shows zfasd status; KernelSU's WebUI serves webroot/"
+      },
       "file": "system-modules/zairenkai_fas.zip",
       "version": "v0.1.0",
       "version_code": 100,

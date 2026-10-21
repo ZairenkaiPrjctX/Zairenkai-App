@@ -24,6 +24,7 @@ import com.zairenkaiprjctx.integration.registry.DeviceDbSubsystem
 import com.zairenkaiprjctx.integration.registry.FasSubsystem
 import com.zairenkaiprjctx.integration.registry.IntegrationRegistry
 import com.zairenkaiprjctx.integration.registry.PlatformSubsystem
+import com.zairenkaiprjctx.integration.registry.SystemModuleSubsystem
 import com.zairenkaiprjctx.integration.registry.ThermalToolsSubsystem
 import com.zairenkaiprjctx.integration.registry.UpstreamGapSubsystem
 import com.zairenkaiprjctx.integration.core.CoreCall
@@ -31,6 +32,9 @@ import com.zairenkaiprjctx.integration.fas.FasCall
 import com.zairenkaiprjctx.integration.systemmodule.ArtifactStore
 import com.zairenkaiprjctx.integration.systemmodule.DeviceFacts
 import com.zairenkaiprjctx.integration.systemmodule.ModuleCatalog
+import com.zairenkaiprjctx.integration.systemmodule.ModuleRelease
+import com.zairenkaiprjctx.integration.systemmodule.ModuleTrust
+import com.zairenkaiprjctx.integration.systemmodule.RuntimeStatus
 import com.zairenkaiprjctx.integration.systemmodule.ModuleInstallController
 import com.zairenkaiprjctx.integration.systemmodule.ModuleStateReader
 import com.zairenkaiprjctx.integration.systemmodule.PreflightProbe
@@ -104,6 +108,8 @@ class AppContainer(private val app: Application) {
 
     fun asset(path: String): String = app.assets.open(path).use { it.readBytes().decodeToString() }
 
+    fun assetExists(path: String): Boolean = runCatching { app.assets.open(path).close() }.isSuccess
+
     val inventory: OrganizationInventory? by lazy {
         runCatching { OrganizationInventory.parse(asset("integration/organization-repositories.json")) }.getOrNull()
     }
@@ -139,6 +145,7 @@ class AppContainer(private val app: Application) {
             art,
             thermalTools,
             DeviceDbSubsystem({ afid }, platform),
+            SystemModuleSubsystem({ moduleRelease }, { moduleInstallers.mapValues { it.value.state.value } }),
             CoreSubsystem(core, root, lockedCommit("Zairenkai-Core")),
             fasSubsystem,
             UpstreamGapSubsystem { inventory },
@@ -146,10 +153,19 @@ class AppContainer(private val app: Application) {
         Dispatchers.IO,
     )
 
-    /** Root modules packaged in this APK (assets/system-modules.json), or null if absent. */
-    val moduleCatalog: ModuleCatalog? by lazy {
-        runCatching { ModuleCatalog.parse(asset("system-modules.json")) }.getOrNull()
+    /**
+     * Root modules packaged in this APK and the verdict on the catalog's signature against the
+     * module-signing keys in integration/module-trust.json; null if no catalog is packaged.
+     */
+    val moduleRelease: ModuleRelease? by lazy {
+        runCatching {
+            val catalog = app.assets.open("system-modules.json").use { it.readBytes() }
+            val sig = runCatching { asset("system-modules.json.sig") }.getOrNull()
+            ModuleRelease.load(catalog, sig, ModuleTrust.parse(asset("integration/module-trust.json")))
+        }.getOrNull()
     }
+
+    val moduleCatalog: ModuleCatalog? get() = moduleRelease?.catalog
 
     /** Copies a packaged module to the cache staging directory (served by the FileProvider). */
     private val moduleStore = ArtifactStore { m ->
@@ -173,26 +189,28 @@ class AppContainer(private val app: Application) {
         freeDataBytes = android.os.StatFs(app.filesDir.path).availableBytes,
     )
 
-    /** Whether the component a module provides answers: Core health or FAS status. */
+    /** What the component a module provides says: Core health or FAS status. */
     private val moduleRuntime = RuntimeProbe { m ->
         when (m.runtimeCheck) {
             "core.health" -> when (val h = core.health()) {
-                is CoreCall.Ok -> null
-                CoreCall.NotInstalled -> "zcored was not found in the module"
-                is CoreCall.Unreachable -> "zcored is not answering: ${h.detail}"
-                is CoreCall.Error -> "Core error ${h.code}: ${h.message}"
-                is CoreCall.NoRoot -> h.detail
-                is CoreCall.Failed -> h.detail
+                is CoreCall.Ok ->
+                    if (h.value.state == "ready") RuntimeStatus.Healthy("Core ${h.value.version}: ready")
+                    else RuntimeStatus.Degraded("Core ${h.value.version}: ${h.value.state} (${h.value.reasons.joinToString("; ")})")
+                CoreCall.NotInstalled -> RuntimeStatus.NotAnswering("zcored was not found in the module")
+                is CoreCall.Unreachable -> RuntimeStatus.NotAnswering("zcored is not answering: ${h.detail}")
+                is CoreCall.Error -> RuntimeStatus.Degraded("Core error ${h.code}: ${h.message}")
+                is CoreCall.NoRoot -> RuntimeStatus.NotAnswering(h.detail)
+                is CoreCall.Failed -> RuntimeStatus.NotAnswering(h.detail)
             }
             "fas.status" -> when (val f = fas.status()) {
-                is FasCall.Ok -> null
-                FasCall.NotInstalled -> "zfasd was not found in the module"
-                is FasCall.Unreachable -> "zfasd is not answering: ${f.detail}"
-                is FasCall.Rejected -> f.message
-                is FasCall.NoRoot -> f.detail
-                is FasCall.Failed -> f.detail
+                is FasCall.Ok -> RuntimeStatus.Healthy(if (f.value.observeOnly) "zfasd running in observe-only mode" else "zfasd running")
+                FasCall.NotInstalled -> RuntimeStatus.NotAnswering("zfasd was not found in the module")
+                is FasCall.Unreachable -> RuntimeStatus.NotAnswering("zfasd is not answering: ${f.detail}")
+                is FasCall.Rejected -> RuntimeStatus.Degraded(f.message)
+                is FasCall.NoRoot -> RuntimeStatus.NotAnswering(f.detail)
+                is FasCall.Failed -> RuntimeStatus.NotAnswering(f.detail)
             }
-            else -> "no runtime check is defined for ${m.id}"
+            else -> RuntimeStatus.NotAnswering("no runtime check is defined for ${m.id}")
         }
     }
 
@@ -203,7 +221,7 @@ class AppContainer(private val app: Application) {
         moduleCatalog?.modules.orEmpty().sortedBy { it.role != "base" }.associate { m ->
             m.id to ModuleInstallController(
                 root = root,
-                catalog = { moduleCatalog },
+                release = { moduleRelease },
                 detector = { RootManagerDetector(root).detect() },
                 facts = ::deviceFacts,
                 probe = PreflightProbe(root, moduleState),

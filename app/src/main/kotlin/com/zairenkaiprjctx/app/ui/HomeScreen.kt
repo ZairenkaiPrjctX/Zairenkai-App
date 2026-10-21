@@ -63,14 +63,23 @@ fun HomeScreen(c: AppContainer, main: MainViewModel, modules: SystemModuleViewMo
     val records = snapshot.records
     val ready = records.count { it.availability.usable }
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
-        // Offered only after root works, the manager is identified and the preflight passed;
-        // never again once declined (Settings can show it again).
-        if (base != null && root == RootState.GRANTED && !declined && baseState?.phase == InstallPhase.MODULE_AVAILABLE) {
+        // System integration: shown when root is granted or a root-manager app is installed.
+        // Nothing is checked until the user asks ("Set up"); "Not now" hides it (Settings undoes that).
+        val settled = baseState?.phase in setOf(InstallPhase.ACTIVE, InstallPhase.INSTALL_PENDING_REBOOT, InstallPhase.INSTALLED_NOT_INITIALIZED, InstallPhase.DEGRADED)
+        if (base != null && !declined && !settled && (root == RootState.GRANTED || modules.managerAppHint != null)) {
             item {
+                val rootFeatures = snapshot.records.filter { it.privilege == com.zairenkaiprjctx.integration.model.Privilege.ROOT && !it.id.startsWith("systemmodule.") }
                 SectionCard(stringResource(R.string.module_offer_title), emphasis = Emphasis.HIGH) {
-                    Supporting(stringResource(R.string.module_offer_body, baseState.manager?.family?.displayName ?: "", base.features.joinToString { snapshot.byId(it)?.name ?: it }))
+                    if (baseState?.phase == InstallPhase.MODULE_AVAILABLE) {
+                        Supporting(stringResource(R.string.module_offer_body, baseState.manager?.family?.displayName ?: "", base.features.joinToString { snapshot.byId(it)?.name ?: it }))
+                    } else {
+                        modules.managerAppHint?.let { Supporting(stringResource(R.string.module_offer_manager_hint, it)) }
+                        Supporting(stringResource(R.string.module_offer_features, rootFeatures.joinToString { it.name }))
+                    }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                        Button(onClick = openModule) { Text(stringResource(R.string.module_offer_review)) }
+                        Button(onClick = openModule) {
+                            Text(stringResource(if (baseState?.phase == InstallPhase.MODULE_AVAILABLE) R.string.module_offer_review else R.string.module_offer_setup))
+                        }
                         OutlinedButton(onClick = modules::decline) { Text(stringResource(R.string.module_not_now)) }
                     }
                 }

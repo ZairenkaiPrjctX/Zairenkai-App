@@ -20,10 +20,10 @@
 | Area | Location | Status |
 |---|---|---|
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
-| JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 66 tests, 2026-10-21 |
+| JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 72 tests, 2026-10-21 |
 | Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 24 Robolectric tests, 2026-10-21. **Unverified** on a device |
 | Organization inventory (16 repositories), lock, scripts | `integration/` | Verified. Evidence: scripts exit 0, re-audit 2026-10-21 |
-| CI | `.github/workflows/ci.yml` | Verified on GitHub. Evidence: Actions run 39608170919 (workflow_dispatch, 7fc9cb2), both jobs green, 2026-10-21 |
+| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build verified on GitHub. Evidence: run 39608170919 (7fc9cb2). The full-integration job is **Unverified** on GitHub: the CI GitHub App does not exist yet (`docs/build/ci.md`) |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
 
 ## Key facts and limitations
@@ -40,8 +40,13 @@
   APatch. The manager commands were read in each manager's source. Verified. Evidence:
   `docs/integration/system-module.md`, `SystemModuleTest`. Installation on a device is
   **Unverified**: no device has a validation record.
-- No release channel exists. The module zips are packaged in the APK, and the APK signature is
-  the trust root. Verified. Evidence: `list_releases` empty for Core, FAS and Release, 2026-10-21.
+- No release channel exists, so the module zips are packaged in the APK. Verified. Evidence:
+  `list_releases` empty for Core, FAS and Release, 2026-10-21.
+- Module installation needs a catalog signed by a key in `integration/module-trust.json`, which
+  is empty. Every build therefore refuses to install. Verified. Evidence: `SystemModuleTrustTest`,
+  `verify_integration.py report --release`, 2026-10-21.
+- Release blocked: APK unsigned, catalog unsigned, no trusted module key, and no licence for the
+  App, ART or FAS. Verified. Evidence: the release gate, 2026-10-21.
 
 ## Authoritative sources
 
@@ -67,6 +72,7 @@
 
 - Which licence should the app use (and ART, whose zart is packaged unlicensed)?
 - Which device will run the first on-device validation?
-- Release signing: where will the key live, and who signs?
+- Release signing: who creates the APK keystore and the module-signing key, and who holds them (`docs/build/release.md`)?
+- When will the CI GitHub App for the full integration build be created (`docs/build/ci.md`)?
 - When should the app move to Material 3 1.5.0 stable (and the compileSdk 37 / AGP 9.1
   toolchain)?

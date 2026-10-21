@@ -6,6 +6,7 @@ import com.zairenkaiprjctx.app.AppContainer
 import com.zairenkaiprjctx.integration.systemmodule.BundledModule
 import com.zairenkaiprjctx.integration.systemmodule.InstallFlowState
 import com.zairenkaiprjctx.integration.systemmodule.ModuleInstallController
+import com.zairenkaiprjctx.integration.systemmodule.SignatureVerdict
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +45,7 @@ class SystemModuleViewModel(private val c: AppContainer) : ViewModel() {
                 } finally {
                     busyFlow.value = false
                 }
+                c.registry.refresh("systemmodule") // reads the new state; runs no command
             }
         }
     }
@@ -60,6 +62,18 @@ class SystemModuleViewModel(private val c: AppContainer) : ViewModel() {
     fun confirm(id: String, acknowledgedExperimental: Boolean) = run(id) { confirm(acknowledgedExperimental) }
     fun cancel(id: String) = run(id) { cancel() }
     fun uninstall(id: String) = run(id) { uninstall() }
+    fun enable(id: String) = run(id) { enable() }
+
+    /** The catalog's signature verdict (the release identity shown on the screen). */
+    val signature: SignatureVerdict? get() = c.moduleRelease?.signature
+
+    /**
+     * A root-manager app installed on this device (package visibility only: a hint, not evidence
+     * that root works). Magisk can hide itself under another name, so absence proves nothing.
+     */
+    val managerAppHint: String? by lazy {
+        MANAGER_APPS.entries.firstOrNull { (pkg, _) -> c.handoff.installedManager(listOf(pkg)) != null }?.value
+    }
 
     fun handOff(id: String) {
         val h = c.moduleInstallers[id]?.state?.value?.handoff ?: return
@@ -81,5 +95,15 @@ class SystemModuleViewModel(private val c: AppContainer) : ViewModel() {
         c.moduleOfferDeclined = false
         declinedFlow.value = false
         evaluateAll()
+    }
+
+    private companion object {
+        /** Package ids from the managers' own build files (docs/integration/system-module.md). */
+        val MANAGER_APPS = linkedMapOf(
+            "com.topjohnwu.magisk" to "Magisk",
+            "me.weishu.kernelsu" to "KernelSU",
+            "com.rifsxd.ksunext" to "KernelSU-Next",
+            "me.bmax.apatch" to "APatch",
+        )
     }
 }

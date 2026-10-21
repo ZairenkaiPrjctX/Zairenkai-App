@@ -48,15 +48,16 @@ import com.zairenkaiprjctx.integration.systemmodule.CheckStatus
 import com.zairenkaiprjctx.integration.systemmodule.InstallFlowState
 import com.zairenkaiprjctx.integration.systemmodule.InstallPhase
 import com.zairenkaiprjctx.integration.systemmodule.InstallSupport
+import com.zairenkaiprjctx.integration.systemmodule.SignatureVerdict
 import com.zairenkaiprjctx.integration.systemmodule.Verdict
 
 /** The registry state a phase is shown with (icon + text, never colour alone). */
 fun InstallPhase.badge(): AvailabilityState = when (this) {
     InstallPhase.ACTIVE -> AvailabilityState.AVAILABLE
-    InstallPhase.DEGRADED, InstallPhase.INSTALL_FAILED -> AvailabilityState.INITIALIZATION_FAILED
-    InstallPhase.UNSUPPORTED -> AvailabilityState.UNSUPPORTED_DEVICE
+    InstallPhase.DEGRADED, InstallPhase.INSTALL_FAILED, InstallPhase.INSTALLED_NOT_INITIALIZED -> AvailabilityState.INITIALIZATION_FAILED
+    InstallPhase.UNSUPPORTED, InstallPhase.MANAGER_UNSUPPORTED -> AvailabilityState.UNSUPPORTED_DEVICE
     InstallPhase.ROOT_NOT_AVAILABLE, InstallPhase.ROOT_PERMISSION_REQUIRED, InstallPhase.ROOT_PERMISSION_DENIED -> AvailabilityState.ROOT_REQUIRED
-    InstallPhase.MODULE_AVAILABLE, InstallPhase.READY_TO_INSTALL, InstallPhase.AWAITING_USER_CONFIRMATION, InstallPhase.HANDOFF_READY ->
+    InstallPhase.MODULE_AVAILABLE, InstallPhase.MODULE_NOT_AVAILABLE, InstallPhase.READY_TO_INSTALL, InstallPhase.AWAITING_USER_CONFIRMATION, InstallPhase.HANDOFF_READY ->
         AvailabilityState.COMPONENT_NOT_INSTALLED
     else -> AvailabilityState.NOT_VERIFIED
 }
@@ -67,6 +68,9 @@ fun InstallPhase.label(): Int = when (this) {
     InstallPhase.ROOT_PERMISSION_REQUIRED -> R.string.module_phase_root_required
     InstallPhase.ROOT_PERMISSION_DENIED -> R.string.module_phase_root_denied
     InstallPhase.MANAGER_DETECTION -> R.string.module_phase_detection
+    InstallPhase.MANAGER_UNSUPPORTED -> R.string.module_phase_manager_unsupported
+    InstallPhase.MODULE_NOT_AVAILABLE -> R.string.module_phase_not_available
+    InstallPhase.INSTALLED_NOT_INITIALIZED -> R.string.module_phase_not_initialized
     InstallPhase.COMPATIBILITY_CHECK -> R.string.module_phase_compatibility
     InstallPhase.MODULE_AVAILABLE -> R.string.module_phase_available
     InstallPhase.DOWNLOAD_PENDING -> R.string.module_phase_preparing
@@ -139,6 +143,17 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
         InfoRow(stringResource(R.string.module_release), "${m.source.repository} @ ${m.source.commit.take(12)}", code = true)
         InfoRow(stringResource(R.string.module_source), stringResource(R.string.module_source_value))
         InfoRow(stringResource(R.string.module_digest), m.sha256, code = true)
+        InfoRow(
+            stringResource(R.string.module_signature),
+            when (val sig = vm.signature) {
+                null -> stringResource(R.string.module_sig_none)
+                is SignatureVerdict.Verified -> stringResource(R.string.module_sig_verified, sig.owner, sig.keyId.take(16))
+                SignatureVerdict.Unsigned -> stringResource(R.string.module_sig_unsigned)
+                SignatureVerdict.NoTrustedKey -> stringResource(R.string.module_sig_no_key)
+                is SignatureVerdict.UnknownKey -> stringResource(R.string.module_sig_unknown)
+                is SignatureVerdict.Invalid -> stringResource(R.string.module_sig_invalid)
+            },
+        )
         s.manager?.let { id ->
             val how = stringResource(
                 when (id.install) {
@@ -177,8 +192,15 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
                 v.checks.forEach { Supporting("✓ $it") }
             }
         }
-        if (m.risks.isNotEmpty()) {
-            ExpandableSection(stringResource(R.string.module_risks)) { m.risks.forEach { Supporting(it) } }
+        ExpandableSection(stringResource(R.string.module_risks)) {
+            m.risks.forEach { Supporting(it) }
+            val l = m.lifecycle
+            l.destinations.forEach { (k, v) -> InfoRow(k, v, code = true) }
+            listOf(
+                R.string.module_life_startup to l.startup, R.string.module_life_shutdown to l.shutdown,
+                R.string.module_life_uninstall to l.uninstall, R.string.module_life_recovery to l.recovery,
+                R.string.module_life_kernel to l.kernel,
+            ).filter { it.second.isNotBlank() }.forEach { (label, text) -> InfoRow(stringResource(label), text) }
         }
         if (s.log.isNotBlank()) {
             ExpandableSection(stringResource(R.string.module_log)) { Text(s.log, style = ZairenkaiTextStyles.code) }
@@ -203,11 +225,13 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
                     }
                     OutlinedButton(onClick = { vm.cancel(m.id) }, enabled = !busy) { Text(stringResource(R.string.action_cancel)) }
                 }
-                InstallPhase.ACTIVE, InstallPhase.DEGRADED -> {
+                InstallPhase.ACTIVE, InstallPhase.DEGRADED, InstallPhase.INSTALLED_NOT_INITIALIZED -> {
                     OutlinedButton(onClick = { vm.evaluate(m.id) }, enabled = !busy) { Text(stringResource(R.string.module_check_again)) }
+                    if (s.disabled) OutlinedButton(onClick = { vm.enable(m.id) }, enabled = !busy) { Text(stringResource(R.string.module_enable)) }
                     OutlinedButton(onClick = { confirmRemove = true }, enabled = !busy) { Text(stringResource(R.string.module_remove)) }
                 }
-                InstallPhase.INSTALL_FAILED, InstallPhase.INSTALL_PENDING_REBOOT, InstallPhase.REMOVAL_PENDING_REBOOT, InstallPhase.UNSUPPORTED ->
+                InstallPhase.INSTALL_FAILED, InstallPhase.INSTALL_PENDING_REBOOT, InstallPhase.REMOVAL_PENDING_REBOOT, InstallPhase.UNSUPPORTED,
+                InstallPhase.MANAGER_UNSUPPORTED, InstallPhase.MODULE_NOT_AVAILABLE ->
                     OutlinedButton(onClick = { vm.evaluate(m.id) }, enabled = !busy) { Text(stringResource(R.string.module_check_again)) }
                 else -> Unit
             }

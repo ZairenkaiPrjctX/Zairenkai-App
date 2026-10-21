@@ -26,7 +26,9 @@ Non-negotiables in this repo:
 - **zthermal is read only.** The app runs only `zthermal snapshot` (with `--framework` through
   root, on request). Never `apply`, `rollback` or `backup-config`; no thermal control in the UI.
 - **Modules are installed only by the root manager's own installer**, after the user confirms,
-  from the zip packaged and verified in the APK (`docs/integration/system-module.md`). Never
+  from the zip packaged in the APK, and only when its catalog is signed by a key in
+  `integration/module-trust.json` (`docs/integration/system-module.md`). Never add a key to that
+  list without the maintainer, and never put a private key anywhere in the repository or APK. Never
   write into `/data/adb` directly, never install on startup, and never mark a module ACTIVE
   without reading its state and its runtime.
 - **Actions go through Core while it answers.** Direct `zfasd ctl` only when Core is down, and
@@ -46,11 +48,14 @@ Non-negotiables in this repo:
 |---|---|---|
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
 | Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: exit 0, 2026-10-21 |
-| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 66 passed, 2026-10-21 |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 72 passed, 2026-10-21 |
 | Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 24 passed, 2026-10-21 |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-21 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
+| Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/access/build/apk/report ok; `--release` fails on 6 blockers, 2026-10-21 |
+| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 6 passed, 2026-10-21 |
+| Device check (read only) | `integration/scripts/device-readonly-check.sh [--root]` | Configured (no device available) |
 | Validate agent foundation | `python3 <path-to-.github>/agent-foundation/scripts/validate_agent_setup.py .` | Configured |
 
 Only list commands that exist in this repository. Never invent one.

@@ -124,6 +124,9 @@ interface ManagerAdapter {
     /** Marks the module for removal with the manager's own command, or says it cannot. */
     fun uninstall(id: String): ManagerResult<String>
 
+    /** Clears the manager's `disable` mark with its own command, or says it cannot. */
+    fun enable(id: String): ManagerResult<String>
+
     /** The manager app that can finish an install or removal itself, for a handoff. */
     val managerPackages: List<String>
 
@@ -216,6 +219,9 @@ class MagiskAdapter(private val root: RootShell) : ManagerAdapter {
 
     override fun uninstall(id: String): ManagerResult<String> =
         ManagerResult.Failed("Magisk has no command to remove one module; remove it in the Magisk app (Modules).")
+
+    override fun enable(id: String): ManagerResult<String> =
+        ManagerResult.Failed("Magisk has no command to enable one module; enable it in the Magisk app (Modules).")
 }
 
 /** ksud for KernelSU and KernelSU-Next. */
@@ -233,6 +239,12 @@ class KernelSuAdapter(private val root: RootShell) : ManagerAdapter {
         if (!ModuleIds.isValid(id)) return ManagerResult.Failed("invalid module id")
         val s = scriptWith(id, KSUD, "module", "uninstall") ?: return UNSAFE
         return outcome(root.run(s, INSTALL_TIMEOUT_MS), "ksud module uninstall")
+    }
+
+    override fun enable(id: String): ManagerResult<String> {
+        if (!ModuleIds.isValid(id)) return ManagerResult.Failed("invalid module id")
+        val s = scriptWith(id, KSUD, "module", "enable") ?: return UNSAFE
+        return outcome(root.run(s, INSTALL_TIMEOUT_MS), "ksud module enable")
     }
 
     companion object {
@@ -255,6 +267,12 @@ class APatchAdapter(private val root: RootShell) : ManagerAdapter {
         if (!ModuleIds.isValid(id)) return ManagerResult.Failed("invalid module id")
         val s = scriptWith(id, APD, "module", "uninstall") ?: return UNSAFE
         return outcome(root.run(s, INSTALL_TIMEOUT_MS), "apd module uninstall")
+    }
+
+    override fun enable(id: String): ManagerResult<String> {
+        if (!ModuleIds.isValid(id)) return ManagerResult.Failed("invalid module id")
+        val s = scriptWith(id, APD, "module", "enable") ?: return UNSAFE
+        return outcome(root.run(s, INSTALL_TIMEOUT_MS), "apd module enable")
     }
 
     companion object {

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "algorithm": "ECDSA_P256_SHA256",
+  "key_id": "cf791a6b130f82e799bca0e3927a70ab60a3c35202050126e4f4c7d424a37480",
+  "signature": "MEUCIQC6EPT2dv0I6uiB1ibsgun+rIQfUfo0qW87EwhMMkI94wIgJFyDVSAnV1MQi+sUx/zBXWqDqNVIqC5sICSaAeY1FW4="
+}

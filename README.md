@@ -22,7 +22,9 @@ audited commit, instead of showing placeholders. Details: `integration/repositor
   System › Root access.
 - **System module.** With root, the app can install the Zairenkai Core (and optional FAS)
   module through the root manager's own installer, only after you confirm
-  (`docs/integration/system-module.md`). It has not been tested on a device.
+  (`docs/integration/system-module.md`). Installation stays blocked until the module catalog is
+  signed by a trusted module-signing key, and none exists yet. It has not been tested on a
+  device.
 
 ## Build
 
@@ -42,6 +44,9 @@ Full instructions: `docs/build/building.md`.
 | Repository capability matrix | `docs/integration/repository-capability-matrix.md` |
 | Root and data handling | `docs/integration/privilege-model.md` |
 | In-app module installation | `docs/integration/system-module.md` |
+| CI and the full integration build | `docs/build/ci.md` |
+| Release and signing (blocked) | `docs/build/release.md` |
+| Device validation procedure | `docs/testing/device-validation.md` |
 | Device, API and ABI compatibility | `docs/integration/compatibility-matrix.md` |
 | Design system (Material 3 Expressive, Google Sans Flex) | `docs/design/design-system.md` |
 | What was verified | `docs/testing/verification-report.md` |

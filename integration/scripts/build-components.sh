@@ -5,6 +5,8 @@
 #   integration/out/jniLibs/<abi>/libzart.so      zart from Zairenkai-ART (scripts/build-android.sh)
 #   integration/out/jniLibs/<abi>/libzthermal.so  zthermal from Zairenkai-ThermalTools (scripts/build-android.sh)
 #   integration/out/assets/licenses/zthermal/     zthermal's LICENSE and NOTICE (Apache-2.0)
+#   integration/out/assets/licenses/<component>/THIRD_PARTY_NOTICES.txt  licences of every Rust
+#                                                   crate compiled into each binary (rust_notices.py)
 #   integration/out/assets/afid/device-candidates.json   AFID asset (integration/scripts/afid_asset.py)
 #   integration/out/assets/system-modules/<id>.zip  root modules (Core, FAS) from their build-android.sh
 #   integration/out/assets/system-modules.json      module catalog: integration/system-modules.json plus
@@ -59,6 +61,12 @@ for abi in arm64-v8a armeabi-v7a x86_64; do
   install -m 0755 "$OUT/src/zart/dist/zart-$ZART_VERSION-$abi" "$OUT/jniLibs/$abi/libzart.so"
 done
 (cd "$OUT/src/zart/dist" && sha256sum -c --quiet SHA256SUMS)
+notices() { # notices <workspace> <package> <component>
+  python3 "$ROOT/integration/scripts/rust_notices.py" --workspace "$1" --package "$2" \
+    --target aarch64-linux-android --component "$3" --out "$OUT/assets/licenses/$3/THIRD_PARTY_NOTICES.txt"
+}
+notices "$OUT/src/zart" zart zart
+install -m 0644 "$ROOT/integration/notices/zart-aosp-attribution.txt" "$OUT/assets/licenses/zart/AOSP-ATTRIBUTION.txt"
 
 # --- zthermal (Zairenkai-ThermalTools) ---------------------------------------------------
 ZT_COMMIT=$(field zthermal commit)
@@ -72,12 +80,13 @@ for abi in arm64-v8a armeabi-v7a x86_64; do
 done
 mkdir -p "$OUT/assets/licenses/zthermal"
 install -m 0644 "$OUT/src/zthermal/LICENSE" "$OUT/src/zthermal/NOTICE" "$OUT/assets/licenses/zthermal/"
+notices "$OUT/src/zthermal" zthermal zthermal
 
 # --- root modules (Zairenkai-Core, Zairenkai-FAS) ------------------------------------------
 # Built by each repository's own script at the locked commit; module_asset.py checks every
 # script in the zip against that commit's module/ sources before the zip is packaged.
 mkdir -p "$OUT/assets/system-modules"
-build_module() { # build_module <lock component> <module id> <dist prefix>
+build_module() { # build_module <lock component> <module id> <dist prefix> <cargo package>
   local comp=$1 id=$2 prefix=$3 commit dir zip
   commit=$(field "$comp" commit)
   dir="$OUT/src/$comp"
@@ -89,10 +98,20 @@ build_module() { # build_module <lock component> <module id> <dist prefix>
     --id "$id" --zip "$zip" --source "$dir" --commit "$commit" --repository "$(field "$comp" repository)" \
     --out "$OUT/assets/system-modules.json"
   install -m 0644 "$zip" "$OUT/assets/system-modules/$id.zip"
+  notices "$dir" "$4" "$id"
 }
 rm -f "$OUT/assets/system-modules.json"
-build_module zairenkai-core-module zairenkai_core zairenkai-core
-build_module zairenkai-fas-module zairenkai_fas zairenkai-fas
+build_module zairenkai-core-module zairenkai_core zairenkai-core zcored
+build_module zairenkai-fas-module zairenkai_fas zairenkai-fas zfasd
+# The catalog is signed only when the module-signing key is provided (release builds); the
+# key's public half must be in integration/module-trust.json. Without it the catalog stays
+# unsigned and the app refuses to install modules from this build.
+rm -f "$OUT/assets/system-modules.json.sig"
+if [ -n "${ZAIRENKAI_MODULE_SIGNING_KEY_FILE:-}" ]; then
+  "$ROOT/integration/scripts/sign-module-catalog.sh" "$ZAIRENKAI_MODULE_SIGNING_KEY_FILE"
+else
+  echo "module catalog left unsigned (ZAIRENKAI_MODULE_SIGNING_KEY_FILE not set): module installation is blocked in this build" >&2
+fi
 
 # --- AFID device candidates (Zairenkai-Database-Source) ----------------------------------
 AFID_COMMIT=$(field afid-device-candidates commit)

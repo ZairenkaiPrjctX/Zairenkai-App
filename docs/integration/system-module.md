@@ -3,63 +3,97 @@
 The app can install the Zairenkai root modules through the user's root manager. This page
 covers what is implemented, what each fact rests on, and what has not been tested on hardware.
 
-## What is installed
+## Package architecture
+
+There is no single combined "system module". Zairenkai-Core and Zairenkai-FAS are separate
+root modules, each with its own id, data directory, service and uninstall scripts. Merging them
+would break that lifecycle: FAS restores its cpufreq floors in its own `uninstall.sh`. So the
+**Zairenkai System Module package** is a versioned, signed release set of the two real modules:
 
 | Module id | Role | Built from | Provides | Why it needs root |
 |---|---|---|---|---|
-| `zairenkai_core` | base | Zairenkai-Core `34e93e3` (`module/`, `scripts/build-android.sh`) | `zcored`: Core health, policy-checked actions, module inventory | A root daemon with a root-only socket (Core ADR-0005) |
-| `zairenkai_fas` | optional | Zairenkai-FAS `3c83f0e` | `zfasd`: FAS status and controls | Writes cpufreq `scaling_min_freq` floors |
+| `zairenkai_core` | base | Zairenkai-Core `34e93e3` (unmerged topic branch), `module/` + `scripts/build-android.sh` | `zcored`: Core health, policy-checked actions, module inventory | A root daemon with a root-only socket (Core ADR-0005) |
+| `zairenkai_fas` | optional | Zairenkai-FAS `3c83f0e` (dev) | `zfasd`: FAS status and controls | Writes cpufreq `scaling_min_freq` floors |
 
-The spec is `integration/system-modules.json`. It records requirements, conflicts, risks, and
-`validated_on`, which is empty for both modules.
+**Zip contents.** Each zip is exactly what the component's own build script produces:
+- `module.prop`, `customize.sh`, `service.sh`, `uninstall.sh`, `action.sh`;
+- `META-INF/com/google/android/{update-binary,updater-script}`;
+- `bin/<daemon>`;
+- licence files (Core: `LICENSE`, `NOTICE`, `THIRD_PARTY.md`; FAS: `THIRD_PARTY.md` only);
+- `webroot/` (FAS).
 
-Other repositories were checked and are not part of the module:
-- **Zairenkai-Modules:** no packages.
+There are no other files, no configuration or profile data, and no `system/` overlay.
+
+**Manifest.** `integration/system-modules.json` is reviewed in Git. For each module it declares:
+- id, role and features;
+- requirements: architecture, ABI, minimum API, supported managers with minimum versions and
+  their source evidence, required kernel paths, dependencies, conflicts;
+- reboot;
+- `lifecycle`: destinations, start, stop, uninstall, recovery and kernel conditions, as the
+  modules' scripts implement them;
+- risks, and `validated_on` (empty).
+
+`build-components.sh` adds the version, versionCode, size, SHA-256, per-entry digests and the
+source commit, and writes `assets/system-modules.json`.
+
+**Repositories checked and left out:**
+- **Zairenkai-Modules:** empty.
 - **Zairenkai-Sdk:** no code.
-- **ART:** ART patches need a ROM or ART-module build; `zart` stays in the APK.
-- **ThermalTools:** `zthermal` stays in the APK. It is read only and needs no daemon. Nothing
-  here enables a thermal write.
-- **Database-Source:** an offline asset.
+- **ART:** its patches need a ROM build, and `zart` stays in the APK.
+- **ThermalTools:** `zthermal` stays in the APK, read only. Its writable-control list stays
+  empty, and nothing here enables a thermal write.
+- **Database-Source:** an offline asset in the APK.
 
-Installing a module only installs it. Its features count as working only when its runtime
-answers: `ACTIVE` needs Core health (or FAS status) to respond. Otherwise the module is
-`DEGRADED`.
+**Installed is not working.** A module's features count as working only when its runtime
+answers:
 
-## Where the package comes from, and why it is trusted
+| Runtime answer | State |
+|---|---|
+| Core health `ready`, or FAS status | `ACTIVE` |
+| Core health `degraded` (for example FAS absent) | `DEGRADED` |
+| No answer | `INSTALLED_NOT_INITIALIZED` |
 
-- **Packaged, not downloaded.** No release pipeline, release signature, or published artifact
-  exists:
-  - `list_releases` returns nothing for Core, FAS and Zairenkai-Release (2026-10-21);
-  - Zairenkai-Release is empty;
-  - the app has no INTERNET permission.
+## Acquisition: decision
 
-  So the zips are built at the locked commits by `build-components.sh` and packaged in the APK.
-  Nothing is fetched at run time.
-- **Build-time check.** `integration/scripts/module_asset.py` checks each zip against its
-  source:
-  - module.prop id;
-  - no unsafe entry;
-  - every installer file byte-identical to `module/` at the locked commit.
+| | A. Packaged in the APK (chosen) | B. Separately distributed release |
+|---|---|---|
+| APK size | +1.36 MB (both zips) | none |
+| Update independence | a module update needs an app update | modules can update alone |
+| Offline | works offline | needs the network at install time |
+| Network permission | none (the app has no INTERNET permission) | INTERNET permission required |
+| Infrastructure | none beyond the signed catalog | a release host, a version index, rollout and revocation |
+| Exists today | yes | no: no release exists in Core, FAS or Zairenkai-Release (`list_releases`, 2026-10-21) |
 
-  It then records the size, the SHA-256 and every entry's SHA-256 in
-  `assets/system-modules.json`.
-- **Trust root.** The APK signature. The catalog and the zip are covered by the same signature,
-  so no checksum is trusted from an unverified source.
-- **Install-time check.** `ModulePackageVerifier` checks the staged copy twice: after staging,
-  and again immediately before the manager reads it. It checks:
-  - the size;
-  - the SHA-256;
+A is the simplest safe choice: no network capability, no release host to secure. B can be
+added when a module release pipeline exists. It would reuse the same signed catalog format.
+
+## Trust: a signed catalog
+
+- **The catalog is signed by a module-signing key.** `assets/system-modules.json` carries a
+  detached signature (`system-modules.json.sig`: ECDSA P-256 over SHA-256, the format
+  `openssl dgst -sha256 -sign` writes). The app verifies it (`CatalogSignature`, `ModuleRelease`)
+  against the public keys in `integration/module-trust.json`. That list is reviewed in Git and
+  copied into the APK.
+- **A separate identity from the APK signer.** A debug-signed or rebuilt APK cannot authorise a
+  module, and no private key is in the APK.
+- **Today the list is empty.** No module-signing key has been created, so every build reports
+  "No module-signing key is trusted yet" and **the app refuses to install either module**:
+  - the flow stops in `MODULE_NOT_AVAILABLE`, with the compatibility result still shown;
+  - checking and removing an existing installation still work.
+
+  This is the missing prerequisite (`docs/build/release.md`).
+- **Build-time check.** `module_asset.py` requires each zip's module.prop id, version and
+  versionCode, rejects unsafe entries, and requires every installer file to be byte-identical
+  to `module/` at the locked commit.
+- **Install-time check.** `ModulePackageVerifier` checks the staged copy after staging and again
+  immediately before the manager reads it. It checks:
+  - the size and the SHA-256;
   - the exact entry set (no `..`, no absolute paths, no extras);
   - each entry's SHA-256;
   - module.prop id, version and versionCode;
-  - that the installer scripts were matched to source.
-- **Not implemented: a network release channel with a signed manifest.** It needs:
-  - a release signing key kept off the device;
-  - a published, signed manifest;
-  - an embedded public key;
-  - the INTERNET permission.
+  - the installer scripts matched to source.
 
-  None of these exists yet. Adding that channel is a release-engineering decision.
+  The release gate checks that licence files are present.
 
 ## Root managers
 
@@ -101,6 +135,8 @@ Every command below was read in the manager's own source (shallow clones on 2026
 
    No su call happens in these states.
 2. `MANAGER_DETECTION`: two independent sources, as above.
+   - an unknown manager, or one too old → `MANAGER_UNSUPPORTED`;
+   - module not packaged → `MODULE_NOT_AVAILABLE`.
 3. `COMPATIBILITY_CHECK` (`Preflight.decide`, pure) checks:
    - ABI, kernel architecture (`uname -m`), API level;
    - manager family and version, installer method;
@@ -116,7 +152,9 @@ Every command below was read in the manager's own source (shallow clones on 2026
    No device has a validation record, so a passing device is `EXPERIMENTAL`, never
    `COMPATIBLE`. A recognised manufacturer does not count as validation: only the device
    codename in `validated_on` does.
-4. `MODULE_AVAILABLE`: the Home offer and the module screen.
+4. `MODULE_AVAILABLE` only when the catalog signature is trusted. Otherwise
+   `MODULE_NOT_AVAILABLE`, naming the missing prerequisite. That is the state of every build
+   today.
 5. The user taps **Install Zairenkai System Module**:
    - `DOWNLOAD_PENDING`: the packaged zip is copied to `cache/system-modules/`;
    - `VERIFYING_ARTIFACT`;
@@ -128,8 +166,13 @@ Every command below was read in the manager's own source (shallow clones on 2026
    - staged → `INSTALL_PENDING_REBOOT`;
    - not staged → `INSTALL_FAILED`.
 8. After a reboot (screen resume or **Check again**):
-   - `ACTIVE`: installed, enabled, and the runtime answers;
-   - `DEGRADED`: disabled, wrong version, or not answering.
+   - `ACTIVE`: installed, enabled, and Core health `ready` (or FAS status answers);
+   - `DEGRADED`: disabled, wrong version, or the runtime reports a problem (Core `degraded`);
+   - `INSTALLED_NOT_INITIALIZED`: installed and enabled, but the service does not answer.
+
+   A disabled module offers **Enable**, which runs the manager's own command (KernelSU and
+   APatch: `module enable <id>`; Magisk: its app). The `disable` marker must then be gone, and
+   the state becomes `INSTALL_PENDING_REBOOT`.
 9. Without a direct installer → `HANDOFF_READY`. The verified zip goes to the manager app.
    This is not reported as an automated install.
 10. **Remove**:
@@ -144,14 +187,17 @@ The user can cancel at any point before `INSTALLING`. Cancelling deletes the sta
 the device is never changed. **Not now** on the Home offer is stored. Settings › Zairenkai
 System Module reopens the screen and can show the offer again.
 
-### When the offer appears
+### When anything runs
 
-- **Only after this session's grant.** The offer appears only after root is granted in this
-  session: a stored grant re-checked at start-up does not trigger detection.
-- **Read-only checks.** Root permission alone never installs anything. Detection and
-  preflight only read.
-- **On the module screen.** Opening the screen re-checks the modules. If root is not granted,
-  that runs no su call.
+- **Home card.** Shown when root is granted or a root-manager app is installed. The app is
+  detected by package visibility only, as a hint. Magisk can hide itself, so absence proves
+  nothing. The card lists the root-dependent capabilities from the registry and offers **Set up
+  system integration** and **Not now** (stored). It runs nothing.
+- **Checks need an explicit request.** Root verification, manager detection and the preflight
+  run only on the System Module screen (from Home, System or Settings). Granting root alone
+  checks and installs nothing, and app start-up runs no module check.
+- **Registry.** The registry (`SystemModuleSubsystem`) shows each module's last known state
+  without running a command.
 
 ## Rollback and recovery
 
@@ -170,7 +216,8 @@ System Module reopens the screen and can show the offer again.
 
 | Claim | Status |
 |---|---|
-| Detection, preflight, verification, state machine, uninstall, handoff decisions, unsafe-path refusal | Verified on the JVM: `SystemModuleTest` (21), `SystemModuleAdapterTest` (1) and the catalog contract test, against a scripted su |
+| Detection, preflight, verification, state machine, uninstall, enable, handoff decisions, unsafe-path refusal | Verified on the JVM: `SystemModuleTest` (21), `SystemModuleAdapterTest` (1), `SystemModuleTrustTest` (5), `SystemModuleRegistryTest` (1) and the catalog contract test, against a scripted su |
+| Catalog signature: openssl's ECDSA P-256 format verifies in the app; tampered, unknown-key, unsigned and empty-trust cases are refused | Verified on the JVM: `SystemModuleTrustTest`, with a throwaway key whose private half was deleted (`contracts/system-modules/test-trust.json`, never trusted by the app) |
 | Handoff intents (FileProvider URI, package, grant flag; launch intents) | Verified under Robolectric: `ManagerHandoffTest` (3) |
 | Module screen without root (no install offer, no su call) | Verified under Robolectric: `AppUiTest.systemModuleScreenNeedsRootAndOffersNoInstallWithoutIt` |
 | Package contents: scripts identical to source, digests in the APK | Verified: `module_asset.py` at build time; APK entries' SHA-256 equal to the catalog (2026-10-21) |

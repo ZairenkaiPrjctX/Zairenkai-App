@@ -72,8 +72,6 @@ import com.zairenkaiprjctx.app.ui.SystemScreen
 import com.zairenkaiprjctx.app.ui.SystemViewModel
 import com.zairenkaiprjctx.app.ui.ThermalScreen
 import com.zairenkaiprjctx.app.ui.ThermalViewModel
-import androidx.compose.runtime.LaunchedEffect
-import com.zairenkaiprjctx.integration.exec.RootState
 
 /** Top-level destinations, each backed by registered subsystems (AppContainer.registry). */
 enum class Tab(@StringRes val title: Int, val icon: ImageVector, val subsystems: List<String>) {
@@ -136,14 +134,8 @@ private fun App(c: AppContainer) {
     val showSettings = overlay != Overlay.NONE
     BackHandler(enabled = showSettings) { overlay = Overlay.NONE }
 
-    // Root granted in this session (not a stored consent re-checked at start-up): identify the
-    // manager and run the preflight, so Home can offer the module. Never installs anything.
-    val root by main.rootState.collectAsStateWithLifecycle()
-    var previousRoot by rememberSaveable { mutableStateOf(root) }
-    LaunchedEffect(root) {
-        if (root == RootState.GRANTED && previousRoot != RootState.GRANTED && !modulesVm.declined.value) modulesVm.evaluateAll()
-        previousRoot = root
-    }
+    // Compatibility checks run only when the user opens the System Module screen: granting root
+    // alone neither checks nor installs anything.
     val openModule = { overlay = Overlay.SYSTEM_MODULE }
 
     val registered = c.registry.subsystems.map { it.id }.toSet()

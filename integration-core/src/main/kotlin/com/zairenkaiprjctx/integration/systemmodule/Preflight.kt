@@ -158,7 +158,7 @@ object Preflight {
             active.versionCode == module.versionCode && active.enabled ->
                 settled = Verdict.ALREADY_INSTALLED.also { checks += PreflightCheck("existing", CheckStatus.INFO, "${module.version} is already installed") }
             active.versionCode == module.versionCode ->
-                checks += PreflightCheck("existing", CheckStatus.WARN, "${module.version} is installed but disabled in the manager; enable it there")
+                settled = Verdict.ALREADY_INSTALLED.also { checks += PreflightCheck("existing", CheckStatus.WARN, "${module.version} is installed but disabled in the root manager") }
             else -> {
                 upgradeFrom = active.version
                 checks += PreflightCheck("existing", CheckStatus.PASS, "upgrade from ${active.version}")
@@ -172,11 +172,10 @@ object Preflight {
             if (validated) CheckStatus.PASS else CheckStatus.WARN,
             if (validated) "validated on ${device.codename}" else "not validated on any device yet (experimental)",
         )
-        val disabledSameVersion = active != null && active.versionCode == module.versionCode && !active.enabled && staged == null
         val verdict = when {
-            checks.any { it.status == CheckStatus.FAIL } -> Verdict.INCOMPATIBLE
+            // An existing install is reported as it is, whatever the device checks say now.
             settled != null -> settled
-            disabledSameVersion -> Verdict.INCOMPATIBLE.also { checks += PreflightCheck("existing_disabled", CheckStatus.FAIL, "reinstalling would not change a module disabled in the manager") }
+            checks.any { it.status == CheckStatus.FAIL } -> Verdict.INCOMPATIBLE
             validated -> Verdict.COMPATIBLE
             else -> Verdict.EXPERIMENTAL
         }

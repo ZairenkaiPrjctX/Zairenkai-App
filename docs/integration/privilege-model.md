@@ -25,7 +25,7 @@
   packaged zthermal. zthermal is only ever run as `snapshot` (optionally with `--framework`):
   `ThermalToolsClient` has no path to `apply`, `rollback` or `backup-config`.
 - **Modules only through the manager.** `magisk --install-module`, `/data/adb/ksud module
-  install|uninstall` and `/data/adb/apd module install|uninstall`, each only after a
+  install|uninstall|enable` and `/data/adb/apd module install|uninstall|enable`, each only after a
   confirmation dialog. Module state is read with `cat` and `ls`. The app never writes into
   `/data/adb` itself.
 - **Confirmation before changes.** Every action that changes the device shows a confirmation:

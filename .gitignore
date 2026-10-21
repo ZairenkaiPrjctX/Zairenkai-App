@@ -14,6 +14,8 @@
 # Build output
 /build/
 **/build/
+# docs/build holds documentation, not build output.
+!/docs/build/
 /.gradle/
 /local.properties
 /integration/out/

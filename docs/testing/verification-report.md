@@ -1,5 +1,38 @@
 # Verification report
 
+## Signed module release, notices, full-integration CI (2026-10-21)
+
+**Verdict: partially verified.**
+- Every host check passed.
+- The engineering integration report passes.
+- The release gate fails on six real blockers (`docs/build/release.md`).
+- Nothing ran on a device or emulator.
+- The full-integration CI job has not run on GitHub: the CI GitHub App does not exist yet
+  (`docs/build/ci.md`).
+
+| Check | Command | Result |
+|---|---|---|
+| Components at locked commits | `build-components.sh` | exit 0. zart, zthermal (3 ABIs each), both module zips (reproducible: the catalog is byte-identical to the previous build before the lifecycle fields were added), AFID asset, crate notices for zart (11), zthermal (25), zairenkai_core (29), zairenkai_fas (21). Catalog left **unsigned**: no module-signing key |
+| Contracts re-captured | `capture-contracts.sh` | exit 0 |
+| integration-core tests | `./gradlew --rerun-tasks :integration-core:test` | 72 passed, 0 failed, 0 skipped (adds SystemModuleTrust 5, SystemModuleRegistry 1) |
+| App tests (Robolectric) | `./gradlew --rerun-tasks :app:testDebugUnitTest` | 24 passed, 0 failed |
+| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | 6 passed (incorrect lock ×7 cases, unfetchable repository, missing and tampered native component, APK without components or with key material) |
+| Lint | `./gradlew lint` | 0 errors, 24 warnings ("newer version available") |
+| Android notices | `generateAndroidNotices` | 112 libraries, all Apache-2.0 |
+| APKs | `assembleDebug assembleRelease` | debug 38,161,927 bytes `eaef2296…1505`; release unsigned 30,929,872 bytes `ef263c14…228e` |
+| Source lock | `verify_integration.py lock` | ok |
+| Repository access | `verify_integration.py access` | ok (with this session's credentials) |
+| Build artifacts | `verify_integration.py build` | ok |
+| APK contents | `verify_integration.py apk app-release-unsigned.apk` | ok: every component byte-identical, 3 ABIs, notices, trust list, no key material |
+| Engineering report | `verify_integration.py report …` | pass (`integration/out/integration-report.md`) |
+| Release gate | `verify_integration.py report … --release` | **fails, 6**: APK unsigned; catalog unsigned; no trusted module-signing key; no licence for App, zart (ART), FAS |
+| Scripts and workflows | shellcheck 0.10.0, actionlint 1.7.12, `py_compile` | clean |
+| Strings | key parity | 301 translatable strings in both languages |
+
+Not run: the `full-integration` job on GitHub, emulator tests, any physical device, any root
+manager.
+
+
 ## In-app system module installation (2026-10-21)
 
 Branch `ccr-63f8aa87-1b0paj`. Design and evidence: `docs/integration/system-module.md`.

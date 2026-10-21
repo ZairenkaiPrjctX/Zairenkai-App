@@ -13,7 +13,13 @@ enum class InstallPhase {
     ROOT_PERMISSION_REQUIRED,
     ROOT_PERMISSION_DENIED,
     MANAGER_DETECTION,
+
+    /** Root works, but the manager is not one with a verified adapter, or is too old. */
+    MANAGER_UNSUPPORTED,
     COMPATIBILITY_CHECK,
+
+    /** Nothing installable: the module is not packaged, or its release is not signed by a trusted key. */
+    MODULE_NOT_AVAILABLE,
     MODULE_AVAILABLE,
 
     /** Copying the module packaged in this APK to the staging file (no network is used). */
@@ -25,6 +31,9 @@ enum class InstallPhase {
     INSTALL_FAILED,
     INSTALL_PENDING_REBOOT,
     VERIFYING_INSTALLED_STATE,
+
+    /** Installed and enabled, but its service has not answered (not started yet, or failing to start). */
+    INSTALLED_NOT_INITIALIZED,
     ACTIVE,
     DEGRADED,
     UNSUPPORTED,
@@ -50,8 +59,10 @@ data class InstallFlowState(
     /** The manager's installer output (bounded), for the result screen. */
     val log: String = "",
     val handoff: HandoffRequest? = null,
-    /** Set for a manager that cannot remove a module from the CLI (Magisk). */
+    /** Set for a manager that cannot remove or enable a module from the CLI (Magisk). */
     val removalHandoff: List<String> = emptyList(),
+    /** The module is installed but disabled in the root manager. */
+    val disabled: Boolean = false,
 )
 
 /** Copies the packaged module to a file the root manager can read. */
@@ -60,10 +71,19 @@ fun interface ArtifactStore {
     fun stage(module: BundledModule): File
 }
 
-/** The component a module provides answers at runtime: Core health, FAS status. */
+/** What the component a module provides says at runtime (Core health, FAS status). */
+sealed interface RuntimeStatus {
+    data class Healthy(val detail: String) : RuntimeStatus
+
+    /** It answers, but reports a problem (Core health `degraded`, with its reasons). */
+    data class Degraded(val detail: String) : RuntimeStatus
+
+    /** It does not answer at all. */
+    data class NotAnswering(val detail: String) : RuntimeStatus
+}
+
 fun interface RuntimeProbe {
-    /** Null when it answers; otherwise why not. */
-    fun failure(module: BundledModule): String?
+    fun status(module: BundledModule): RuntimeStatus
 }
 
 /**
@@ -73,7 +93,8 @@ fun interface RuntimeProbe {
  */
 class ModuleInstallController(
     private val root: RootShell,
-    private val catalog: () -> ModuleCatalog?,
+    /** The packaged release and its signature verdict; null when nothing is packaged. */
+    private val release: () -> ModuleRelease?,
     private val detector: () -> ManagerDetection,
     private val facts: () -> DeviceFacts,
     private val probe: PreflightProbe,
@@ -98,14 +119,15 @@ class ModuleInstallController(
             RootState.DENIED -> return update(InstallPhase.ROOT_PERMISSION_DENIED, "The root manager refused, or su did not return uid 0.")
             RootState.GRANTED -> Unit
         }
-        val module = catalog()?.byId(moduleId)
-            ?: return update(InstallPhase.UNSUPPORTED, "$moduleId is not packaged in this build.")
+        val rel = release()
+        val module = rel?.catalog?.byId(moduleId)
+            ?: return update(InstallPhase.MODULE_NOT_AVAILABLE, "$moduleId is not packaged in this build.")
         val manager = when (val d = detector()) {
             ManagerDetection.RootNotDetected -> return update(InstallPhase.ROOT_NOT_AVAILABLE, "No su binary: this device is not rooted.")
             ManagerDetection.NotGranted -> return update(InstallPhase.ROOT_PERMISSION_REQUIRED, "Root integration is off.")
             ManagerDetection.Denied -> return update(InstallPhase.ROOT_PERMISSION_DENIED, "The root manager refused.")
-            is ManagerDetection.Unsupported -> return update(InstallPhase.UNSUPPORTED, "Unsupported root manager (su -v: ${d.suVersion.ifEmpty { "no answer" }}). Supported: Magisk, KernelSU, APatch.")
-            is ManagerDetection.VersionIncompatible -> return update(InstallPhase.UNSUPPORTED, "${d.identity.family.displayName} ${d.identity.versionName} is too old: needs ${d.required}.") { it.copy(manager = d.identity) }
+            is ManagerDetection.Unsupported -> return update(InstallPhase.MANAGER_UNSUPPORTED, "Unsupported root manager (su -v: ${d.suVersion.ifEmpty { "no answer" }}). Supported: Magisk, KernelSU, APatch.")
+            is ManagerDetection.VersionIncompatible -> return update(InstallPhase.MANAGER_UNSUPPORTED, "${d.identity.family.displayName} ${d.identity.versionName} is too old: needs ${d.required}.") { it.copy(manager = d.identity) }
             is ManagerDetection.Identified -> d.identity
         }
         update(InstallPhase.COMPATIBILITY_CHECK, "Checking the device and the installed modules.") { it.copy(manager = manager) }
@@ -124,7 +146,10 @@ class ModuleInstallController(
             Verdict.INCOMPATIBLE -> update(InstallPhase.UNSUPPORTED, decision.failures.joinToString("; ") { it.detail })
             Verdict.PENDING_REBOOT -> update(InstallPhase.INSTALL_PENDING_REBOOT, "${module.version} is installed; reboot to activate it.")
             Verdict.ALREADY_INSTALLED -> verifyInstalled()
-            Verdict.COMPATIBLE, Verdict.EXPERIMENTAL -> update(InstallPhase.MODULE_AVAILABLE, "${module.name} ${module.version} can be installed.")
+            Verdict.COMPATIBLE, Verdict.EXPERIMENTAL -> when (val blocker = rel.blocker) {
+                null -> update(InstallPhase.MODULE_AVAILABLE, "${module.name} ${module.version} can be installed.")
+                else -> update(InstallPhase.MODULE_NOT_AVAILABLE, "The device is compatible, but installation is blocked. $blocker")
+            }
         }
     }
 
@@ -135,6 +160,7 @@ class ModuleInstallController(
         val s = flow.value
         if (s.phase != InstallPhase.MODULE_AVAILABLE) return s
         val module = module() ?: return s
+        release()?.blocker?.let { return update(InstallPhase.MODULE_NOT_AVAILABLE, it) }
         update(InstallPhase.DOWNLOAD_PENDING, "Preparing the packaged module.")
         val file = try {
             store.stage(module)
@@ -174,6 +200,7 @@ class ModuleInstallController(
         if (decision.verdict == Verdict.EXPERIMENTAL && !acknowledgedExperimental) {
             return update(InstallPhase.AWAITING_USER_CONFIRMATION, "Confirm that you accept an experimental module.")
         }
+        release()?.blocker?.let { return update(InstallPhase.MODULE_NOT_AVAILABLE, it) }
         val verified = s.verified ?: return update(InstallPhase.INSTALL_FAILED, "The package was not verified.")
         val again = ModulePackageVerifier.verify(verified.file, decision.module)
         if (again !is PackageVerdict.Verified) {
@@ -226,11 +253,12 @@ class ModuleInstallController(
             st.staged != null -> update(InstallPhase.INSTALL_PENDING_REBOOT, "${st.staged.version} is staged; reboot to activate it.")
             active == null -> update(InstallPhase.MODULE_AVAILABLE, "${module.id} is not installed.")
             active.removePending -> update(InstallPhase.REMOVAL_PENDING_REBOOT, "${module.id} is marked for removal; reboot to finish.")
-            !active.enabled -> update(InstallPhase.DEGRADED, "${module.id} ${active.version} is installed but disabled in the root manager.")
+            !active.enabled -> update(InstallPhase.DEGRADED, "${module.id} ${active.version} is installed but disabled in the root manager.") { it.copy(disabled = true) }
             active.versionCode != module.versionCode -> update(InstallPhase.DEGRADED, "${module.id} ${active.version} is installed; this build packages ${module.version}.")
-            else -> when (val why = runtime.failure(module)) {
-                null -> update(InstallPhase.ACTIVE, "${module.name} ${active.version} is installed, enabled and answering.")
-                else -> update(InstallPhase.DEGRADED, "${module.name} ${active.version} is installed and enabled, but its service is not answering: $why")
+            else -> when (val r = runtime.status(module)) {
+                is RuntimeStatus.Healthy -> update(InstallPhase.ACTIVE, "${module.name} ${active.version} is installed, enabled and answering: ${r.detail}")
+                is RuntimeStatus.Degraded -> update(InstallPhase.DEGRADED, "${module.name} ${active.version} answers but reports a problem: ${r.detail}")
+                is RuntimeStatus.NotAnswering -> update(InstallPhase.INSTALLED_NOT_INITIALIZED, "${module.name} ${active.version} is installed and enabled, but its service is not answering: ${r.detail}")
             }
         }
     }
@@ -257,6 +285,28 @@ class ModuleInstallController(
         }
     }
 
+    /** Re-enables a module the user disabled in the manager, with the manager's own command. */
+    fun enable(): InstallFlowState {
+        val s = flow.value
+        if (!s.disabled || s.phase != InstallPhase.DEGRADED) return s
+        val module = module() ?: return s
+        val manager = s.manager ?: return s
+        val adapter = adapters(manager.family)
+        return when (val r = adapter.enable(module.id)) {
+            is ManagerResult.Failed -> update(s.phase, r.detail) {
+                it.copy(log = r.output, removalHandoff = if (manager.family == ManagerFamily.MAGISK) adapter.managerPackages else emptyList())
+            }
+            is ManagerResult.Ok -> {
+                val active = (probe.installed(module.id) as? ManagerResult.Ok)?.value?.active
+                if (active != null && active.enabled) {
+                    update(InstallPhase.INSTALL_PENDING_REBOOT, "${module.id} is enabled again; reboot to start it.") { it.copy(log = r.value, disabled = false) }
+                } else {
+                    update(s.phase, "The manager reported success, but ${module.id} is still disabled.") { it.copy(log = r.value) }
+                }
+            }
+        }
+    }
+
     private fun discardStaged() {
         flow.value.verified?.file?.delete()
     }
@@ -266,6 +316,6 @@ class ModuleInstallController(
             InstallPhase.MODULE_AVAILABLE, InstallPhase.READY_TO_INSTALL,
             InstallPhase.AWAITING_USER_CONFIRMATION, InstallPhase.HANDOFF_READY,
         )
-        private val REMOVABLE = setOf(InstallPhase.ACTIVE, InstallPhase.DEGRADED)
+        private val REMOVABLE = setOf(InstallPhase.ACTIVE, InstallPhase.DEGRADED, InstallPhase.INSTALLED_NOT_INITIALIZED)
     }
 }

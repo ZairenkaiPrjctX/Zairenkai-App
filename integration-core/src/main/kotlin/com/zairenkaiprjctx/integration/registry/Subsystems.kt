@@ -310,3 +310,50 @@ class UpstreamGapSubsystem(private val inventory: () -> OrganizationInventory?) 
         }
     }
 }
+
+/**
+ * The Zairenkai root modules as the installer last saw them. The probe only reads the
+ * controllers' current state: it runs no su command, so a registry refresh at start-up never
+ * touches root. The state is checked when the user opens the System Module screen.
+ */
+class SystemModuleSubsystem(
+    private val release: () -> com.zairenkaiprjctx.integration.systemmodule.ModuleRelease?,
+    private val states: () -> Map<String, com.zairenkaiprjctx.integration.systemmodule.InstallFlowState>,
+) : ZairenkaiSubsystem {
+    override val id = "systemmodule"
+    override val displayName = "Zairenkai System Module"
+    override val provider = Provider("ZairenkaiPrjctX/Zairenkai-Core, Zairenkai-FAS", null, "root modules installed through the root manager")
+
+    override fun probe(): List<CapabilityRecord> {
+        val rel = release() ?: return listOf(
+            CapabilityRecord(
+                "systemmodule.package", "System module package", "Root modules packaged in this APK",
+                provider, Privilege.ROOT, Availability(NATIVE_COMPONENT_UNAVAILABLE, "This build packages no modules."),
+            ),
+        )
+        val current = states()
+        return rel.catalog.modules.map { m ->
+            val s = current[m.id]
+            val a = when (s?.phase) {
+                null, com.zairenkaiprjctx.integration.systemmodule.InstallPhase.MANAGER_DETECTION ->
+                    Availability(NOT_VERIFIED, "Not checked yet. Open System › Zairenkai System Module to check it.")
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.ACTIVE -> Availability.available(s.detail)
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.ROOT_NOT_AVAILABLE,
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.ROOT_PERMISSION_REQUIRED,
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.ROOT_PERMISSION_DENIED -> Availability(ROOT_REQUIRED, s.detail)
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.MANAGER_UNSUPPORTED,
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.UNSUPPORTED -> Availability(UNSUPPORTED_DEVICE, s.detail)
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.DEGRADED,
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.INSTALLED_NOT_INITIALIZED,
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.INSTALL_FAILED -> Availability(INITIALIZATION_FAILED, s.detail)
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.INSTALL_PENDING_REBOOT,
+                com.zairenkaiprjctx.integration.systemmodule.InstallPhase.REMOVAL_PENDING_REBOOT -> Availability(NOT_VERIFIED, s.detail)
+                else -> Availability(COMPONENT_NOT_INSTALLED, s.detail)
+            }
+            CapabilityRecord(
+                "systemmodule.${m.id}", m.name, "Root module ${m.id} ${m.version} (${m.role}); provides ${m.features.joinToString()}",
+                Provider(m.source.repository, m.source.commit, m.id), Privilege.ROOT, a, listOf("install", "verify", "remove"),
+            )
+        }
+    }
+}
