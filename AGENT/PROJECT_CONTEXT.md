@@ -54,6 +54,10 @@
 - FAS stays internal-only: its licence is not merged, and the first hardware test is Core only.
   The provenance audit found no copied GPL code. Verified. Evidence:
   `docs/integration/fas-provenance.md`, 2026-10-21.
+- No Actions secret or variable is set in Zairenkai-App; the `release` environment exists with
+  no protection, and required reviewers are refused on the current plan (HTTP 422). Verified.
+  Evidence: `setup-actions-secrets.sh status`, GitHub API, 2026-10-21
+  (`docs/build/secrets-and-variables.md`).
 - Draft PRs Core #2 and ThermalTools #2 bring the pinned topic branches to `dev`; they are not
   merged. Verified. Evidence: GitHub, 2026-10-21.
 

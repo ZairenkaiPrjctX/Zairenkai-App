@@ -61,6 +61,7 @@ Non-negotiables in this repo:
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
 | Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/access/build/apk/report ok; `--release` fails on 3 blockers (signing), 2026-10-21 |
 | Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 7 passed, 2026-10-21 |
+| Actions secrets (maintainer) | `integration/scripts/setup-actions-secrets.sh status\|environment\|ci-app\|module-key\|keystore` | Configured. `status` run 2026-10-21: everything MISSING |
 | Device check (read only) | `integration/scripts/device-readonly-check.sh [--root]` | Configured (no device available) |
 | Validate agent foundation | `python3 <path-to-.github>/agent-foundation/scripts/validate_agent_setup.py .` | Configured |
 
