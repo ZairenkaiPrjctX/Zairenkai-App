@@ -38,6 +38,8 @@ not configured". It never falls back to the reduced build.
 
 ## Setting it up (maintainer, once)
 
+Every secret and variable, with an install script: `docs/build/secrets-and-variables.md`.
+
 1. Create a dedicated GitHub App owned by ZairenkaiPrjctX with **Repository permissions →
    Contents: Read-only** and **Metadata: Read-only** (GitHub adds Metadata automatically), and
    nothing else: no organization or account permissions, no webhook, no user authorization.

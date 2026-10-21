@@ -78,6 +78,11 @@ repository. Store in the `release` environment:
 `app/build.gradle.kts` creates the release signing configuration only when
 `ZAIRENKAI_RELEASE_KEYSTORE_FILE` points to a file. Otherwise `assembleRelease` stays unsigned.
 
+## Installing the secrets
+
+`integration/scripts/setup-actions-secrets.sh` creates the `release` environment and stores
+these secrets (`docs/build/secrets-and-variables.md`).
+
 ## Running a release
 
 `.github/workflows/release.yml`, run manually in the protected `release` environment:
