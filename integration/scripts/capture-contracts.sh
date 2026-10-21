@@ -44,7 +44,19 @@ fetch() {
   git -C "$dir" -c advice.detachedHead=false checkout -q --force FETCH_HEAD
   [ "$(git -C "$dir" rev-parse HEAD)" = "$commit" ] || { echo "wrong commit in $dir" >&2; exit 1; }
 }
-wait_for() { for _ in $(seq 1 50); do [ -S "$1" ] && return 0; sleep 0.2; done; echo "no socket $1" >&2; exit 1; }
+wait_for() { for _ in $(seq 1 50); do [ -S "$1" ] && return 0; sleep 0.2; done; echo "no socket $1" >&2; return 1; }
+# capture <file> <command...>: the command's stdout is the fixture. On failure, say which
+# command failed and show what it printed (zcored ctl prints its error response on stdout).
+capture() {
+  local out=$1
+  shift
+  "$@" >"$out" || {
+    local code=$?
+    echo "capture-contracts: '$*' exited $code; its output:" >&2
+    cat "$out" >&2
+    exit "$code"
+  }
+}
 
 mkdir -p "$SRC" "$DEST/zart" "$DEST/zthermal" "$DEST/core" "$DEST/fas" "$DEST/system-modules"
 CATALOG="$ROOT/integration/out/assets/system-modules.json"
@@ -60,7 +72,7 @@ fetch "$SRC/fas" "$(field zfasd-ctl-contract url)" "$(field zfasd-ctl-contract c
 (cd "$SRC/fas" && cargo build -q --locked --release -p zfasd)
 
 ZART="$SRC/zart/target/release/zart"
-"$ZART" inspect >"$DEST/zart/inspect-host.json"
+capture "$DEST/zart/inspect-host.json" "$ZART" inspect
 "$ZART" dexopt-status com.example.app >"$DEST/zart/dexopt-status-host.json" || true
 
 # Populated reports: zart's own library serialises inspect/dexopt results for the fixture
@@ -83,28 +95,35 @@ cp "$SRC/zart/Cargo.lock" "$TMP/zart-fixture/Cargo.lock"
 
 ZT="$SRC/zthermal/target/release/zthermal"
 for dev in synthetic-qcom synthetic-pixel synthetic-mtk empty-host; do
-  "$ZT" snapshot --framework --root "$SRC/zthermal/tests/fixtures/devices/$dev" >"$DEST/zthermal/snapshot-$dev.json"
+  capture "$DEST/zthermal/snapshot-$dev.json" "$ZT" snapshot --framework --root "$SRC/zthermal/tests/fixtures/devices/$dev"
 done
-"$ZT" snapshot >"$DEST/zthermal/snapshot-host.json"
+capture "$DEST/zthermal/snapshot-host.json" "$ZT" snapshot
 
 CORE="$SRC/core/target/release/zcored"
+mkdir -p "$TMP/core"
+# Core answers root, and any other uid only when it is a configured principal ("uid N is not a
+# configured Core client"). CI runs as an unprivileged user: register it as an app client allowed
+# the one operation the dry-run submit asks for, as Core's own daemon tests do.
+if [ "$(id -u)" -ne 0 ]; then
+  printf '[[principals]]\nuid = %s\nrole = "app"\ngrants = ["fas_set_profile"]\n' "$(id -u)" >"$TMP/core/config.toml"
+fi
 "$CORE" run --dir "$TMP/core" >"$TMP/core.log" 2>&1 &
 CORE_PID=$!
-wait_for "$TMP/core/zcored.sock"
+wait_for "$TMP/core/zcored.sock" || { cat "$TMP/core.log" >&2; exit 1; }
 for m in health capabilities context modules leases; do
-  "$CORE" ctl --dir "$TMP/core" "$m" >"$DEST/core/$m.json"
+  capture "$DEST/core/$m.json" "$CORE" ctl --dir "$TMP/core" "$m"
 done
-"$CORE" ctl --dir "$TMP/core" audit '{"limit":5}' >"$DEST/core/audit.json"
-"$CORE" ctl --dir "$TMP/core" submit \
-  '{"operation":{"op":"fas_set_profile","profile":"performance"},"dry_run":true}' >"$DEST/core/submit-dry-run.json"
+capture "$DEST/core/audit.json" "$CORE" ctl --dir "$TMP/core" audit '{"limit":5}'
+capture "$DEST/core/submit-dry-run.json" "$CORE" ctl --dir "$TMP/core" submit \
+  '{"operation":{"op":"fas_set_profile","profile":"performance"},"dry_run":true}'
 
 FAS="$SRC/fas/target/release/zfasd"
 "$FAS" run --observe-only --dir "$TMP/fas" >"$TMP/fas.log" 2>&1 &
 FAS_PID=$!
-wait_for "$TMP/fas/zfasd.sock"
+wait_for "$TMP/fas/zfasd.sock" || { cat "$TMP/fas.log" >&2; exit 1; }
 sleep 3 # let the daemon publish a full snapshot
-"$FAS" ctl --dir "$TMP/fas" status >"$DEST/fas/status.json"
-"$FAS" ctl --dir "$TMP/fas" profile balanced >"$DEST/fas/profile-ok.json"
+capture "$DEST/fas/status.json" "$FAS" ctl --dir "$TMP/fas" status
+capture "$DEST/fas/profile-ok.json" "$FAS" ctl --dir "$TMP/fas" profile balanced
 
 python3 - "$DEST" "$LOCK" <<'PY'
 import json, sys, pathlib

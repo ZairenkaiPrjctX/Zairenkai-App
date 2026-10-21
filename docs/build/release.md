@@ -45,7 +45,10 @@ Not done by an agent: the private key must never pass through a chat session, a 
 repository or a CI artifact. No development key exists to fall back on, and no build substitutes
 one. Without the trusted key, every build refuses to install modules.
 
-Run this on a trusted machine, in a directory outside any Git checkout:
+`integration/scripts/setup-actions-secrets.sh module-signing` does all of this (key in
+`~/.zairenkai-keys`, public half into the trust list, private key into the `release`
+environment; `docs/build/secrets-and-variables.md`). By hand, on a trusted machine, in a
+directory outside any Git checkout:
 
 ```sh
 openssl ecparam -name prime256v1 -genkey -noout -out module-signing.pem   # keep offline / in a secret store
@@ -85,14 +88,23 @@ these secrets (`docs/build/secrets-and-variables.md`).
 
 ## Running a release
 
-`.github/workflows/release.yml`, run manually in the protected `release` environment:
-1. Lock check, then the CI GitHub App token (`docs/build/ci.md`).
-2. Keys are written to `$RUNNER_TEMP` (mode 600).
+`.github/workflows/release.yml`, run manually from `dev` in the `release` environment:
+1. Lock check. Then, before any build, the job fails if it runs on another branch, if any of the
+   seven values is missing, if the module key is not in the committed trust list, or if the
+   keystore does not open with the stored alias and password.
+2. The keys are written to `$RUNNER_TEMP` (mode 600), then the CI GitHub App token
+   (`docs/build/ci.md`).
 3. `build-components.sh` signs the catalog.
 4. Tests, lint and a signed `assembleRelease`.
 5. The keys and the token are removed.
-6. The release gate: `verify_integration.py report --release`. It runs `apksigner verify`,
+6. `apksigner verify --verbose --print-certs`; the scheme lines, certificate DN and SHA-256
+   digest go into the job summary.
+7. The release gate: `verify_integration.py report --release`. It runs `apksigner verify` again,
    requires a signed catalog and a trusted key, and requires a licence file for every
    distributed component.
+
+Nothing is published. The signed APK and the report are uploaded as the `release` workflow
+artifact only when every step passed. On a failure, the job summary says so and the integration
+report, if one was written, is uploaded as `release-failure-report`.
 
 The job fails while any blocker remains. No release has been run.
