@@ -56,42 +56,44 @@
         "zcored and zfasd start at boot from service.sh; each restarts at most 5 times in 10 minutes.",
         "While running, zfasd raises cpufreq scaling_min_freq floors within [cpuinfo_min, scaling_max] and restores them when it stops (FAS docs/CAPABILITIES.md); service.sh runs zfasd restore after every exit.",
         "Vendor performance agents may write the same cpufreq nodes; FAS backs off on contention but does not disable them.",
-        "Removing the module restores what zfasd changed, stops zcored (which restores any temporary override it made) and deletes /data/adb/zairenkai."
+        "Removing the module restores what zfasd changed, stops zcored (which restores any temporary override it made) and deletes /data/adb/zairenkai.",
+        "bin/ztune (Zairenkai-Tuning, GPL-3.0) never runs at install or boot. Core may run it to set an I/O scheduler or GPU governor only when ztune reports an exact-device write authorization from a hardware-validated profile; none ships, so it is read-only on every device today. Removing the module runs ztune restore first."
       ],
       "lifecycle": {
         "destinations": {
           "staged": "/data/adb/modules_update/zairenkai (by the root manager)",
           "active": "/data/adb/modules/zairenkai (after reboot)",
-          "data": "/data/adb/zairenkai/core and /data/adb/zairenkai/fas (customize.sh creates them 0700; config.toml in each is kept across installs)"
+          "data": "/data/adb/zairenkai/core, /data/adb/zairenkai/fas and /data/adb/zairenkai/tuning (customize.sh creates them 0700; config.toml in core and fas is kept across installs)"
         },
         "startup": "service.sh waits for sys.boot_completed, then supervises bin/zcored run --dir /data/adb/zairenkai/core and bin/zfasd run --dir /data/adb/zairenkai/fas, each with exponential backoff and at most 5 starts in 10 minutes, then writes <data>/failed; after every zfasd exit it runs zfasd restore",
         "shutdown": "the supervisors stop when the manager's disable or remove marker exists; zcored restores temporary overrides on SIGTERM; zfasd restores every floor it raised",
-        "uninstall": "uninstall.sh stops zfasd and runs zfasd restore, stops zcored (waits up to 30 s), then deletes /data/adb/zairenkai; if the FAS restore fails it keeps /data/adb/zairenkai/fas and logs to /cache",
+        "uninstall": "uninstall.sh runs ztune restore (I/O scheduler, GPU governor changed this boot), stops zfasd and runs zfasd restore, stops zcored (waits up to 30 s), then deletes /data/adb/zairenkai; if the FAS restore fails it keeps /data/adb/zairenkai/fas and logs to /cache",
         "recovery": "disable or remove the module in the root manager (or its safe mode); <data>/failed and the daemon logs record start failures; zfasd restore restores recorded floors",
         "kernel": "Android 10+ arm64 (customize.sh checks ARCH and API); cpufreq policy directories for FAS (required_paths)",
-        "action": "action.sh prints zcored ctl health and zfasd ctl status; KernelSU's WebUI serves webroot/ (FAS)"
+        "action": "action.sh prints zcored ctl health, zfasd ctl status and ztune capabilities (read-only); KernelSU's WebUI serves webroot/ (FAS)"
       },
       "distribution": "distributable",
-      "distribution_reason": "Apache-2.0: LICENSE and NOTICE of Zairenkai-Modules, plus each component's LICENSE, NOTICE and THIRD_PARTY.md under licenses/<component>/ in the zip. FAS is distributed in this module by the maintainer's decision of 2026-10-22 (docs/integration/fas-provenance.md); its hardware validation is still pending.",
+      "distribution_reason": "Aggregate. Zairenkai-Modules, Core and FAS are Apache-2.0: LICENSE and NOTICE of Zairenkai-Modules, plus each component's LICENSE, NOTICE and THIRD_PARTY.md under licenses/<component>/ in the zip. ztune is GPL-3.0-only (Zairenkai-Tuning 0c226b2): its licence is under licenses/zairenkai-tuning/ and its Corresponding Source under source/zairenkai-tuning/, and assemble.py refuses the zip without them. ztune is a separate program; no GPL code is linked into zcored, zfasd or the app. FAS is distributed in this module by the maintainer's decision of 2026-10-22 (docs/integration/fas-provenance.md); its hardware validation is still pending.",
       "file": "system-modules/zairenkai.zip",
-      "version": "v0.1.0",
-      "version_code": 100,
-      "size": 1375455,
-      "sha256": "4937db2e0f0e53335c119766397c1d14cf60d17483a267db217f7f309a375a2c",
+      "version": "v0.2.0",
+      "version_code": 200,
+      "size": 4399697,
+      "sha256": "f4ad8d649071c6a168e846803662c5cd7976b174ee8dccb44da765693478400d",
       "source": {
         "repository": "ZairenkaiPrjctX/Zairenkai-Modules",
-        "commit": "ea138ef7ef688ae482f997ad85e9edaf6aef7c15"
+        "commit": "298311ce44e4c2b3457db4831b92a48e9ee03a1d"
       },
       "entries": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "META-INF/com/google/android/update-binary": "a3cd18357728f186eb4950a822b2d8cd175c846064daa65d40755c29ed56ffcd",
         "META-INF/com/google/android/updater-script": "d2b8203193a083e43ad076fde01b9c7821e0aa521e1f8077b8628fb1cdb70c60",
-        "NOTICE": "363bdfc92428286dd15edc4fad36095794a1d6e16e2f972451292246d16ed94c",
-        "action.sh": "d381a58f15fe41de520155ac3bddac7f68ab5587f1175bfdd83cdb4498a97549",
-        "bin/zcored": "9fbc353ba403b1026f5cf5e0e7cab47880f270318215164b6cecec7e77728315",
-        "bin/zfasd": "d5917881bbd5daaf77df061779f9bc4869f96d987b202a82020bce472d97083f",
-        "components.json": "d94a770da26045e4b74cce6163ae727c14194921a2e1277c7a175ddf664fce48",
-        "customize.sh": "3b1c450878315199f0ec3d867f7b7252e577c1d76a52cf1d48e1fdfd854fc920",
+        "NOTICE": "aaa2182bb52729c2ec7230714919c12357e06d6a893158fd4efa8eda9f3168a0",
+        "action.sh": "a06a9022abe339fe78fda6794aa2d8fea06401dffc28bb2e9bf354bb2a27a407",
+        "bin/zcored": "a0b2747e914207445914772dca28e3de4fbfce5d4a7a0e8d2e496699648c58ca",
+        "bin/zfasd": "2475c22e0dcd505fa14ecd38be7eebd576457936290aceb45167d323194429ac",
+        "bin/ztune": "91af22c5bf713ec9e10dfc37c3393a7f460c1996464b906ccd1458d55fc84f87",
+        "components.json": "edda480f5c12ff5489af82ad83d6c8aee8165243fca5c7667fe5c2195cce1926",
+        "customize.sh": "c5d0b674463ad11f70682e2609be477b8dae98506225661958742e6e21f26e51",
         "defaults/fas-config.toml": "258ad87eb2c37c157f4035ff804e3da23a908d9d8fa4ecd83ed4f8b048b7d39e",
         "licenses/zairenkai-core/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "licenses/zairenkai-core/NOTICE": "217d7ee16694298d4936ff8e668d1fc8e67bf3e33a88f0a74d3d584c3efe5f70",
@@ -99,9 +101,14 @@
         "licenses/zairenkai-fas/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "licenses/zairenkai-fas/NOTICE": "025251e60d9a0976f1d568296994c9b03d666e4ecd8eaf45b88b9d8f850eff65",
         "licenses/zairenkai-fas/THIRD_PARTY.md": "397da6934d09cf66a8d800b828e1cac72d8ce325110a87ad12ef7f9bf63a5b23",
-        "module.prop": "bc889661cd0a417de0e030b6c371d33b3a33135f028eda777b2054109993880c",
-        "service.sh": "07b58276159d3595a11303d8456eab9930a79042d8f4a1c17479e7776a5a4e55",
-        "uninstall.sh": "4810d5deec409576da01471a302611ab152d9d6d531b3240fba6d8e4e23b67f2",
+        "licenses/zairenkai-tuning/LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "licenses/zairenkai-tuning/NOTICE": "ebf8f479ec0bd600c2dec91149201d27d48ab8f7ede17f349f20da002300665b",
+        "licenses/zairenkai-tuning/SOURCE.md": "2b0bb74c3fa382cecf257bde8169289159b629595565bc881ade78c5ef08eff7",
+        "licenses/zairenkai-tuning/THIRD_PARTY.md": "00e7bb78656e235d320d9fdcccd4d420fc82e2ce1fe061d4217c3bf2f78b91fb",
+        "module.prop": "0f498473c51c2d466617073b060a04909bab22544b5fa87524473788b7d138ba",
+        "service.sh": "ac0ecff777d7e4b14a37173e1c4fbb79b6665148869bc5068a0e0da37bf554ac",
+        "source/zairenkai-tuning/zairenkai-tuning-0c226b27771c0e0274feb6435b36c8d90487a814-src.tar.gz": "dce07d4e62acb9d9780fb66e9974892dd5576eeba1cb4d92e4ac9fb89df84248",
+        "uninstall.sh": "e16dab8a68524a2b14ea7d87a729fd8b414b42c87f897270558089e902eeb482",
         "webroot/index.html": "b878ee3ef98f5d28ceb56f70410ca5ce0906ab41c7eb8da91e7fa024819745bc"
       },
       "source_matched": [

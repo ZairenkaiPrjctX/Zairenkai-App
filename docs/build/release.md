@@ -21,7 +21,8 @@ the stored key matches the trusted public key is checked only when `release.yml`
 never run.
 
 The gate also fails on any APK carrying a module other than the single `zairenkai` module
-(Zairenkai-Modules, with zcored and zfasd: `docs/integration/fas-provenance.md`).
+(Zairenkai-Modules, with zcored, zfasd and the GPL-3.0 ztune with its source:
+`docs/integration/fas-provenance.md`, `docs/integration/license-inventory.md`).
 
 The gate is not the whole readiness question. Release readiness also needs:
 - the full-integration CI job green on the release commit (`docs/build/ci.md`; it no longer needs

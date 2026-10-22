@@ -576,11 +576,17 @@ class SystemModuleCatalogContractTest {
             assertFalse("no /system overlay", m.entries.keys.any { it.startsWith("system/") })
             assertEquals("arm64-v8a", m.requirements.abi)
         }
-        // One module, carrying both daemons and every component's licence files.
+        // One module, carrying both daemons, ztune and every component's licence files.
         assertEquals(listOf("zairenkai"), c.modules.map { it.id })
         val z = c.byId("zairenkai")!!
         assertEquals("distributable", z.distribution)
         for (e in listOf("bin/zcored", "bin/zfasd", "components.json", "defaults/fas-config.toml", "licenses/zairenkai-core/LICENSE", "licenses/zairenkai-fas/LICENSE")) {
+            assertTrue("$e missing from the module", e in z.entries)
+        }
+        // ztune is GPL-3.0-only: its licence and Corresponding Source travel with the binary.
+        val source = Regex("source/zairenkai-tuning/zairenkai-tuning-[0-9a-f]{40}-src\\.tar\\.gz")
+        assertEquals(1, z.entries.keys.count { source.matches(it) })
+        for (e in listOf("bin/ztune", "licenses/zairenkai-tuning/LICENSE", "licenses/zairenkai-tuning/SOURCE.md")) {
             assertTrue("$e missing from the module", e in z.entries)
         }
     }

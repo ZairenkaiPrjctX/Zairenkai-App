@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Reviewed specification of the single root module the app installs, zairenkai (Zairenkai-Modules), which packages zcored and zfasd. build-components.sh assembles it at the commit of the zairenkai-module lock component, checks that every script in the zip is byte-identical to that commit's module/ source, and writes assets/system-modules.json (this file plus digests). Requirements come from the module's customize.sh and update-binary and from each daemon's docs. lifecycle: destinations, start, stop, uninstall and recovery as the module's scripts implement them.",
+  "note": "Reviewed specification of the single root module the app installs, zairenkai (Zairenkai-Modules), which packages zcored, zfasd and ztune. build-components.sh assembles it at the commit of the zairenkai-module lock component, checks that every script in the zip is byte-identical to that commit's module/ source, and writes assets/system-modules.json (this file plus digests). Requirements come from the module's customize.sh and update-binary and from each daemon's docs. lifecycle: destinations, start, stop, uninstall and recovery as the module's scripts implement them.",
   "modules": [
     {
       "id": "zairenkai",
@@ -57,23 +57,24 @@
         "zcored and zfasd start at boot from service.sh; each restarts at most 5 times in 10 minutes.",
         "While running, zfasd raises cpufreq scaling_min_freq floors within [cpuinfo_min, scaling_max] and restores them when it stops (FAS docs/CAPABILITIES.md); service.sh runs zfasd restore after every exit.",
         "Vendor performance agents may write the same cpufreq nodes; FAS backs off on contention but does not disable them.",
-        "Removing the module restores what zfasd changed, stops zcored (which restores any temporary override it made) and deletes /data/adb/zairenkai."
+        "Removing the module restores what zfasd changed, stops zcored (which restores any temporary override it made) and deletes /data/adb/zairenkai.",
+        "bin/ztune (Zairenkai-Tuning, GPL-3.0) never runs at install or boot. Core may run it to set an I/O scheduler or GPU governor only when ztune reports an exact-device write authorization from a hardware-validated profile; none ships, so it is read-only on every device today. Removing the module runs ztune restore first."
       ],
       "lifecycle": {
         "destinations": {
           "staged": "/data/adb/modules_update/zairenkai (by the root manager)",
           "active": "/data/adb/modules/zairenkai (after reboot)",
-          "data": "/data/adb/zairenkai/core and /data/adb/zairenkai/fas (customize.sh creates them 0700; config.toml in each is kept across installs)"
+          "data": "/data/adb/zairenkai/core, /data/adb/zairenkai/fas and /data/adb/zairenkai/tuning (customize.sh creates them 0700; config.toml in core and fas is kept across installs)"
         },
         "startup": "service.sh waits for sys.boot_completed, then supervises bin/zcored run --dir /data/adb/zairenkai/core and bin/zfasd run --dir /data/adb/zairenkai/fas, each with exponential backoff and at most 5 starts in 10 minutes, then writes <data>/failed; after every zfasd exit it runs zfasd restore",
         "shutdown": "the supervisors stop when the manager's disable or remove marker exists; zcored restores temporary overrides on SIGTERM; zfasd restores every floor it raised",
-        "uninstall": "uninstall.sh stops zfasd and runs zfasd restore, stops zcored (waits up to 30 s), then deletes /data/adb/zairenkai; if the FAS restore fails it keeps /data/adb/zairenkai/fas and logs to /cache",
+        "uninstall": "uninstall.sh runs ztune restore (I/O scheduler, GPU governor changed this boot), stops zfasd and runs zfasd restore, stops zcored (waits up to 30 s), then deletes /data/adb/zairenkai; if the FAS restore fails it keeps /data/adb/zairenkai/fas and logs to /cache",
         "recovery": "disable or remove the module in the root manager (or its safe mode); <data>/failed and the daemon logs record start failures; zfasd restore restores recorded floors",
         "kernel": "Android 10+ arm64 (customize.sh checks ARCH and API); cpufreq policy directories for FAS (required_paths)",
-        "action": "action.sh prints zcored ctl health and zfasd ctl status; KernelSU's WebUI serves webroot/ (FAS)"
+        "action": "action.sh prints zcored ctl health, zfasd ctl status and ztune capabilities (read-only); KernelSU's WebUI serves webroot/ (FAS)"
       },
       "distribution": "distributable",
-      "distribution_reason": "Apache-2.0: LICENSE and NOTICE of Zairenkai-Modules, plus each component's LICENSE, NOTICE and THIRD_PARTY.md under licenses/<component>/ in the zip. FAS is distributed in this module by the maintainer's decision of 2026-10-22 (docs/integration/fas-provenance.md); its hardware validation is still pending."
+      "distribution_reason": "Aggregate. Zairenkai-Modules, Core and FAS are Apache-2.0: LICENSE and NOTICE of Zairenkai-Modules, plus each component's LICENSE, NOTICE and THIRD_PARTY.md under licenses/<component>/ in the zip. ztune is GPL-3.0-only (Zairenkai-Tuning 0c226b2): its licence is under licenses/zairenkai-tuning/ and its Corresponding Source under source/zairenkai-tuning/, and assemble.py refuses the zip without them. ztune is a separate program; no GPL code is linked into zcored, zfasd or the app. FAS is distributed in this module by the maintainer's decision of 2026-10-22 (docs/integration/fas-provenance.md); its hardware validation is still pending."
     }
   ]
 }

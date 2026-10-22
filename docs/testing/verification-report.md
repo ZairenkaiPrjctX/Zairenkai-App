@@ -1,5 +1,20 @@
 # Verification report
 
+## Module with ztune; first green full-integration run (2026-10-22)
+
+**Verdict: the integrated app built in CI for the first time; the re-pin is verified on the host
+and waits for CI.** Nothing ran on a device.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Full integration on GitHub, at `d0db6b7` (pins Core `4cdfe8e`, Modules `ea138ef`) | CI run 39827139485 | **all jobs green**: anonymous fetch, every component built at its lock, `verify_integration.py build`, contracts re-captured, `:integration-core:test :app:testDebugUnitTest lint assembleDebug assembleRelease`, APK inspection and integration report |
+| Re-pin: Core `8931cbb`, Modules `298311c` (module 0.2.0 with ztune and its source) | `ANDROID_NDK_HOME=… build-components.sh` | exit 0; zip SHA-256 `f4ad8d64…400d`, byte-identical to the build in Zairenkai-Modules from the same commits |
+| Artifacts and notices | `verify_integration.py build` | `build: ok` (now also `licenses/zairenkai-tuning/THIRD_PARTY_NOTICES.txt`, 25 crates) |
+| GPL obligations in the zip | `unzip -l zairenkai.zip` | `bin/ztune`, `licenses/zairenkai-tuning/{LICENSE,NOTICE,SOURCE.md,THIRD_PARTY.md}`, `source/zairenkai-tuning/zairenkai-tuning-0c226b2…-src.tar.gz` |
+| Contracts | `capture-contracts.sh` | exit 0; every core/ and fas/ fixture re-captured on a Linux container at the new pins (Core now reports `tuning.gpu_governor`, `tuning.io_scheduler`, `tuning.telemetry` as `unsupported` without ztune; module version 0.2.0) |
+| Lock | `verify_integration.py lock` | ok |
+| Gradle at the new pins | `./gradlew :integration-core:test` | **not run locally**: Maven Central HTTP 429; CI on this push is the check |
+
 ## Public sources, no CI GitHub App (2026-10-22)
 
 **Verdict: verified locally, not yet on GitHub.** Every ZairenkaiPrjctX repository is public

@@ -1,15 +1,18 @@
 {
-  "id": "cli-3015-588496",
+  "id": "cli-22315-3007760",
   "ok": true,
   "result": [
     {
-      "at_ms": 588264,
+      "at_ms": 3007543,
       "correlation_id": null,
       "event": {
         "changed": [
           "fas.profile",
           "fas.enabled",
-          "android.low_power_mode"
+          "android.low_power_mode",
+          "tuning.io_scheduler",
+          "tuning.gpu_governor",
+          "tuning.telemetry"
         ],
         "kind": "capabilities_refreshed"
       },
@@ -17,7 +20,7 @@
       "seq": 1
     },
     {
-      "at_ms": 588264,
+      "at_ms": 3007543,
       "correlation_id": null,
       "event": {
         "changed": [
@@ -29,7 +32,7 @@
       "seq": 2
     },
     {
-      "at_ms": 588264,
+      "at_ms": 3007543,
       "correlation_id": null,
       "event": {
         "changed": [
@@ -41,7 +44,7 @@
       "seq": 3
     },
     {
-      "at_ms": 588264,
+      "at_ms": 3007543,
       "correlation_id": null,
       "event": {
         "changed": [
@@ -57,11 +60,11 @@
       "seq": 4
     },
     {
-      "at_ms": 588264,
+      "at_ms": 3007543,
       "correlation_id": null,
       "event": {
         "kind": "started",
-        "policy_version": "builtin-1/cfg-105385cae3148f35",
+        "policy_version": "builtin-1/cfg-811a9b9369260358",
         "version": "zcored 0.1.0 (core api 1.0.0)"
       },
       "principal": {

@@ -29,7 +29,7 @@
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "4cdfe8e4f515840ba634c9de2197f46bfa516d5d",
+      "audited_commit": "8931cbb6aa3e70dc0197c2840b61842039b03626",
       "code_present": true,
       "languages": [
         "Rust",
@@ -51,7 +51,7 @@
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai/bin/zcored ctl (protocol v1 JSON)",
       "runtime_requirements": "root (Magisk/KernelSU/APatch) and the zairenkai module installed and running; ADR-0005 limits the socket to root clients",
       "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
-      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev. Re-audited 2026-10-21 at 11e9742 (dev): Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21. Re-audited 2026-10-22 at 4cdfe8e (Core PR #3, topic branch): data under /data/adb/zairenkai/core, zfasd found as bin/zfasd of the zairenkai module, module inventory reports zairenkai itself; module/ moved to Zairenkai-Modules, build-android.sh emits a component."
+      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev. Re-audited 2026-10-21 at 11e9742 (dev): Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21. Re-audited 2026-10-22 at 4cdfe8e (Core PR #3, topic branch): data under /data/adb/zairenkai/core, zfasd found as bin/zfasd of the zairenkai module, module inventory reports zairenkai itself; module/ moved to Zairenkai-Modules, build-android.sh emits a component. Re-audited 2026-10-22 at 8931cbb (Core PR #3): tuning adapter running ztune as a separate process; tuning resources read-only unless ztune authorizes a write."
     },
     {
       "name": "Zairenkai-FAS",
@@ -280,7 +280,7 @@
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "ea138ef7ef688ae482f997ad85e9edaf6aef7c15",
+      "audited_commit": "298311ce44e4c2b3457db4831b92a48e9ee03a1d",
       "code_present": true,
       "languages": [
         "Shell",
@@ -290,7 +290,7 @@
       "categories": [
         "root_module"
       ],
-      "disposition": "integrated: the single zairenkai root module (zcored and zfasd), packaged in the APK and installed through the root manager",
+      "disposition": "integrated: the single zairenkai root module (zcored, zfasd and ztune), packaged in the APK and installed through the root manager",
       "integration_status": "implemented",
       "app_capabilities": [
         "systemmodule.zairenkai (install through the root manager, state, runtime check)"
@@ -298,7 +298,7 @@
       "integration_mechanism": "assets/system-modules/zairenkai.zip, installed with the root manager's own installer after the user confirms; catalog signed by a key in integration/module-trust.json",
       "runtime_requirements": "root manager (Magisk v20.4+, KernelSU/KernelSU-Next, APatch), arm64, API 29+",
       "license": "Apache-2.0 (LICENSE, NOTICE)",
-      "evidence": "Audited 2026-10-22 at ea138ef (Modules PR #1, topic branch, the first code): module/ scripts, components.lock.json (Core 4cdfe8e, FAS 99cfb18), scripts/assemble.py with 11 tests."
+      "evidence": "Audited 2026-10-22 at ea138ef (Modules PR #1, topic branch, the first code): module/ scripts, components.lock.json (Core 4cdfe8e, FAS 99cfb18), scripts/assemble.py with 11 tests. Re-audited 2026-10-22 at 298311c (Modules PR #1): Tuning added to components.lock.json; assemble.py requires a GPL component's licence and Corresponding Source; CI checks out the public components without a token."
     },
     {
       "name": "Zairenkai-Intelligence-Engine",
@@ -492,10 +492,10 @@
         "gpl_component",
         "system_service_or_privileged_daemon"
       ],
-      "disposition": "not integrated in the app yet: GPL-3.0-only executable ztune (telemetry, SoC identity, exact-device tuning profiles), run by Core as a separate process and packaged with its Corresponding Source in the zairenkai module by Zairenkai-Modules (topic branch). The app's lock still pins a Modules commit without it",
-      "integration_status": "not_applicable",
+      "disposition": "packaged, not called by the app: GPL-3.0-only executable ztune (telemetry, SoC identity, exact-device tuning profiles), shipped with its Corresponding Source inside the zairenkai module (Modules 298311c, Tuning 0c226b2) and run only by Core as a separate process. The app reaches it only through Core",
+      "integration_status": "implemented",
       "app_capabilities": [],
-      "integration_mechanism": "none in the app; Core runs ztune capabilities|telemetry|apply with a fixed argv and reads the zairenkai.tuning schema 1 JSON",
+      "integration_mechanism": "indirect: the app installs the zairenkai module that carries bin/ztune; Core runs ztune capabilities|telemetry|apply with a fixed argv and reads the zairenkai.tuning schema 1 JSON",
       "runtime_requirements": "root module zairenkai (Modules bd1eb06 or later); writes only with a Tier D device_validated profile, none shipped",
       "license": "GPL-3.0-only (LICENSE, NOTICE, SPDX headers); adapts RvSystem-Monitor, Lynx and KonaBess (docs/PROVENANCE.md)",
       "evidence": "crates/, docs/CONTRACT.md, docs/PROVENANCE.md, profiles/index.json ([]) at 0c226b2; git ls-remote shows only the topic branch, no default branch, 2026-10-22. No code from it enters this Apache-2.0 repository."

@@ -41,7 +41,7 @@ SRC_DIRS = {
     "zfasd-ctl-contract": "fas",
 }
 # Packaged in the APK (contracts are only called at run time). zairenkai-module is the single
-# root module; it packages zcored and zfasd (maintainer decision 2026-10-22).
+# root module; it packages zcored, zfasd and the GPL-3.0 ztune with its source (2026-10-22).
 PACKAGED = ("zart", "zthermal", "afid-device-candidates", "zairenkai-module")
 INTERNAL_ONLY = ()
 
@@ -165,7 +165,7 @@ def check_build() -> list:
     internal = profile() == "internal"
     if any(n.startswith("assets/system-modules/") and n != "assets/system-modules/zairenkai.zip" for n in files):
         errors.append("build: a module other than zairenkai.zip was built")
-    for c in ("zart", "zthermal", "zairenkai-core", "zairenkai-fas"):
+    for c in ("zart", "zthermal", "zairenkai-core", "zairenkai-fas", "zairenkai-tuning"):
         if not (OUT / f"assets/licenses/{c}/THIRD_PARTY_NOTICES.txt").is_file():
             errors.append(f"build: third-party notices for {c} missing")
     if not (OUT / "assets/licenses/zart/AOSP-ATTRIBUTION.txt").is_file():

@@ -11,7 +11,7 @@ the module, so FAS still restores its cpufreq floors before its data is removed.
 
 | Module id | Built from | Provides | Why it needs root |
 |---|---|---|---|
-| `zairenkai` | Zairenkai-Modules `ea138ef` (`module/` + `scripts/assemble.py`), with Zairenkai-Core `4cdfe8e` and Zairenkai-FAS `99cfb18` as its `components.lock.json` pins them | `zcored`: Core health, policy-checked actions, module inventory. `zfasd`: FAS status and controls | zcored is a root daemon with a root-only socket (Core ADR-0005); zfasd writes cpufreq `scaling_min_freq` floors once enabled |
+| `zairenkai` | Zairenkai-Modules `298311c` (`module/` + `scripts/assemble.py`), with Zairenkai-Core `8931cbb`, Zairenkai-FAS `99cfb18` and Zairenkai-Tuning `0c226b2` as its `components.lock.json` pins them | `zcored`: Core health, policy-checked actions, module inventory, tuning capabilities (read-only). `zfasd`: FAS status and controls. `ztune` (GPL-3.0, with its source): run only by Core | zcored is a root daemon with a root-only socket (Core ADR-0005); zfasd writes cpufreq `scaling_min_freq` floors once enabled; ztune writes nothing without an exact-device validated profile, and none ships |
 
 The separate `zairenkai_core` and `zairenkai_fas` modules are superseded: the catalog lists them
 as conflicts, the installer warns about them, and Core reports them as superseded.

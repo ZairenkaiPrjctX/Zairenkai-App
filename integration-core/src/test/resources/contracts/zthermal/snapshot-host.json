@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "tool_version": "0.2.0",
-  "generated_unix_ms": 1792605346663,
+  "generated_unix_ms": 1792692834987,
   "root": "device",
   "redacted": true,
   "identity": {
@@ -29,7 +29,7 @@
     "build_fingerprint": null,
     "vendor_fingerprint": null,
     "build_type": null,
-    "kernel_release": "6.18.44-fc-v139",
+    "kernel_release": "6.18.44-fc-v140",
     "arch": "x86_64",
     "missing": [
       "ro.product.manufacturer",

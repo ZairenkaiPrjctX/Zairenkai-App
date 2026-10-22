@@ -11,7 +11,7 @@
 A green `reduced` job says nothing about the integrated app. Only `full-integration` does.
 
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
-locked commit: Modules' `components.lock.json` names the Core and FAS commits, each is built
+locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
 with its own `scripts/build-android.sh`, and Modules' `scripts/assemble.py` packages them
 (`docs/integration/system-module.md`).
 

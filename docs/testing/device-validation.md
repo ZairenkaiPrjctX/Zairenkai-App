@@ -7,7 +7,8 @@ and the record to file.
 
 ## Scope
 
-- **One module:** `zairenkai`, which carries zcored and zfasd. **FAS stays switched off.** The
+- **One module:** `zairenkai`, which carries zcored, zfasd and ztune (ztune never runs at boot and
+  writes nothing without a validated profile; none ships). **FAS stays switched off.** The
   module installs it with `enabled = false`; do not enable it during this test. Step 1 and
   the last step confirm that the superseded `zairenkai_core` / `zairenkai_fas` modules are
   absent, and the "after" output must show no changed cpufreq node.

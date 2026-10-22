@@ -36,8 +36,8 @@
   Verified. Evidence: Core `docs/adr/0005-root-only-socket.md`.
 - No Android device or emulator was available: install, launch, root prompts and SELinux
   behaviour are **Unverified**.
-- The app installs one root module, `zairenkai` (Zairenkai-Modules: zcored and zfasd, data in
-  `/data/adb/zairenkai/{core,fas}`), through Magisk, KernelSU/KernelSU-Next or APatch.
+- The app installs one root module, `zairenkai` (Zairenkai-Modules: zcored, zfasd and the GPL-3.0
+  ztune with its source, data in `/data/adb/zairenkai/{core,fas,tuning}`), through Magisk, KernelSU/KernelSU-Next or APatch.
   Verified. Evidence: maintainer decision 2026-10-22; `integration/system-modules.json`; catalog
   fixture built from the real arm64 components (`docs/testing/verification-report.md`,
   2026-10-22). The separate `zairenkai_core` / `zairenkai_fas` modules are superseded. The manager commands were read in each manager's source. Verified. Evidence:
@@ -63,9 +63,13 @@
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
-- Core and FAS are pinned to their topic-branch PR heads (Core PR #3 `4cdfe8e`, FAS PR #4
-  `99cfb18`), which move them into the single module; ART, ThermalTools and Database-Source stay
-  on `dev` merge commits. Verified. Evidence: `integration/repository-lock.json`, 2026-10-22.
+- Core, FAS and Modules are pinned to topic-branch commits (Core PR #3 `8931cbb`, FAS PR #4
+  `99cfb18`, Modules PR #1 `298311c`); ART, ThermalTools and Database-Source stay on `dev` merge
+  commits. Verified. Evidence: `integration/repository-lock.json`, 2026-10-22.
+- The full-integration CI job passed for the first time on `d0db6b7` (run 39827139485: every
+  component built at its locked commit, contracts re-captured, tests, lint, APKs with native
+  components required, integration report), fetching the public sources without a token.
+  Verified. Evidence: CI run 39827139485, 2026-10-22.
 
 ## Authoritative sources
 
@@ -81,13 +85,13 @@
 
 - Zairenkai-ART (`0d8cd72`), Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source
   (`d9c4290`), on `dev`, are integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
-- Zairenkai-Modules (`ea138ef`, topic branch) is integrated as the module source; Core (`4cdfe8e`)
-  and FAS (`99cfb18`) are pinned to their topic-branch PR heads (`"merged": false`). Verified.
+- Zairenkai-Modules (`298311c`, topic branch) is integrated as the module source; Core (`8931cbb`)
+  and FAS (`99cfb18`) are pinned to topic-branch commits (`"merged": false`). Verified.
   Evidence: `integration/repository-lock.json`, 2026-10-22.
-- Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) is run by
-  Core and packaged by Modules (`bd1eb06`, topic branch); the app's lock still pins Modules
-  `ea138ef`, without it, and the app has no tuning client yet. Verified. Evidence:
-  `integration/organization-repositories.json`, 2026-10-22.
+- Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) ships in
+  the module the app packages, with its source, and is run only by Core. The app shows Core's
+  `tuning.*` capabilities generically and has no tuning-specific client yet. Verified. Evidence:
+  `build-components.sh` and `verify_integration.py build` at the new pins, 2026-10-22.
 - The other 8 Zairenkai repositories have no runtime capability. anime-extensions is a separate
   product and is excluded from the ecosystem audit (maintainer, 2026-10-22). Verified. Evidence:
   `integration/repository-audit.md` (re-audit 2026-10-21).

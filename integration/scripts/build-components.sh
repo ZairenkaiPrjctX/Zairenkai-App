@@ -87,8 +87,8 @@ mkdir -p "$OUT/assets/licenses/zthermal"
 install -m 0644 "$OUT/src/zthermal/LICENSE" "$OUT/src/zthermal/NOTICE" "$OUT/assets/licenses/zthermal/"
 notices "$OUT/src/zthermal" zthermal zthermal
 
-# --- the zairenkai root module (Zairenkai-Modules, with Zairenkai-Core and Zairenkai-FAS) -----
-# One module. Zairenkai-Modules at its locked commit names the Core and FAS commits it packages
+# --- the zairenkai root module (Zairenkai-Modules, with Core, FAS and Tuning) ---------------
+# One module. Zairenkai-Modules at its locked commit names the Core, FAS and Tuning commits it packages
 # (components.lock.json); each is built by its own scripts/build-android.sh, then assembled by
 # Modules' scripts/assemble.py, which checks every component file against its component.json.
 # module_asset.py then checks every script in the zip against Modules' module/ sources.
@@ -107,10 +107,13 @@ for pair in zcored-ctl-contract:zairenkai-core zfasd-ctl-contract:zairenkai-fas;
     { echo "${pair%%:*} is not the ${pair#*:} commit Zairenkai-Modules packages" >&2; exit 1; }
 done
 rm -f "$OUT/assets/system-modules.json"
-rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai-core" "$OUT/assets/licenses/zairenkai-fas"
+rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai-core" "$OUT/assets/licenses/zairenkai-fas" \
+  "$OUT/assets/licenses/zairenkai-tuning"
 mkdir -p "$OUT/assets/system-modules"
 components=()
-for spec in zairenkai-core:zcored zairenkai-fas:zfasd; do
+# ztune (Zairenkai-Tuning) is GPL-3.0-only: its build also writes the Corresponding Source archive,
+# and assemble.py refuses the component without it. The app never runs ztune; Core does.
+for spec in zairenkai-core:zcored zairenkai-fas:zfasd zairenkai-tuning:ztune; do
   name=${spec%%:*}
   dir="$OUT/src/$name"
   fetch "$dir" "https://github.com/$(pinned "$name" repository).git" "$(pinned "$name" commit)"
