@@ -16,7 +16,7 @@ TRUST=${ZAIRENKAI_MODULE_TRUST:-$HERE/../module-trust.json}
 KEYS=${ZAIRENKAI_KEYS_DIR:-$HOME/.zairenkai-keys}
 MODULE_KEY="$KEYS/module-signing.pem"
 KEYSTORE="$KEYS/release.jks"
-APP_REPOS="Zairenkai-ART Zairenkai-Core Zairenkai-Database-Source Zairenkai-FAS Zairenkai-ThermalTools"
+APP_REPOS="Zairenkai-ART Zairenkai-Core Zairenkai-Database-Source Zairenkai-FAS Zairenkai-Modules Zairenkai-ThermalTools"
 ENV_SECRETS="ZAIRENKAI_MODULE_SIGNING_KEY ZAIRENKAI_RELEASE_KEYSTORE_BASE64 ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD ZAIRENKAI_RELEASE_KEY_ALIAS ZAIRENKAI_RELEASE_KEY_PASSWORD"
 
 die() { echo "error: $*" >&2; exit 1; }

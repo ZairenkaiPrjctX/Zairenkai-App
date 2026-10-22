@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "locked_at": "2026-10-21",
+  "locked_at": "2026-10-22",
   "note": "Exact source revisions this app integrates. Branch names are recorded for context only; builds resolve the commit. Components with \"merged\": false are pinned to a topic-branch commit that is not in the repository's default branch yet.",
   "components": [
     {
@@ -55,55 +55,40 @@
       "id": "zcored-ctl-contract",
       "repository": "ZairenkaiPrjctX/Zairenkai-Core",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core.git",
-      "branch": "dev",
-      "commit": "11e97429068e69cc889deba891f2015b77060bfb",
-      "merged": true,
-      "packaging": "not packaged; the app calls the installed Magisk/KernelSU module (zairenkai_core) through root: zcored ctl, protocol v1",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "4cdfe8e4f515840ba634c9de2197f46bfa516d5d",
+      "merged": false,
+      "packaging": "not packaged separately; the app calls zcored from the installed zairenkai module through root: zcored ctl, protocol v1",
       "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
-      "note": "Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21. Adds the read-only ThermalTools capabilities (thermaltools.diagnostics, thermaltools.sensors) to discovery.",
+      "note": "Core PR #3 head (topic branch): data under /data/adb/zairenkai/core, zfasd found inside the zairenkai module, the module reported by its real state. Must equal the zairenkai-core commit in Zairenkai-Modules' components.lock.json (build-components.sh checks it).",
       "integration_status": "implemented"
     },
     {
       "id": "zfasd-ctl-contract",
       "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
-      "branch": "dev",
-      "commit": "be08b2d89df0c673d8bf7aa76367ee9a4fbb81f4",
-      "merged": true,
-      "packaging": "not packaged; the app calls the installed module (zairenkai_fas) through root: zfasd ctl (status schema 1, docs/INTEGRATION.md)",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "99cfb18ba7f04753b3cda5534b8fa844d86db9d5",
+      "merged": false,
+      "packaging": "not packaged separately; the app calls zfasd from the installed zairenkai module through root: zfasd ctl (status schema 1, docs/INTEGRATION.md)",
       "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
-      "note": "Merge commit of FAS PR #3 (parents 3c83f0e and 333365e; tree identical to 333365e), verified 2026-10-21.",
+      "note": "FAS PR #4 head (topic branch): data under /data/adb/zairenkai/fas. Must equal the zairenkai-fas commit in Zairenkai-Modules' components.lock.json (build-components.sh checks it).",
       "integration_status": "implemented"
     },
     {
-      "id": "zairenkai-core-module",
-      "repository": "ZairenkaiPrjctX/Zairenkai-Core",
-      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core.git",
-      "branch": "dev",
-      "commit": "11e97429068e69cc889deba891f2015b77060bfb",
-      "merged": true,
-      "packaging": "Magisk/KernelSU/APatch module zip built with the repository's scripts/build-android.sh (arm64-v8a), packaged as assets/system-modules/zairenkai_core.zip and installed only on the user's request through the root manager's own installer",
+      "id": "zairenkai-module",
+      "repository": "ZairenkaiPrjctX/Zairenkai-Modules",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Modules.git",
+      "branch": "ccr-63f8aa87-1b0paj",
+      "commit": "ea138ef7ef688ae482f997ad85e9edaf6aef7c15",
+      "merged": false,
+      "packaging": "the single Magisk/KernelSU/APatch module zip (arm64-v8a), assembled by the repository's scripts/assemble.py from the Core and FAS commits its components.lock.json pins; packaged as assets/system-modules/zairenkai.zip and installed only on the user's request through the root manager's own installer",
       "abis": [
         "arm64-v8a"
       ],
-      "license": "Apache-2.0 (LICENSE and NOTICE inside the zip)",
+      "license": "Apache-2.0 (LICENSE and NOTICE in the zip, plus each component's licence files under licenses/<component>/)",
       "integration_status": "implemented",
-      "note": "Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21."
-    },
-    {
-      "id": "zairenkai-fas-module",
-      "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
-      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
-      "branch": "dev",
-      "commit": "be08b2d89df0c673d8bf7aa76367ee9a4fbb81f4",
-      "merged": true,
-      "packaging": "module zip built with the repository's scripts/build-android.sh (arm64-v8a); packaged as assets/system-modules/zairenkai_fas.zip ONLY in internal development builds (ZAIRENKAI_INTERNAL_BUILD=1), never in distributable builds",
-      "abis": [
-        "arm64-v8a"
-      ],
-      "license": "Apache-2.0 (LICENSE and NOTICE inside the zip at this commit); provenance audit: docs/integration/fas-provenance.md",
-      "integration_status": "implemented",
-      "note": "Merge commit of FAS PR #3 (parents 3c83f0e and 333365e; tree identical to 333365e), verified 2026-10-21."
+      "note": "Modules PR #1 head (topic branch), the first code in that repository. Replaces the separate zairenkai_core and zairenkai_fas modules (maintainer decision 2026-10-22)."
     }
   ]
 }

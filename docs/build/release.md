@@ -11,8 +11,8 @@ three need keys that only the maintainer can create:
 | The module catalog is unsigned | A module-signing key in the `release` environment |
 | `integration/module-trust.json` lists no key | Add the module-signing public key in a reviewed pull request |
 
-The gate also fails on any internal build, and on any APK carrying a module other than
-`zairenkai_core` (FAS stays internal: `docs/integration/fas-provenance.md`).
+The gate also fails on any APK carrying a module other than the single `zairenkai` module
+(Zairenkai-Modules, with zcored and zfasd: `docs/integration/fas-provenance.md`).
 
 The gate is not the whole readiness question. Release readiness also needs:
 - the full-integration CI job green on the release commit (`docs/build/ci.md`; it has never run,

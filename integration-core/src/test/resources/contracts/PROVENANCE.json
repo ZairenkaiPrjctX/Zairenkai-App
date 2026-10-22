@@ -4,5 +4,15 @@
   "zart": "0d8cd7248d7aff3504077b4f3e63af1bf6bf282c",
   "zthermal": "3bc71fea9d2317db10ee551aede857de1448f90f",
   "zcored": "11e97429068e69cc889deba891f2015b77060bfb",
-  "zfasd": "be08b2d89df0c673d8bf7aa76367ee9a4fbb81f4"
+  "zfasd": "be08b2d89df0c673d8bf7aa76367ee9a4fbb81f4",
+  "recaptured_2026_10_22": {
+    "zcored": "4cdfe8e4f515840ba634c9de2197f46bfa516d5d",
+    "zairenkai_module": "ea138ef7ef688ae482f997ad85e9edaf6aef7c15",
+    "files": [
+      "core/modules.json",
+      "core/modules-installed.json",
+      "system-modules/catalog.json"
+    ],
+    "how": "capture-contracts.sh at the new lock. catalog.json and the module.prop behind modules-installed.json come from the real zairenkai zip, assembled by Zairenkai-Modules' assemble.py from the Core and FAS arm64 components of their CI runs 39701977860 and 39701982927 (workflow_dispatch at the locked commits). The other core/ and fas/ fixtures are kept from the earlier capture above: this host runs in proot on an Android phone, so a new capture of them recorded that phone's identity and was discarded."
+  }
 }

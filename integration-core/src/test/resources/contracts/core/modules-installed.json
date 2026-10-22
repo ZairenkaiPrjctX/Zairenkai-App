@@ -7,7 +7,7 @@
       "compatible": true,
       "detail": "no zairenkai-module.toml; known first-party modules are handled by built-in adapters",
       "health": "unknown",
-      "id": "zairenkai_core",
+      "id": "zairenkai",
       "owns": [],
       "requested_permissions": [],
       "version": {

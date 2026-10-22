@@ -12,7 +12,7 @@ import org.junit.Test
 
 /** Parses responses captured from a real zcored (commit in contracts/PROVENANCE.json). */
 class CoreClientTest {
-    private val base = "'/data/adb/modules/zairenkai_core/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai-core'"
+    private val base = "'/data/adb/modules/zairenkai/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai/core'"
 
     private fun client(method: String, exit: Int, stdout: String, stderr: String = ""): Pair<CoreClient, FakeRunner> {
         val runner = FakeRunner()
@@ -59,7 +59,7 @@ class CoreClientTest {
     @Test
     fun installationAndDaemonStates() {
         assertEquals(CoreCall.NotInstalled, client("health", 127, "", "sh: zcored: not found").first.health())
-        val unreachable = client("health", 2, "", "ctl: cannot reach zcored at /data/adb/zairenkai-core/zcored.sock: Connection refused").first.health()
+        val unreachable = client("health", 2, "", "ctl: cannot reach zcored at /data/adb/zairenkai/core/zcored.sock: Connection refused").first.health()
         assertTrue(unreachable is CoreCall.Unreachable)
         val err = client("health", 1, """{"v":1,"id":"x","ok":false,"error":{"code":"rate_limited","message":"slow down"}}""").first.health()
         assertEquals(CoreCall.Error("rate_limited", "slow down"), err)

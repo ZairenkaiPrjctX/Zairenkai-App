@@ -16,11 +16,11 @@ import org.junit.Test
 
 /**
  * The Core response envelope and the `modules` result. `modules-installed.json` is Core's own
- * inventory and `Response` serialising the module.prop packaged in zairenkai_core.zip
+ * inventory and `Response` serialising the module.prop packaged in zairenkai.zip
  * (capture-contracts.sh, core_fixture_main.rs): Core writes `version` as `{major, minor, patch}`.
  */
 class CoreContractTest {
-    private val base = "'/data/adb/modules/zairenkai_core/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai-core'"
+    private val base = "'/data/adb/modules/zairenkai/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai/core'"
 
     private fun core(method: String, stdout: String, exit: Int = 0): CoreClient {
         val runner = FakeRunner()
@@ -31,7 +31,7 @@ class CoreContractTest {
     @Test
     fun installedModuleVersionIsCoresVersionStruct() {
         val mods = (core("modules", contract("core/modules-installed.json")).modules() as CoreCall.Ok).value
-        val m = mods.single { it.id == "zairenkai_core" }
+        val m = mods.single { it.id == com.zairenkaiprjctx.integration.core.CorePaths.MODULE_ID }
         assertEquals(CoreVersion(0, 1, 0), m.version)
         assertEquals("0.1.0", m.version.toString())
         assertTrue(m.compatible)
@@ -42,6 +42,9 @@ class CoreContractTest {
         val mods = (core("modules", contract("core/modules.json")).modules() as CoreCall.Ok).value
         assertTrue(mods.isNotEmpty())
         mods.forEach { assertNull(it.version) }
+        // Core reports the single module itself; Zairenkai-Modules is no longer "no released component".
+        assertEquals("not_installed", mods.single { it.id == "zairenkai" }.health)
+        assertTrue(mods.none { it.id == "zairenkai_modules" })
     }
 
     @Test

@@ -7,9 +7,10 @@ and the record to file.
 
 ## Scope
 
-- **One module:** `zairenkai_core`. **No FAS.** It is internal-only, the default and release
-  builds do not contain it, and it must not be installed during this test, whether by hand or
-  from an internal build. Step 1 and the last step both confirm that `zairenkai_fas` is absent.
+- **One module:** `zairenkai`, which carries zcored and zfasd. **FAS stays switched off.** The
+  module installs it with `enabled = false`; do not enable it during this test. Step 1 and
+  the last step confirm that the superseded `zairenkai_core` / `zairenkai_fas` modules are
+  absent, and the "after" output must show no changed cpufreq node.
 - **One dedicated, recoverable, rooted device.** It must not be a daily phone. Before starting
   you need a backup, the stock boot image for the installed firmware, adb authorisation and
   fastboot, and the manager's safe mode tried once on this device.
@@ -51,8 +52,8 @@ list. Without a signed catalog, the only valid result is "blocked at `MODULE_NOT
 ## Procedure summary
 
 The full table is in `system-module.md`. In outline:
-1. **Before.** Run `device-readonly-check.sh` and `--root`. Expect `zairenkai_core` and
-   `zairenkai_fas` to be absent.
+1. **Before.** Run `device-readonly-check.sh` and `--root`. Expect `zairenkai`,
+   `zairenkai_core` and `zairenkai_fas` to be absent.
 2. **Without root.** Home, Thermal and Runtime.
 3. **Enable root** in the app.
 4. **Check.** Run the System Module checks.
@@ -67,15 +68,16 @@ The full table is in `system-module.md`. In outline:
 Expected Core runtime without FAS: `zcored ctl health` answers `degraded`, naming the FAS
 adapter as unavailable. The screen shows `DEGRADED`. `ACTIVE` would need every Core dependency
 healthy. `INSTALLED_NOT_INITIALIZED` means zcored did not answer: record it as a failure, with
-`zcored.log` and `/data/adb/zairenkai-core/failed`.
+`zcored.log` and `/data/adb/zairenkai/core/failed`.
 
 ## Stop and recover when
 
 - the device does not finish booting within five minutes of the reboot;
 - the manager or the app reports an install exit code other than 0;
-- `/data/adb/zairenkai-core/failed` exists, or zcored restarts repeatedly;
+- `/data/adb/zairenkai/core/failed` or `/data/adb/zairenkai/fas/failed` exists, or a daemon restarts repeatedly;
+- zfasd reports `enabled: true` without the tester enabling it;
 - any thermal or cpufreq node differs between the "before" and "after" outputs;
-- a module other than `zairenkai_core` was added, changed or removed.
+- a module other than `zairenkai` was added, changed or removed.
 
 Recover through the manager's safe mode or its module removal first
 (`system-module.md`, "Prerequisites"), then reflash the stock boot image if needed. Record what
@@ -85,7 +87,7 @@ happened.
 
 One file per device and manager: `docs/validation/<codename>-<YYYY-MM-DD>.md`. Attach the four
 outputs (`1-before.txt`, `2-staged.txt`, `3-after.txt`, `4-removed.txt`). Only after a complete,
-successful record, add the codename to `zairenkai_core`'s `validated_on` in
+successful record, add the codename to `zairenkai`'s `validated_on` in
 `integration/system-modules.json`, in a reviewed pull request.
 
 ```
@@ -96,16 +98,17 @@ Kernel: <uname -r>   Page size: <n>   SELinux: <Enforcing|Permissive>
 Root manager: <family> <version> (<versionCode>); su -v <…>; su -V <…>; CLI <path, version>
 Recovery path tried on this device: <how>   Stock boot image kept: <yes>
 App APK: <sha256> (installed copy: <sha256 from device-readonly-check>), build <CI run id | local>, app commit <sha>
-Catalog: signature <verified, key id …>; module zairenkai_core <version> (<versionCode>), zip <sha256>, built from Core <commit>
+Catalog: signature <verified, key id …>; module zairenkai <version> (<versionCode>), zip <sha256>, built from Modules <commit> (Core <commit>, FAS <commit>)
 Preflight: <verdict>; WARN/FAIL checks: <…>
-Before: zairenkai_core <absent>; zairenkai_fas <absent>; other modules: <list>
+Before: zairenkai <absent>; zairenkai_core <absent>; zairenkai_fas <absent>; other modules: <list>
 Install: method <direct|handoff>, command shown <…>, exit <n>; installer output attached
-Staged: modules_update/zairenkai_core versionCode <n>
+Staged: modules_update/zairenkai versionCode <n>
 Reboot: <normal | problem: …>, boot time <s>
 Core runtime: zcored ctl health <ready|degraded: reasons>; failed marker <absent>; log tail attached; screen state <ACTIVE|DEGRADED|INSTALLED_NOT_INITIALIZED>
+FAS runtime: zfasd ctl status running <yes/no>, enabled <false>; failed marker <absent>
 SELinux denials (avc, zairenkai): <none | list>
 zthermal: snapshot <ok>, zones readable/denied <n/n>; thermal and cpufreq nodes unchanged: <yes/no>
-Removal: method <…>, result after reboot <module and /data/adb/zairenkai-core gone: yes/no>; other modules unchanged: <yes/no>; zairenkai_fas absent throughout: <yes>
+Removal: method <…>, result after reboot <module and /data/adb/zairenkai gone: yes/no>; other modules unchanged: <yes/no>
 Failures and recovery: <none | what, when, how recovered>
 Not covered: <e.g. other managers, other firmware versions>
 ```

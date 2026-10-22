@@ -24,9 +24,10 @@ import kotlinx.serialization.json.put
  * Clients must ignore unknown result fields, so decoding ignores unknown keys.
  */
 object CorePaths {
-    const val MODULE_ID = "zairenkai_core"
-    const val BIN = "/data/adb/modules/zairenkai_core/bin/zcored"
-    const val DIR = "/data/adb/zairenkai-core"
+    /** The single Zairenkai root module (Zairenkai-Modules), which packages zcored and zfasd. */
+    const val MODULE_ID = "zairenkai"
+    const val BIN = "/data/adb/modules/zairenkai/bin/zcored"
+    const val DIR = "/data/adb/zairenkai/core"
 }
 
 /** The only envelope version Core 1.x speaks (`PROTOCOL_VERSION`, `crates/zcore-domain/src/protocol.rs`). */

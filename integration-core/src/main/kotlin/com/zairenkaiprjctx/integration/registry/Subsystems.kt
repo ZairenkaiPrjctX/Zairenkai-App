@@ -265,7 +265,7 @@ class FasSubsystem(private val fas: FasClient, private val root: RootShell, revi
                     if (s.value.observeOnly) "zfasd running in observe-only mode" else "zfasd running (${s.value.profile ?: "?"})",
                 )
             }
-            FasCall.NotInstalled -> Availability(COMPONENT_NOT_INSTALLED, "Module ${com.zairenkaiprjctx.integration.fas.FasPaths.MODULE_ID} is not installed.")
+            FasCall.NotInstalled -> Availability(COMPONENT_NOT_INSTALLED, "zfasd is not installed (${com.zairenkaiprjctx.integration.fas.FasPaths.BIN} is missing).")
             is FasCall.Unreachable -> Availability(INITIALIZATION_FAILED, "zfasd is installed but not answering: ${s.detail}")
             is FasCall.Rejected -> Availability(INITIALIZATION_FAILED, s.message)
             is FasCall.NoRoot -> Availability(ROOT_REQUIRED, s.detail)
@@ -293,7 +293,6 @@ class UpstreamGapSubsystem(private val inventory: () -> OrganizationInventory?) 
         Triple("Zairenkai-License-Server", "license.entitlement", "Licence and entitlement"),
         Triple("Zairenkai-Sdk", "sdk.api", "SDK"),
         Triple("Zairenkai-Graphics-Platform", "graphics.control", "GPU controls"),
-        Triple("Zairenkai-Modules", "modules.packages", "Module packages"),
     )
 
     override fun probe(): List<CapabilityRecord> {
@@ -314,7 +313,8 @@ class UpstreamGapSubsystem(private val inventory: () -> OrganizationInventory?) 
 }
 
 /**
- * The Zairenkai root modules as the installer last saw them. The probe only reads the
+ * The Zairenkai root module (Zairenkai-Modules, one module carrying zcored and zfasd) as the
+ * installer last saw it. The probe only reads the
  * controllers' current state: it runs no su command, so a registry refresh at start-up never
  * touches root. The state is checked when the user opens the System Module screen.
  */
@@ -324,7 +324,7 @@ class SystemModuleSubsystem(
 ) : ZairenkaiSubsystem {
     override val id = "systemmodule"
     override val displayName = "Zairenkai System Module"
-    override val provider = Provider("ZairenkaiPrjctX/Zairenkai-Core, Zairenkai-FAS", null, "root modules installed through the root manager")
+    override val provider = Provider("ZairenkaiPrjctX/Zairenkai-Modules", null, "root module installed through the root manager")
 
     override fun probe(): List<CapabilityRecord> {
         val rel = release() ?: return listOf(

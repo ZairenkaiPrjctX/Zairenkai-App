@@ -11,7 +11,8 @@
 #   integration/out/assets/licenses/<component>/THIRD_PARTY_NOTICES.txt  licences of every Rust
 #                                                   crate compiled into each binary (rust_notices.py)
 #   integration/out/assets/afid/device-candidates.json   AFID asset (integration/scripts/afid_asset.py)
-#   integration/out/assets/system-modules/<id>.zip  root modules (Core, FAS) from their build-android.sh
+#   integration/out/assets/system-modules/zairenkai.zip  the single root module: Zairenkai-Modules'
+#                                                   assemble.py over the Core and FAS components
 #   integration/out/assets/system-modules.json      module catalog: integration/system-modules.json plus
 #                                                   size, SHA-256 and per-entry digests (module_asset.py)
 #   integration/out/components.json               what was built, from which commit, with SHA-256
@@ -86,36 +87,46 @@ mkdir -p "$OUT/assets/licenses/zthermal"
 install -m 0644 "$OUT/src/zthermal/LICENSE" "$OUT/src/zthermal/NOTICE" "$OUT/assets/licenses/zthermal/"
 notices "$OUT/src/zthermal" zthermal zthermal
 
-# --- root modules (Zairenkai-Core, Zairenkai-FAS) ------------------------------------------
-# Built by each repository's own script at the locked commit; module_asset.py checks every
-# script in the zip against that commit's module/ sources before the zip is packaged.
-mkdir -p "$OUT/assets/system-modules"
-build_module() { # build_module <lock component> <module id> <dist prefix> <cargo package>
-  local comp=$1 id=$2 prefix=$3 commit dir zip
-  commit=$(field "$comp" commit)
-  dir="$OUT/src/$comp"
-  fetch "$dir" "$(field "$comp" url)" "$commit"
-  (cd "$dir" && rm -rf dist && scripts/build-android.sh >/dev/null)
-  zip=$(ls "$dir"/dist/"$prefix"-v*.zip)
-  (cd "$dir" && sha256sum -c --quiet "dist/$(basename "$zip").sha256") # the .sha256 names dist/<zip>
-  python3 "$ROOT/integration/scripts/module_asset.py" --spec "$ROOT/integration/system-modules.json" \
-    --id "$id" --zip "$zip" --source "$dir" --commit "$commit" --repository "$(field "$comp" repository)" \
-    --out "$OUT/assets/system-modules.json"
-  install -m 0644 "$zip" "$OUT/assets/system-modules/$id.zip"
-  notices "$dir" "$4" "$id"
+# --- the zairenkai root module (Zairenkai-Modules, with Zairenkai-Core and Zairenkai-FAS) -----
+# One module. Zairenkai-Modules at its locked commit names the Core and FAS commits it packages
+# (components.lock.json); each is built by its own scripts/build-android.sh, then assembled by
+# Modules' scripts/assemble.py, which checks every component file against its component.json.
+# module_asset.py then checks every script in the zip against Modules' module/ sources.
+MOD_COMMIT=$(field zairenkai-module commit)
+MOD_DIR="$OUT/src/zairenkai-module"
+fetch "$MOD_DIR" "$(field zairenkai-module url)" "$MOD_COMMIT"
+pinned() { # pinned <component name in the Modules lock> <key>
+  python3 -c 'import json,sys
+c=[c for c in json.load(open(sys.argv[1]))["components"] if c["name"]==sys.argv[2]]
+print(c[0][sys.argv[3]]) if c else sys.exit("components.lock.json has no "+sys.argv[2])' \
+    "$MOD_DIR/components.lock.json" "$1" "$2"
 }
+# The ctl contracts the app speaks must be the daemons the module packages.
+for pair in zcored-ctl-contract:zairenkai-core zfasd-ctl-contract:zairenkai-fas; do
+  [ "$(field "${pair%%:*}" commit)" = "$(pinned "${pair#*:}" commit)" ] ||
+    { echo "${pair%%:*} is not the ${pair#*:} commit Zairenkai-Modules packages" >&2; exit 1; }
+done
 rm -f "$OUT/assets/system-modules.json"
-rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai_fas"
+rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai-core" "$OUT/assets/licenses/zairenkai-fas"
 mkdir -p "$OUT/assets/system-modules"
-build_module zairenkai-core-module zairenkai_core zairenkai-core zcored
-# FAS is an internal module (integration/system-modules.json, docs/integration/fas-provenance.md):
-# built only for an explicitly labelled internal development build and never for distribution.
+components=()
+for spec in zairenkai-core:zcored zairenkai-fas:zfasd; do
+  name=${spec%%:*}
+  dir="$OUT/src/$name"
+  fetch "$dir" "https://github.com/$(pinned "$name" repository).git" "$(pinned "$name" commit)"
+  (cd "$dir" && rm -rf dist && scripts/build-android.sh >/dev/null)
+  components+=(--component "$dir/dist/$name")
+  notices "$dir" "${spec#*:}" "$name"
+done
+rm -rf "$MOD_DIR/dist"
+python3 "$MOD_DIR/scripts/assemble.py" --lock "$MOD_DIR/components.lock.json" "${components[@]}" --out "$MOD_DIR/dist"
+zip=$(ls "$MOD_DIR"/dist/zairenkai-v*.zip)
+(cd "$MOD_DIR/dist" && sha256sum -c --quiet "$(basename "$zip").sha256")
+python3 "$ROOT/integration/scripts/module_asset.py" --spec "$ROOT/integration/system-modules.json" \
+  --id zairenkai --zip "$zip" --source "$MOD_DIR" --commit "$MOD_COMMIT" \
+  --repository "$(field zairenkai-module repository)" --out "$OUT/assets/system-modules.json"
+install -m 0644 "$zip" "$OUT/assets/system-modules/zairenkai.zip"
 PROFILE=distributable
-if [ "${ZAIRENKAI_INTERNAL_BUILD:-0}" = 1 ]; then
-  PROFILE=internal
-  echo "INTERNAL DEVELOPMENT BUILD: including zairenkai_fas (not for distribution)" >&2
-  build_module zairenkai-fas-module zairenkai_fas zairenkai-fas zfasd
-fi
 # The catalog is signed only when the module-signing key is provided (release builds); the
 # key's public half must be in integration/module-trust.json. Without it the catalog stays
 # unsigned and the app refuses to install modules from this build.

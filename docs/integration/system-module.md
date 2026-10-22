@@ -1,33 +1,37 @@
 # Zairenkai System Module: in-app installation
 
-The app can install the Zairenkai root modules through the user's root manager. This page
+The app can install the Zairenkai root module through the user's root manager. This page
 covers what is implemented, what each fact rests on, and what has not been tested on hardware.
 
 ## Package architecture
 
-There is no single combined "system module". Zairenkai-Core and Zairenkai-FAS are separate
-root modules, each with its own id, data directory, service and uninstall scripts. Merging them
-would break that lifecycle: FAS restores its cpufreq floors in its own `uninstall.sh`. So the
-**Zairenkai System Module package** is a versioned, signed release set of the two real modules:
+There is **one** root module, `zairenkai`, built in Zairenkai-Modules (maintainer decision
+2026-10-22). It carries both daemons; each keeps its own data directory and lifecycle inside
+the module, so FAS still restores its cpufreq floors before its data is removed.
 
-| Module id | Role | Built from | Provides | Why it needs root |
-|---|---|---|---|---|
-| `zairenkai_core` | base | Zairenkai-Core `11e9742` (`dev`, merge of PR #2), `module/` + `scripts/build-android.sh` | `zcored`: Core health, policy-checked actions, module inventory | A root daemon with a root-only socket (Core ADR-0005) |
-| `zairenkai_fas` | optional, **internal only** | Zairenkai-FAS `3c83f0e` (dev) | `zfasd`: FAS status and controls | Writes cpufreq `scaling_min_freq` floors |
+| Module id | Built from | Provides | Why it needs root |
+|---|---|---|---|
+| `zairenkai` | Zairenkai-Modules `ea138ef` (`module/` + `scripts/assemble.py`), with Zairenkai-Core `4cdfe8e` and Zairenkai-FAS `99cfb18` as its `components.lock.json` pins them | `zcored`: Core health, policy-checked actions, module inventory. `zfasd`: FAS status and controls | zcored is a root daemon with a root-only socket (Core ADR-0005); zfasd writes cpufreq `scaling_min_freq` floors once enabled |
 
-**FAS is not in distributable builds.** Its Apache-2.0 licence is merged (`be08b2d`), but its
-distribution has not been explicitly cleared, and the first hardware test covers Core only (`docs/integration/fas-provenance.md`). So it is built and packaged only with `ZAIRENKAI_INTERNAL_BUILD=1`. That build is labelled an
-internal development build, and the release gate refuses it. The default build, CI and
-`release.yml` package Core alone.
+The separate `zairenkai_core` and `zairenkai_fas` modules are superseded: the catalog lists them
+as conflicts, the installer warns about them, and Core reports them as superseded.
 
-**Zip contents.** Each zip is exactly what the component's own build script produces:
-- `module.prop`, `customize.sh`, `service.sh`, `uninstall.sh`, `action.sh`;
+**FAS starts switched off.** On a first install the module writes
+`/data/adb/zairenkai/fas/config.toml` with `enabled = false`; zfasd runs and reports, but
+boosts nothing until the user enables it in the app (Core's `fas_set_enabled`) or the WebUI.
+FAS is distributed before its hardware validation, by the maintainer's decision
+(`docs/integration/fas-provenance.md`).
+
+**Zip contents** (Modules' `assemble.py`, which checks every component file against its
+`component.json` at the locked commit):
+- `module.prop`, `components.json` (generated), `customize.sh`, `service.sh`, `uninstall.sh`, `action.sh`;
 - `META-INF/com/google/android/{update-binary,updater-script}`;
-- `bin/<daemon>`;
-- licence files: `LICENSE`, `NOTICE` and `THIRD_PARTY.md` (Core, and FAS from `9d87236`), checked by `verify_integration.py build`;
-- `webroot/` (FAS).
+- `bin/zcored`, `bin/zfasd`;
+- `defaults/fas-config.toml`, `webroot/` (FAS WebUI);
+- licence files: `LICENSE` and `NOTICE` of Zairenkai-Modules, and each component's `LICENSE`,
+  `NOTICE` and `THIRD_PARTY.md` under `licenses/<component>/`, checked by `verify_integration.py build`.
 
-There are no other files, no configuration or profile data, and no `system/` overlay.
+There are no other files and no `system/` overlay.
 
 **Manifest.** `integration/system-modules.json` is reviewed in Git. For each module it declares:
 - id, role and features;
@@ -42,7 +46,6 @@ There are no other files, no configuration or profile data, and no `system/` ove
 source commit, and writes `assets/system-modules.json`.
 
 **Repositories checked and left out:**
-- **Zairenkai-Modules:** empty.
 - **Zairenkai-Sdk:** no code.
 - **ART:** its patches need a ROM build, and `zart` stays in the APK.
 - **ThermalTools:** `zthermal` stays in the APK, read only. Its writable-control list stays
@@ -253,8 +256,9 @@ codename is in `validated_on`.
 
 ### Scope
 
-- **Modules:** `zairenkai_core` alone. FAS is not installed: it is internal-only, and the
-  default build does not contain it.
+- **Module:** `zairenkai` (zcored and zfasd). FAS stays switched off for the whole test:
+  do not enable it. Its first configuration has `enabled = false`, and the "after" outputs
+  must show no changed cpufreq node.
 - **One device, one manager.** The result validates that device codename with that root manager
   and version, nothing broader.
 - **No thermal changes.** Do not disable thermal protection, change kernel or thermal controls,
@@ -299,16 +303,16 @@ through the manager after you confirm.
 
 | Step | Action | Record |
 |---|---|---|
-| 1 | `integration/scripts/device-readonly-check.sh > 1-before.txt` and `--root > 1-before-root.txt` | Device and SoC, Android and kernel (`uname -a`), page size, ABIs, root manager and version (`su -v`/`-V`, CLI), the initial module state of `zairenkai_core` (expected: absent), `getenforce`, avc denials, the installed APK's SHA-256 |
+| 1 | `integration/scripts/device-readonly-check.sh > 1-before.txt` and `--root > 1-before-root.txt` | Device and SoC, Android and kernel (`uname -a`), page size, ABIs, root manager and version (`su -v`/`-V`, CLI), the initial module state of `zairenkai` (expected: absent), `getenforce`, avc denials, the installed APK's SHA-256 |
 | 2 | Open the app without root: Home, Thermal (zthermal snapshot), Runtime | Which thermal zones are readable or `permission_denied` |
 | 3 | System › Root access › Enable | The manager's prompt; the app shows root granted |
 | 4 | System › Zairenkai System Module | Detected manager and installer method; every preflight check; signature state; distribution "Licensed for distribution"; experimental notice |
 | 5 | **Install Zairenkai System Module**, then **Continue**, tick the acknowledgement, **Install** | Verification lines (size, SHA-256, entries, module.prop, scripts matched to Core `34e93e3`); the full "Installer output"; final state `INSTALL_PENDING_REBOOT` |
-| 6 | `device-readonly-check.sh --root > 2-staged.txt` | `/data/adb/modules_update/zairenkai_core/module.prop` shows `versionCode=100` (`v0.1.0`) |
+| 6 | `device-readonly-check.sh --root > 2-staged.txt` | `/data/adb/modules_update/zairenkai/module.prop` shows `versionCode=100` (`v0.1.0`) |
 | 7 | Reboot, wait two minutes | Did it boot normally? |
-| 8 | `device-readonly-check.sh --root > 3-after.txt`, then the module screen's **Check again** | `zcored ctl health` (`ready`, or `degraded` with reasons: `degraded` is expected while FAS is absent); `/data/adb/zairenkai-core/failed` (must not exist); the tail of `zcored.log`; avc denials; the screen state (`DEGRADED` or `ACTIVE`; `INSTALLED_NOT_INITIALIZED` if zcored does not answer), which must agree with the readings |
+| 8 | `device-readonly-check.sh --root > 3-after.txt`, then the module screen's **Check again** | `zcored ctl health` (`ready`, or `degraded` with reasons: `degraded` is expected while FAS is absent); `/data/adb/zairenkai/core/failed` (must not exist); the tail of `zcored.log`; avc denials; the screen state (`DEGRADED` or `ACTIVE`; `INSTALLED_NOT_INITIALIZED` if zcored does not answer), which must agree with the readings |
 | 9 | Thermal screen (and "Read with root") | Snapshot taken; "Thermal controls" still says no validated control; thermal nodes unchanged between 1 and 3 |
-| 10 | **Remove** (KernelSU and APatch) or remove in the Magisk app; reboot; `device-readonly-check.sh --root > 4-removed.txt` | Uninstall result; `zairenkai_core` and `/data/adb/zairenkai-core` gone; every other module unchanged (compare the module lists in 1 and 4) |
+| 10 | **Remove** (KernelSU and APatch) or remove in the Magisk app; reboot; `device-readonly-check.sh --root > 4-removed.txt` | Uninstall result; `zairenkai` and `/data/adb/zairenkai/core` gone; every other module unchanged (compare the module lists in 1 and 4) |
 | 11 | Optional failure paths: decline the root prompt; cancel before installing; disable the module in the manager | `ROOT_PERMISSION_DENIED`; nothing staged; `DEGRADED`, then the manager's enable |
 
 If anything fails, stop and recover through the manager first. Record exactly what happened,
@@ -321,7 +325,7 @@ Device: <manufacturer model> (<codename>), SoC <soc>
 Android <release> (API <n>), security patch <date>, kernel <uname -r>, page size <n>
 Root manager: <family> <version> (<versionCode>); su -v <…>; installer method shown <direct|handoff>
 Backup and recovery path checked: <yes: how>
-APK: <sha256> from integration report <run id / local>; module zairenkai_core <version> zip <sha256>
+APK: <sha256> from integration report <run id / local>; module zairenkai <version> zip <sha256>
 Catalog signature: <verified, key id …>   Distribution: distributable
 Preflight: <verdict> — <checks that were WARN or FAIL>
 Initial module state: <absent | …>

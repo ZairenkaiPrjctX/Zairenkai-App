@@ -24,7 +24,7 @@ import org.junit.Test
  * directly, because a host has no battery or thermal zones to capture.
  */
 class TelemetryTest {
-    private val base = "'/data/adb/modules/zairenkai_core/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai-core'"
+    private val base = "'/data/adb/modules/zairenkai/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai/core'"
 
     private fun context(stdout: String): CoreCall<CoreTelemetry> {
         val runner = FakeRunner()

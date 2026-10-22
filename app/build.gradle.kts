@@ -89,8 +89,8 @@ val verifyIntegrationComponents = tasks.register("verifyIntegrationComponents") 
             "assets/afid/device-candidates.json", "assets/components.json",
             "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE",
             "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE",
-            // FAS is an internal-only module: not required, absent by default.
-            "assets/system-modules.json", "assets/system-modules/zairenkai_core.zip",
+            // The single root module (Zairenkai-Modules): zcored and zfasd.
+            "assets/system-modules.json", "assets/system-modules/zairenkai.zip",
         )
     val allow = allowMissingComponents
     doLast {

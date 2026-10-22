@@ -31,9 +31,10 @@ Non-negotiables in this repo:
   list without the maintainer, and never put a private key anywhere in the repository or APK. Never
   write into `/data/adb` directly, never install on startup, and never mark a module ACTIVE
   without reading its state and its runtime.
-- **FAS stays out of distributable builds** until the maintainer explicitly clears its
-  distribution, after hardware validation (`docs/integration/fas-provenance.md`); its licence is
-  merged. Only `ZAIRENKAI_INTERNAL_BUILD=1` packages it, labelled internal. Never change FAS files or headers to make an audit pass.
+- **One root module, `zairenkai`** (Zairenkai-Modules), carries zcored and zfasd; data lives in
+  `/data/adb/zairenkai/{core,fas}`. Never add a separately installed Zairenkai module. FAS is
+  distributed in it by the maintainer's decision of 2026-10-22, before hardware validation
+  (`docs/integration/fas-provenance.md`). Never change FAS files or headers to make an audit pass.
 - **Licensing:** the app is Apache-2.0 (`LICENSE`, `NOTICE`). New source files start with
   `SPDX-License-Identifier: Apache-2.0` and `Copyright 2026 ZairenkaiPrjctX contributors`. Never
   change third-party headers or notices (Gradle wrapper, font, AOSP attribution, device data).

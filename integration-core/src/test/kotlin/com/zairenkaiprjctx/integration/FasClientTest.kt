@@ -13,7 +13,7 @@ import org.junit.Test
 
 /** Parses `zfasd ctl` output captured from a real observe-only zfasd. */
 class FasClientTest {
-    private val base = "'/data/adb/modules/zairenkai_fas/bin/zfasd' 'ctl' '--dir' '/data/adb/zairenkai-fas'"
+    private val base = "'/data/adb/modules/zairenkai/bin/zfasd' 'ctl' '--dir' '/data/adb/zairenkai/fas'"
 
     private fun setup(words: String, exit: Int, stdout: String, stderr: String = ""): FasClient {
         val runner = FakeRunner()

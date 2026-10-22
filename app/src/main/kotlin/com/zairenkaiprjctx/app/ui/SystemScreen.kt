@@ -42,6 +42,7 @@ import com.zairenkaiprjctx.app.design.Supporting
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.app.design.ZairenkaiTextStyles
 import com.zairenkaiprjctx.integration.core.CoreCall
+import com.zairenkaiprjctx.integration.core.CorePaths
 import com.zairenkaiprjctx.integration.exec.RootState
 import com.zairenkaiprjctx.integration.model.AvailabilityState
 import com.zairenkaiprjctx.integration.registry.RegistrySnapshot
@@ -102,7 +103,7 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
                     null -> ProgressRow(stringResource(R.string.loading))
                     else -> Supporting(m.describeFailure())
                 }
-                snapshot.byId("modules.packages")?.let { Supporting(it.availability.reason) }
+                snapshot.byId("systemmodule.${CorePaths.MODULE_ID}")?.let { Supporting(it.availability.reason) }
             }
         }
         item {
@@ -166,8 +167,8 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
                     "licenses/zart/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zart,
                     "licenses/zart/AOSP-ATTRIBUTION.txt" to R.string.licence_notices_zart_aosp,
                     "licenses/zthermal/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zthermal,
-                    "licenses/zairenkai_core/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_core,
-                    "licenses/zairenkai_fas/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_fas,
+                    "licenses/zairenkai-core/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_core,
+                    "licenses/zairenkai-fas/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_fas,
                 ).filter { c.assetExists(it.first) }
                 if (notices.isNotEmpty()) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {

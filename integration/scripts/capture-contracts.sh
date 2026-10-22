@@ -14,7 +14,7 @@
 #   - zfasd run --observe-only --dir TMP (in-memory control backend: no cpufreq writes), then
 #     zfasd ctl status and profile.
 #   - Core's own module inventory over a temporary root holding the module.prop packaged in
-#     zairenkai_core.zip, so the modules result carries an installed module and its version;
+#     zairenkai.zip, so the modules result carries an installed module and its version;
 #   - the module catalog build-components.sh wrote from the real module zips (run it first).
 # Requires: git read access to the repositories, Rust (stable), python3.
 set -euo pipefail
@@ -121,7 +121,7 @@ capture "$DEST/core/submit-dry-run.json" "$CORE" ctl --dir "$TMP/core" submit \
 
 # The host has no /data/adb/modules: the daemon reports every module not_installed with
 # version null. Core's inventory and Response types serialise one installed module instead.
-CORE_ZIP="$ROOT/integration/out/assets/system-modules/zairenkai_core.zip"
+CORE_ZIP="$ROOT/integration/out/assets/system-modules/zairenkai.zip"
 [ -f "$CORE_ZIP" ] || { echo "run integration/scripts/build-components.sh first ($CORE_ZIP missing)" >&2; exit 1; }
 python3 -c 'import sys, zipfile; sys.stdout.buffer.write(zipfile.ZipFile(sys.argv[1]).read("module.prop"))' "$CORE_ZIP" >"$TMP/core-module.prop"
 mkdir -p "$TMP/core-fixture/src"

@@ -25,6 +25,7 @@ import com.zairenkaiprjctx.integration.zart.ZartClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -75,9 +76,11 @@ class RegistryTest {
         assertEquals(AvailabilityState.UNSUPPORTED_DEVICE, s.availability("art.patches").state)
         assertEquals(AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE, s.availability("thermaltools.snapshot").state)
         assertEquals(AvailabilityState.ROOT_REQUIRED, s.availability("thermaltools.snapshot_root").state)
-        for (id in listOf("thermaltools.control", "intelligence.analysis", "license.entitlement", "sdk.api", "graphics.control", "modules.packages")) {
+        for (id in listOf("thermaltools.control", "intelligence.analysis", "license.entitlement", "sdk.api", "graphics.control")) {
             assertEquals(id, AvailabilityState.NO_UPSTREAM_IMPLEMENTATION, s.availability(id).state)
         }
+        // Zairenkai-Modules is implemented (the zairenkai module); it is no longer a planned gap.
+        assertNull(s.byId("modules.packages"))
         assertTrue("no su call without consent", runner.calls.isEmpty())
     }
 
@@ -85,8 +88,8 @@ class RegistryTest {
     fun withRootTheRealDaemonsAnswer() = runTest {
         val runner = FakeRunner()
         val root = grantedRoot(runner)
-        val core = "'/data/adb/modules/zairenkai_core/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai-core'"
-        val fas = "'/data/adb/modules/zairenkai_fas/bin/zfasd' 'ctl' '--dir' '/data/adb/zairenkai-fas'"
+        val core = "'/data/adb/modules/zairenkai/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai/core'"
+        val fas = "'/data/adb/modules/zairenkai/bin/zfasd' 'ctl' '--dir' '/data/adb/zairenkai/fas'"
         runner.on(su("$core 'health'"), 0, contract("core/health.json"))
         runner.on(su("$fas 'status'"), 127, "", "not found")
         val exe = "/data/app/x/lib/arm64/libzart.so"

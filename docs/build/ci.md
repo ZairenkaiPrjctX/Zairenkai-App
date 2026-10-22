@@ -10,9 +10,11 @@
 
 A green `reduced` job says nothing about the integrated app. Only `full-integration` does.
 
-`full-integration` builds the **distributable profile**: Core is the only module. FAS is
-internal-only, and is built only locally with `ZAIRENKAI_INTERNAL_BUILD=1`
-(`docs/integration/fas-provenance.md`). No CI job builds it.
+`full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
+locked commit: Modules' `components.lock.json` names the Core and FAS commits, each is built
+with its own `scripts/build-android.sh`, and Modules' `scripts/assemble.py` packages them
+(`docs/integration/system-module.md`). The CI GitHub App must therefore be installed on
+Zairenkai-Modules as well as on the component repositories.
 
 **Status, 2026-10-21:**
 - run 39622352061 (f34246c) and run 39623939493 (b9ce39b): `scripts` and `reduced` passed;

@@ -109,18 +109,26 @@ class BuildTest(unittest.TestCase):
 
     def test_a_module_zip_without_its_licence_and_notice_fails(self):
         (self.out / "assets/system-modules").mkdir(parents=True)
-        z = self.out / "assets/system-modules/zairenkai_core.zip"
+        z = self.out / "assets/system-modules/zairenkai.zip"
         with zipfile.ZipFile(z, "w") as zf:
-            zf.writestr("module.prop", "id=zairenkai_core\n")
+            zf.writestr("module.prop", "id=zairenkai\n")
             zf.writestr("LICENSE", "Apache License\n")
         (self.out / "assets/system-modules.json").write_text(json.dumps({"modules": [{
-            "id": "zairenkai_core", "file": "system-modules/zairenkai_core.zip", "sha256": "0" * 64,
+            "id": "zairenkai", "file": "system-modules/zairenkai.zip", "sha256": "0" * 64,
             "source": {"commit": "0" * 40}, "source_matched": [], "distribution": "distributable"}]}))
         (self.out / "components.json").write_text(json.dumps({"profile": "distributable", "files": {}}))
         r = run("build", env={"ZAIRENKAI_OUT": str(self.out)})
         self.assertEqual(r.returncode, 1)
-        self.assertIn("system-modules/zairenkai_core.zip lacks ['NOTICE']", r.stdout)
+        self.assertIn("system-modules/zairenkai.zip lacks ['NOTICE']", r.stdout)
+        self.assertIn("module zairenkai was built from 000000000000, not the locked commit", r.stdout)
 
+    def test_a_separate_module_next_to_the_single_one_fails(self):
+        (self.out / "components.json").write_text(json.dumps({"profile": "distributable", "files": {
+            "assets/system-modules/zairenkai.zip": "0" * 64,
+            "assets/system-modules/zairenkai_fas.zip": "0" * 64}}))
+        r = run("build", env={"ZAIRENKAI_OUT": str(self.out)})
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("a module other than zairenkai.zip was built", r.stdout)
 
 if __name__ == "__main__":
     unittest.main()

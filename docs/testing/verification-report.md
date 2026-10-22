@@ -1,5 +1,28 @@
 # Verification report
 
+## One root module, `zairenkai` (2026-10-22)
+
+**Verdict: verified on the host and in component CI.** Nothing ran on a device; the release
+gate still fails on signing.
+
+Maintainer decision: one root module assembled in Zairenkai-Modules, FAS included, all data in
+`/data/adb/zairenkai`. Pins: Modules `ea138ef` (PR #1), Core `4cdfe8e` (PR #3), FAS `99cfb18`
+(PR #4), all on topic branches.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Core | `cargo test --workspace`, clippy, fmt, shellcheck; CI 39700980963 (PR) and 39701977860 (dispatch at `4cdfe8e`) | 65 passed; all CI jobs green, including the NDK arm64 component |
+| FAS | `cargo test --workspace`, clippy, fmt, shellcheck; CI 39700987721 (PR) and 39701982927 (dispatch at `99cfb18`) | 82 passed; all CI jobs green, including the NDK arm64 component |
+| Modules | `python3 -m unittest discover -s tests`; shellcheck; actionlint | 12 passed; clean. CI `checks` green; CI `module` blocked: the CI GitHub App is not configured in Zairenkai-Modules |
+| Real module | Modules' `assemble.py` over the components of the two dispatch runs; `module_asset.py` | `zairenkai-v0.1.0.zip`, 20 entries, 8 matched to source, SHA-256 `4937db2e…5a2c`. A component from a `pull_request` run (PR merge commit `5994ad3`) was correctly refused |
+| First-install FAS config | real `zfasd check-config` (host build at `99cfb18`) on `defaults/fas-config.toml` | ok (`enabled = false`) |
+| Contracts | `capture-contracts.sh` | `core/modules.json`, `core/modules-installed.json`, `system-modules/catalog.json` re-captured. The other core/fas fixtures were kept: this host is proot on an Android phone, and the new capture recorded that phone's identity (`PROVENANCE.json`) |
+| App | `:integration-core:test`, `:app:testDebugUnitTest`, `lintDebug`, `verify_integration.py lock`, verifier tests | 88 (1 skipped), 29 (1 skipped: native graphics), lint 0 errors, lock ok, 18 passed |
+
+Not verified: `build-components.sh` end to end (no NDK on this aarch64 host; the App's
+`full-integration` job needs the CI GitHub App installed on Zairenkai-Modules); install, boot,
+FAS enable and uninstall on any device or root manager.
+
 ## Re-pin to the component merge commits (2026-10-21)
 
 **Verdict: verified on the host.** Nothing ran on a device, and the release gate still fails on

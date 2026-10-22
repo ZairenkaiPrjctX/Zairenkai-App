@@ -85,7 +85,7 @@ jobs:
           app-id: ${{ vars.ZAIRENKAI_CI_APP_ID }} # the numeric App ID, not the OAuth Client ID (v3.3.0 marks app-id deprecated but still reads it)
           private-key: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY }}
           owner: ZairenkaiPrjctX
-          repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source
+          repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source,Zairenkai-Modules
           permission-contents: read
       - name: Let git use the token
         env:

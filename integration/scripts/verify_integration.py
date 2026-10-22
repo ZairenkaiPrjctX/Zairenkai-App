@@ -36,15 +36,14 @@ SRC_DIRS = {
     "zart": "zart",
     "zthermal": "zthermal",
     "afid-device-candidates": "afid",
-    "zairenkai-core-module": "zairenkai-core-module",
-    "zairenkai-fas-module": "zairenkai-fas-module",
+    "zairenkai-module": "zairenkai-module",
     "zcored-ctl-contract": "core",
     "zfasd-ctl-contract": "fas",
 }
-# Packaged in the APK (contracts are only called at run time). zairenkai-fas-module is packaged
-# only in internal development builds (components.json "profile": "internal").
-PACKAGED = ("zart", "zthermal", "afid-device-candidates", "zairenkai-core-module")
-INTERNAL_ONLY = ("zairenkai-fas-module",)
+# Packaged in the APK (contracts are only called at run time). zairenkai-module is the single
+# root module; it packages zcored and zfasd (maintainer decision 2026-10-22).
+PACKAGED = ("zart", "zthermal", "afid-device-candidates", "zairenkai-module")
+INTERNAL_ONLY = ()
 
 
 def profile() -> str:
@@ -158,15 +157,15 @@ def check_build() -> list:
             if f"jniLibs/{abi}/{lib}" not in files:
                 errors.append(f"build: jniLibs/{abi}/{lib} not built")
     for req in ("assets/afid/device-candidates.json", "assets/system-modules.json",
-                "assets/system-modules/zairenkai_core.zip",
+                "assets/system-modules/zairenkai.zip",
                 "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE",
                 "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE"):
         if req not in files:
             errors.append(f"build: {req} not built")
     internal = profile() == "internal"
-    if internal != ("assets/system-modules/zairenkai_fas.zip" in files):
-        errors.append(f"build: profile {profile()} but zairenkai_fas.zip is {'absent' if internal else 'present'}")
-    for c in ("zart", "zthermal", "zairenkai_core") + (("zairenkai_fas",) if internal else ()):
+    if any(n.startswith("assets/system-modules/") and n != "assets/system-modules/zairenkai.zip" for n in files):
+        errors.append("build: a module other than zairenkai.zip was built")
+    for c in ("zart", "zthermal", "zairenkai-core", "zairenkai-fas"):
         if not (OUT / f"assets/licenses/{c}/THIRD_PARTY_NOTICES.txt").is_file():
             errors.append(f"build: third-party notices for {c} missing")
     if not (OUT / "assets/licenses/zart/AOSP-ATTRIBUTION.txt").is_file():
@@ -182,7 +181,7 @@ def check_build() -> list:
     if cat_path.is_file():
         cat = json.loads(cat_path.read_text())
         for m in cat["modules"]:
-            comp_id = {"zairenkai_core": "zairenkai-core-module", "zairenkai_fas": "zairenkai-fas-module"}.get(m["id"])
+            comp_id = {"zairenkai": "zairenkai-module"}.get(m["id"])
             if comp_id is None or m["source"]["commit"] != lock.get(comp_id, {}).get("commit"):
                 errors.append(f"build: module {m['id']} was built from {m['source']['commit'][:12]}, not the locked commit")
             z = OUT / "assets" / m["file"]
@@ -262,8 +261,8 @@ def check_apk(apk: pathlib.Path, release: bool) -> list:
                 errors.append(f"release: {cid} has no licence file at its pinned commit: it cannot be distributed")
         if profile() != "distributable":
             errors.append("release: this is an internal development build (ZAIRENKAI_INTERNAL_BUILD=1)")
-        if any(n.startswith("assets/system-modules/") and not n.endswith("zairenkai_core.zip") for n in facts["names"]):
-            errors.append("release: the APK contains a module other than zairenkai_core")
+        if any(n.startswith("assets/system-modules/") and not n.endswith("zairenkai.zip") for n in facts["names"]):
+            errors.append("release: the APK contains a module other than zairenkai")
     return errors
 
 

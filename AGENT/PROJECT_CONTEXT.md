@@ -36,8 +36,11 @@
   Verified. Evidence: Core `docs/adr/0005-root-only-socket.md`.
 - No Android device or emulator was available: install, launch, root prompts and SELinux
   behaviour are **Unverified**.
-- The app can install the Core and FAS root modules through Magisk, KernelSU/KernelSU-Next or
-  APatch. The manager commands were read in each manager's source. Verified. Evidence:
+- The app installs one root module, `zairenkai` (Zairenkai-Modules: zcored and zfasd, data in
+  `/data/adb/zairenkai/{core,fas}`), through Magisk, KernelSU/KernelSU-Next or APatch.
+  Verified. Evidence: maintainer decision 2026-10-22; `integration/system-modules.json`; catalog
+  fixture built from the real arm64 components (`docs/testing/verification-report.md`,
+  2026-10-22). The separate `zairenkai_core` / `zairenkai_fas` modules are superseded. The manager commands were read in each manager's source. Verified. Evidence:
   `docs/integration/system-module.md`, `SystemModuleTest`. Installation on a device is
   **Unverified**: no device has a validation record.
 - No release channel exists, so the module zips are packaged in the APK. Verified. Evidence:
@@ -51,16 +54,17 @@
 - App, ART and FAS are Apache-2.0 (maintainer decision 2026-10-21). The licence commits are
   merged: ART PR #2 (`0d8cd72`), FAS PR #3 (`be08b2d`).
   Verified. Evidence: `integration/repository-lock.json`, `docs/integration/license-inventory.md`.
-- FAS stays internal-only until its distribution is explicitly cleared; the first hardware test is Core only.
+- FAS is distributed inside the `zairenkai` module by the maintainer's decision of 2026-10-22,
+  before hardware validation. It installs switched off (`enabled = false`) until the user enables it.
   The provenance audit found no copied GPL code. Verified. Evidence:
   `docs/integration/fas-provenance.md`, 2026-10-21.
 - All seven Actions values are set (CI App ID and key at repository level, five signing secrets in
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
-- Core PR #2 (`11e9742`) and ThermalTools PR #2 (`3bc71fe`) are merged. Every lock pin is now
-  a `dev` merge commit whose tree equals the PR head that was tested. Verified. Evidence:
-  `git log`/`git diff` on each `dev`, GitHub, 2026-10-21.
+- Core and FAS are pinned to their topic-branch PR heads (Core PR #3 `4cdfe8e`, FAS PR #4
+  `99cfb18`), which move them into the single module; ART, ThermalTools and Database-Source stay
+  on `dev` merge commits. Verified. Evidence: `integration/repository-lock.json`, 2026-10-22.
 
 ## Authoritative sources
 
@@ -74,13 +78,13 @@
 
 ## Related repositories
 
-- Zairenkai-Core (`11e9742`), Zairenkai-FAS (`be08b2d`), Zairenkai-ART (`0d8cd72`),
-  Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source (`d9c4290`), all on `dev`, are
-  integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
-- The other 10 Zairenkai repositories have no runtime capability, and anime-extensions is a separate
+- Zairenkai-ART (`0d8cd72`), Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source
+  (`d9c4290`), on `dev`, are integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
+- Zairenkai-Modules (`ea138ef`, topic branch) is integrated as the module source; Core (`4cdfe8e`)
+  and FAS (`99cfb18`) are pinned to their topic-branch PR heads (`"merged": false`). Verified.
+  Evidence: `integration/repository-lock.json`, 2026-10-22.
+- The other 9 Zairenkai repositories have no runtime capability, and anime-extensions is a separate
   product. Verified. Evidence: `integration/repository-audit.md` (re-audit 2026-10-21).
-- No pin is an unmerged topic-branch commit any more. Verified. Evidence: `"merged": true` for
-  every component in `integration/repository-lock.json`, 2026-10-21.
 
 ## Open questions
 

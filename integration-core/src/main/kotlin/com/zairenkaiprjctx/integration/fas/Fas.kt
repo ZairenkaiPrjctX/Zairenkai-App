@@ -17,9 +17,10 @@ import kotlinx.serialization.json.Json
  * only" must be shown, and no FPS may be shown while `telemetry_error` is set.
  */
 object FasPaths {
-    const val MODULE_ID = "zairenkai_fas"
-    const val BIN = "/data/adb/modules/zairenkai_fas/bin/zfasd"
-    const val DIR = "/data/adb/zairenkai-fas"
+    /** zfasd is packaged in the single `zairenkai` module, next to zcored. */
+    const val MODULE_ID = "zairenkai"
+    const val BIN = "/data/adb/modules/zairenkai/bin/zfasd"
+    const val DIR = "/data/adb/zairenkai/fas"
 }
 
 @Serializable

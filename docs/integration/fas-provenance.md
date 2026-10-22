@@ -163,10 +163,15 @@ licence files, so it gives the same result:
      (`license-inventory.md`, "Authorship and rights").
 
    Merged by PR #3 as `be08b2d`; the app's lock pins that merge commit.
-3. **Remaining:**
-   - put the crate licence texts in the zip;
-   - validate FAS on hardware (not part of the first, Core-only test);
-   - then the maintainer decides whether to change its `distribution` to `distributable`, and re-run the release
-     gate.
+3. **Distribution decision, 2026-10-22.** The maintainer decided that Zairenkai ships one root
+   module, `zairenkai` (Zairenkai-Modules), carrying zcored and zfasd together, and that FAS is
+   distributed in it. The separate `zairenkai_fas` module and the `ZAIRENKAI_INTERNAL_BUILD`
+   profile are gone; the catalog's only module is `distributable`. The module zip carries
+   FAS's `LICENSE`, `NOTICE` and `THIRD_PARTY.md` (with the crate licences) under
+   `licenses/zairenkai-fas/`.
+4. **Remaining:**
+   - validate FAS on hardware: it is now distributed **before** that validation, by the
+     maintainer's decision; until then it is labelled unvalidated (`validated_on` is empty);
+   - re-run the release gate once the APK and catalog are signed.
 
 Only licence files and headers were changed in FAS; no code.
