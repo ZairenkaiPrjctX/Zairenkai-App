@@ -14,7 +14,7 @@
 ## Steps
 
 ```sh
-# 1. Packaged components at the locked commits (needs read access to the private repositories)
+# 1. Packaged components at the locked commits (the locked repositories are public)
 ANDROID_NDK_HOME=/path/to/android-ndk-r27d integration/scripts/build-components.sh
 
 # 2. Tests, lint, APKs

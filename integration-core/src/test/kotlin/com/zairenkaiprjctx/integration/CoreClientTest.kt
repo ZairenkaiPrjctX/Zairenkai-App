@@ -12,7 +12,7 @@ import org.junit.Test
 
 /** Parses responses captured from a real zcored (commit in contracts/PROVENANCE.json). */
 class CoreClientTest {
-    private val base = "'/data/adb/modules/zairenkai_core/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai-core'"
+    private val base = "'/data/adb/modules/zairenkai/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai/core'"
 
     private fun client(method: String, exit: Int, stdout: String, stderr: String = ""): Pair<CoreClient, FakeRunner> {
         val runner = FakeRunner()
@@ -38,7 +38,7 @@ class CoreClientTest {
         val mods = (client("modules", 0, contract("core/modules.json")).first.modules() as CoreCall.Ok).value
         assertTrue(mods.any { it.id == "zairenkai_thermaltools" && it.health == "not_installed" })
         val tel = (client("context", 0, contract("core/context.json")).first.telemetry() as CoreCall.Ok).value
-        val thermal = tel.getValue("thermal_status")
+        val thermal = tel["thermal_status"]!!
         assertEquals("unavailable", thermal.status)
         assertEquals("dumpsys thermalservice", thermal.source)
     }
@@ -59,7 +59,7 @@ class CoreClientTest {
     @Test
     fun installationAndDaemonStates() {
         assertEquals(CoreCall.NotInstalled, client("health", 127, "", "sh: zcored: not found").first.health())
-        val unreachable = client("health", 2, "", "ctl: cannot reach zcored at /data/adb/zairenkai-core/zcored.sock: Connection refused").first.health()
+        val unreachable = client("health", 2, "", "ctl: cannot reach zcored at /data/adb/zairenkai/core/zcored.sock: Connection refused").first.health()
         assertTrue(unreachable is CoreCall.Unreachable)
         val err = client("health", 1, """{"v":1,"id":"x","ok":false,"error":{"code":"rate_limited","message":"slow down"}}""").first.health()
         assertEquals(CoreCall.Error("rate_limited", "slow down"), err)

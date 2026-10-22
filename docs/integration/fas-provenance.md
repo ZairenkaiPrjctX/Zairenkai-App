@@ -6,12 +6,12 @@ engineering record, not legal advice.
 **Outcome:** the audit found no copied or adapted third-party code, and no GPL dependency. On
 2026-10-21 the maintainer decided on Apache-2.0, conditional on this audit, and the audit supports
 it. The audit was re-run on the same tree that day, with the same result (below). FAS commit
-`9d87236`, on its topic branch and not merged yet, adds `LICENSE`, `NOTICE` and SPDX headers
-(`f6de6ee` and `333365e` refine `NOTICE` and the authorship record),
+`9d87236` adds `LICENSE`, `NOTICE` and SPDX headers (`f6de6ee` and `333365e` refine `NOTICE`
+and the authorship record). They were merged into FAS `dev` by PR #3 (`be08b2d`, 2026-10-21),
 and changes no code.
 
 FAS **stays out of distributable builds** for now, for two reasons:
-- its licence is not merged into FAS `dev`;
+- its distribution has not been explicitly cleared by the maintainer;
 - the first hardware validation covers Core only.
 
 Making it distributable is a reviewed change to `integration/system-modules.json` and the release
@@ -162,11 +162,16 @@ licence files, so it gives the same result:
    - an authorship section in `docs/THIRD_PARTY.md`: the Git history and Anthropic's terms
      (`license-inventory.md`, "Authorship and rights").
 
-   The app's lock pins `333365e`.
-3. **Remaining:**
-   - merge the licence commits into FAS `dev` and re-pin both FAS lock components to the merge commit;
-   - put the crate licence texts in the zip;
-   - then decide whether to change its `distribution` to `distributable`, and re-run the release
-     gate.
+   Merged by PR #3 as `be08b2d`; the app's lock pins that merge commit.
+3. **Distribution decision, 2026-10-22.** The maintainer decided that Zairenkai ships one root
+   module, `zairenkai` (Zairenkai-Modules), carrying zcored and zfasd together, and that FAS is
+   distributed in it. The separate `zairenkai_fas` module and the `ZAIRENKAI_INTERNAL_BUILD`
+   profile are gone; the catalog's only module is `distributable`. The module zip carries
+   FAS's `LICENSE`, `NOTICE` and `THIRD_PARTY.md` (with the crate licences) under
+   `licenses/zairenkai-fas/`.
+4. **Remaining:**
+   - validate FAS on hardware: it is now distributed **before** that validation, by the
+     maintainer's decision; until then it is labelled unvalidated (`validated_on` is empty);
+   - re-run the release gate once the APK and catalog are signed.
 
 Only licence files and headers were changed in FAS; no code.

@@ -12,7 +12,7 @@ import com.zairenkaiprjctx.integration.core.ActionResult
 import com.zairenkaiprjctx.integration.core.CoreCall
 import com.zairenkaiprjctx.integration.core.CoreHealth
 import com.zairenkaiprjctx.integration.core.CoreModule
-import com.zairenkaiprjctx.integration.core.CoreObservation
+import com.zairenkaiprjctx.integration.core.CoreTelemetry
 import com.zairenkaiprjctx.integration.core.CoreOperation
 import com.zairenkaiprjctx.integration.core.FasProfileName
 import com.zairenkaiprjctx.integration.exec.RootState
@@ -109,10 +109,24 @@ sealed interface ActionState {
     data class Preview(val label: UiText, val op: CoreOperation, val result: ActionResult) : ActionState
 
     /** Direct zfasd command waiting for the user's confirmation (no Core policy preview exists). */
-    data class ConfirmDirect(val label: UiText, val run: () -> FasCall<String>) : ActionState
-    data class Done(val label: UiText, val message: String, val succeeded: Boolean) : ActionState
+    data class ConfirmDirect(val label: UiText, val run: () -> FasCall<String>, val requestedProfile: String? = null) : ActionState
+
+    /**
+     * The provider's answer ([succeeded]: Core reported applied, or zfasd accepted the command) and,
+     * for a profile change, what zfasd reported when read back afterwards ([profile]).
+     */
+    data class Done(val label: UiText, val message: String, val succeeded: Boolean, val profile: ProfileCheck? = null) : ActionState
     data class Error(val label: UiText, val detail: String) : ActionState
 }
+
+/** A profile change read back from zfasd: [reported] is null when the status could not be read. */
+data class ProfileCheck(val requested: String, val reported: String?) {
+    val confirmed: Boolean get() = reported == requested
+}
+
+/** What zfasd reports after a profile request; only zfasd's own status can confirm it. */
+fun profileCheck(requested: String?, status: FasCall<FasStatus>?): ProfileCheck? =
+    requested?.let { ProfileCheck(it, (status as? FasCall.Ok)?.value?.profile) }
 
 class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
     private val health = MutableStateFlow<CoreCall<CoreHealth>?>(null)
@@ -138,7 +152,13 @@ class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
         is CoreOperation.SetLowPowerMode -> UiText(if (op.enabled) R.string.battery_saver_on else R.string.battery_saver_off)
     }
 
+    /** One operation at a time: a request while another is running is ignored. */
+    private val busy: Boolean get() = action.value is ActionState.Working
+
+    private fun requestedProfile(op: CoreOperation) = (op as? CoreOperation.FasSetProfile)?.profile?.wire
+
     fun preview(op: CoreOperation) {
+        if (busy) return
         val l = label(op)
         action.value = ActionState.Working(l)
         viewModelScope.launch(Dispatchers.IO) {
@@ -150,43 +170,55 @@ class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
     }
 
     fun apply(op: CoreOperation) {
+        if (busy) return
         val l = label(op)
         action.value = ActionState.Working(l)
         viewModelScope.launch(Dispatchers.IO) {
-            action.value = when (val r = c.core.submit(op, dryRun = false)) {
-                is CoreCall.Ok -> ActionState.Done(l, "${r.value.outcome}: ${r.value.message}", r.value.outcome in setOf("applied", "already_applied"))
+            val r = c.core.submit(op, dryRun = false)
+            // Read the provider back before reporting, so the result shows what zfasd now says.
+            val status = c.fas.status()
+            fasState.value = status
+            health.value = c.core.health()
+            action.value = when (r) {
+                is CoreCall.Ok -> ActionState.Done(
+                    l, "${r.value.outcome}: ${r.value.message}", r.value.outcome in setOf("applied", "already_applied"),
+                    profileCheck(requestedProfile(op), status),
+                )
                 else -> ActionState.Error(l, r.describeFailure())
             }
-            fasState.value = c.fas.status()
-            health.value = c.core.health()
             c.registry.refresh("fas")
         }
     }
 
     /** Direct zfasd control: only offered when Core is not answering (FAS's own WebUI does the same). */
-    fun applyDirect(label: UiText, call: () -> FasCall<String>) {
+    fun applyDirect(label: UiText, call: () -> FasCall<String>, requestedProfile: String? = null) {
+        if (busy) return
         action.value = ActionState.Working(label)
         viewModelScope.launch(Dispatchers.IO) {
-            action.value = when (val r = call()) {
-                is FasCall.Ok -> ActionState.Done(label, r.value, true)
+            val r = call()
+            val status = c.fas.status()
+            fasState.value = status
+            action.value = when (r) {
+                is FasCall.Ok -> ActionState.Done(label, r.value, true, profileCheck(requestedProfile, status))
                 else -> ActionState.Error(label, r.describeFailure())
             }
-            fasState.value = c.fas.status()
             c.registry.refresh("fas")
         }
     }
 
     fun setProfileDirect(p: FasProfileName) {
-        action.value = ActionState.ConfirmDirect(UiText(R.string.action_profile, listOf(p.wire))) { c.fas.setProfile(p) }
+        if (busy) return
+        action.value = ActionState.ConfirmDirect(UiText(R.string.action_profile, listOf(p.wire)), { c.fas.setProfile(p) }, p.wire)
     }
 
     fun commandDirect(cmd: FasCommand) {
+        if (busy) return
         val label = when (cmd) {
             FasCommand.ENABLE -> R.string.fas_enable
             FasCommand.DISABLE -> R.string.fas_disable
             FasCommand.RESET -> R.string.fas_reset
         }
-        action.value = ActionState.ConfirmDirect(UiText(label)) { c.fas.command(cmd) }
+        action.value = ActionState.ConfirmDirect(UiText(label), run = { c.fas.command(cmd) })
     }
 
     fun dismiss() {
@@ -212,8 +244,8 @@ fun com.zairenkaiprjctx.app.platform.ThermalStatusMonitor.statusFlow(): Flow<Int
 class ThermalViewModel(private val c: AppContainer) : ViewModel() {
     private val sample = MutableStateFlow<ThermalSample?>(null)
     val android: StateFlow<ThermalSample?> = sample.asStateFlow()
-    private val telemetry = MutableStateFlow<CoreCall<Map<String, CoreObservation>>?>(null)
-    val core: StateFlow<CoreCall<Map<String, CoreObservation>>?> = telemetry.asStateFlow()
+    private val telemetry = MutableStateFlow<CoreCall<CoreTelemetry>?>(null)
+    val core: StateFlow<CoreCall<CoreTelemetry>?> = telemetry.asStateFlow()
     private var jobs: List<Job> = emptyList()
 
     @Volatile

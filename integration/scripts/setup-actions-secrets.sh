@@ -9,14 +9,15 @@
 # typing "overwrite". Run "setup-actions-secrets.sh help" for each subcommand's prerequisites.
 set -euo pipefail
 REPO=${ZAIRENKAI_APP_REPO:-ZairenkaiPrjctX/Zairenkai-App}
-ORG=${REPO%%/*}
 ENV_NAME=release
 HERE=$(cd "$(dirname "$0")" && pwd)
 TRUST=${ZAIRENKAI_MODULE_TRUST:-$HERE/../module-trust.json}
 KEYS=${ZAIRENKAI_KEYS_DIR:-$HOME/.zairenkai-keys}
 MODULE_KEY="$KEYS/module-signing.pem"
 KEYSTORE="$KEYS/release.jks"
-APP_REPOS="Zairenkai-ART Zairenkai-Core Zairenkai-Database-Source Zairenkai-FAS Zairenkai-ThermalTools"
+# The component repositories are public and CI fetches them without a token; these two values
+# configured the former CI GitHub App and are no longer read by any workflow.
+UNUSED="ZAIRENKAI_CI_APP_ID ZAIRENKAI_CI_APP_PRIVATE_KEY"
 ENV_SECRETS="ZAIRENKAI_MODULE_SIGNING_KEY ZAIRENKAI_RELEASE_KEYSTORE_BASE64 ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD ZAIRENKAI_RELEASE_KEY_ALIAS ZAIRENKAI_RELEASE_KEY_PASSWORD"
 
 die() { echo "error: $*" >&2; exit 1; }
@@ -31,18 +32,11 @@ gh logged in (gh auth login) with admin access to it.
   status
       Lists each variable and secret as ok or MISSING (names only, never values), the release
       environment and its branch policy, the trust list and the local key directory.
-      Exits 1 while anything is missing.
+      Exits 1 while anything is missing. Names the former CI App values if they are still set:
+      no workflow reads them, so the maintainer may delete them.
 
   environment
       Creates the "$ENV_NAME" environment and limits deployments to the dev branch.
-
-  app <App ID> <private key PEM>
-      Prerequisite: a GitHub App owned by $ORG with only Contents: read-only, installed on
-      only $APP_REPOS, and a private key generated on the App's settings page ("Generate a
-      private key"). The App ID is the number on that page, not the Client ID (Iv...).
-      Checks that the key authenticates as that App and that its permissions and installation
-      match, then sets variable ZAIRENKAI_CI_APP_ID and secret ZAIRENKAI_CI_APP_PRIVATE_KEY at
-      repository level (ci.yml reads them outside any environment).
 
   module-signing [owner]
       Creates an ECDSA P-256 key in $KEYS (mode 700; reuses an existing key), adds only its
@@ -137,8 +131,11 @@ status() {
     echo "  MISSING  environment $ENV_NAME"
     missing=1
   fi
-  check "repo variable" "$repo_vars" ZAIRENKAI_CI_APP_ID
-  check "repo secret  " "$repo_secrets" ZAIRENKAI_CI_APP_PRIVATE_KEY
+  for name in $UNUSED; do
+    if grep -qx "$name" <<<"$repo_vars"$'\n'"$repo_secrets"; then
+      echo "  unused   $name (no workflow reads it; it may be deleted)"
+    fi
+  done
   for name in $ENV_SECRETS; do
     check "env secret   " "$env_secrets" "$name"
   done
@@ -163,7 +160,7 @@ status() {
 environment() {
   require_gh
   confirm "Create or update environment $ENV_NAME on $REPO, deployable only from dev?"
-  # Required reviewers are refused for this private repository on the organization's plan
+  # Required reviewers were refused for this repository, then private, on the organization's plan
   # (HTTP 422, 2026-10-21), so the environment is limited to the dev branch instead.
   printf '%s' '{"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}' |
     gh api -X PUT "repos/$REPO/environments/$ENV_NAME" --input - --silent
@@ -173,74 +170,6 @@ environment() {
       -f name=dev -f type=branch --silent
   fi
   echo "environment $ENV_NAME: deployments limited to dev"
-}
-
-# Authenticate as the App with a JWT signed by the key, then read its permissions and its
-# installation's repositories with a short-lived installation token, revoked at the end. Neither
-# the JWT nor the token is printed.
-check_app() { # check_app <App ID> <PEM>
-  python3 - "$1" "$2" "$ORG" "$APP_REPOS" <<'PY'
-import base64, json, subprocess, sys, time, urllib.error, urllib.request
-app_id, pem, org, wanted = sys.argv[1], sys.argv[2], sys.argv[3], set(sys.argv[4].split())
-b64 = lambda b: base64.urlsafe_b64encode(b).rstrip(b"=").decode()
-now = int(time.time())
-unsigned = b64(b'{"alg":"RS256","typ":"JWT"}') + "." + b64(json.dumps({"iat": now - 60, "exp": now + 540, "iss": app_id}).encode())
-sig = subprocess.run(["openssl", "dgst", "-sha256", "-sign", pem], input=unsigned.encode(), capture_output=True, check=True).stdout
-jwt = unsigned + "." + b64(sig)
-
-def call(path, token, method="GET", scheme="Bearer"):
-    req = urllib.request.Request("https://api.github.com" + path, method=method, headers={
-        "Authorization": f"{scheme} {token}", "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
-    try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            body = r.read()
-            return json.loads(body) if body else None
-    except urllib.error.HTTPError as e:
-        sys.exit(f"GitHub refused {method} {path.split('?')[0]}: HTTP {e.code}"
-                 + (" (the key does not belong to App ID " + app_id + ", or the App ID is wrong)" if path == "/app" else ""))
-
-app = call("/app", jwt)
-problems = []
-if app["owner"]["login"] != org:
-    problems.append(f"the App is owned by {app['owner']['login']}, not {org}")
-perms = {k: v for k, v in app["permissions"].items() if k != "metadata"}
-if perms != {"contents": "read"}:
-    problems.append(f"the App's permissions are {perms}; only contents: read is allowed")
-inst = next((i for i in call("/app/installations", jwt) if i["account"]["login"] == org), None)
-if inst is None:
-    problems.append(f"the App is not installed on {org}")
-else:
-    if inst["repository_selection"] != "selected":
-        problems.append("the App is installed on all repositories; choose 'Only select repositories'")
-    token = call(f"/app/installations/{inst['id']}/access_tokens", jwt, method="POST")["token"]
-    try:
-        repos = {r["name"] for r in call("/installation/repositories?per_page=100", token)["repositories"]}
-    finally:
-        call("/installation/token", token, method="DELETE")
-    if repos != wanted:
-        problems.append(f"the App is installed on {sorted(repos)}; it must be exactly {sorted(wanted)}")
-print(f"App {app['slug']} (ID {app_id}), owner {app['owner']['login']}, permissions {app['permissions']}")
-if problems:
-    sys.exit("refusing to store it:\n  - " + "\n  - ".join(problems))
-PY
-}
-
-app() {
-  local app_id=${1:-} pem=${2:-}
-  [ -n "$app_id" ] && [ -n "$pem" ] || die "usage: setup-actions-secrets.sh app <App ID> <private key PEM>"
-  [[ $app_id == Iv* ]] && die "$app_id is the Client ID; use the numeric App ID from the App's settings page"
-  [[ $app_id =~ ^[0-9]+$ ]] || die "the App ID is a number (the App's settings page, 'App ID')"
-  [ -r "$pem" ] || die "cannot read $pem"
-  openssl rsa -in "$pem" -check -noout >/dev/null 2>&1 ||
-    die "$pem is not an RSA private key. Use the .pem downloaded from the App's settings page ('Generate a private key'); a locally made OpenSSL key does not belong to the App"
-  require_gh
-  check_app "$app_id" "$pem"
-  confirm "Set repository variable ZAIRENKAI_CI_APP_ID and secret ZAIRENKAI_CI_APP_PRIVATE_KEY on $REPO?"
-  guard variable ZAIRENKAI_CI_APP_ID
-  guard secret ZAIRENKAI_CI_APP_PRIVATE_KEY
-  gh variable set ZAIRENKAI_CI_APP_ID -R "$REPO" --body "$app_id"
-  gh secret set ZAIRENKAI_CI_APP_PRIVATE_KEY -R "$REPO" <"$pem"
-  echo "set ZAIRENKAI_CI_APP_ID and ZAIRENKAI_CI_APP_PRIVATE_KEY. Delete the downloaded PEM: GitHub keeps no copy, and you can generate a new key on the App's page."
 }
 
 module_signing() {
@@ -333,7 +262,6 @@ keystore() {
 case "${1:-help}" in
   status) status ;;
   environment) environment ;;
-  app) app "${@:2}" ;;
   module-signing) module_signing "${@:2}" ;;
   keystore) keystore ;;
   help | -h | --help) usage ;;

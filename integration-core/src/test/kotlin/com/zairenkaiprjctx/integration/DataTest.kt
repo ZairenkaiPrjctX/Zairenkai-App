@@ -48,7 +48,7 @@ class DataTest {
     fun inventoryCoversTheOrganizationAndMatchesTheLock() {
         val inv = OrganizationInventory.parse(repoFile("integration/organization-repositories.json"))
         assertEquals("ZairenkaiPrjctX", inv.organization)
-        assertEquals(16, inv.repositories.size) // 15 Zairenkai repositories and anime-extensions (2026-10-21)
+        assertEquals(17, inv.repositories.size) // 16 Zairenkai repositories and the excluded anime-extensions (2026-10-22)
         assertTrue(inv.repositories.all { it.disposition.isNotBlank() && it.evidence.isNotBlank() })
         val lock = Json.parseToJsonElement(repoFile("integration/repository-lock.json")).jsonObject
         for (c in lock["components"]!!.jsonArray) {

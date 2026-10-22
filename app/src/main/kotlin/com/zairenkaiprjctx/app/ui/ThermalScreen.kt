@@ -27,6 +27,8 @@ import com.zairenkaiprjctx.app.design.Supporting
 import com.zairenkaiprjctx.app.design.UnavailableCard
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.integration.core.CoreCall
+import com.zairenkaiprjctx.integration.core.TelemetryField
+import com.zairenkaiprjctx.integration.core.TelemetryReading
 import com.zairenkaiprjctx.integration.fas.FasCall
 import com.zairenkaiprjctx.integration.registry.RegistrySnapshot
 import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsResult
@@ -70,10 +72,8 @@ fun ThermalScreen(vm: ThermalViewModel, perf: PerformanceViewModel, snapshot: Re
                 is CoreCall.Ok -> SectionCard(stringResource(R.string.thermal_core), trailing = {
                     OutlinedButton(onClick = vm::reloadCore) { Text(stringResource(R.string.action_refresh)) }
                 }) {
-                    listOf("thermal_status", "battery_temp", "battery_level", "charging", "low_power_mode").forEach { key ->
-                        t.value[key]?.let { o ->
-                            InfoRow(key, if (o.status == "value") (o.text ?: o.value.toString()) else "${o.status}: ${o.text ?: ""}", numeric = true)
-                        }
+                    CORE_FIELDS.forEach { (key, label) ->
+                        t.value.reading(key)?.let { f -> InfoRow(stringResource(label), telemetryText(f), numeric = true) }
                     }
                     Supporting(stringResource(R.string.thermal_core_source))
                 }
@@ -100,6 +100,51 @@ fun ThermalScreen(vm: ThermalViewModel, perf: PerformanceViewModel, snapshot: Re
 }
 
 private fun celsius(milli: Long): String = "%.1f °C".format(milli / 1000.0)
+
+/** Core telemetry shown on this screen, with its label. Keys are Core's `TelemetrySnapshot` fields. */
+private val CORE_FIELDS = listOf(
+    "thermal_status" to R.string.core_field_thermal_status,
+    "battery_temp" to R.string.core_field_battery_temp,
+    "battery_level" to R.string.core_field_battery_level,
+    "charging" to R.string.core_field_charging,
+    "low_power_mode" to R.string.battery_saver,
+)
+
+/** A reading in the user's language and unit; invalid values are named as such, never shown as measurements. */
+@Composable
+private fun telemetryText(f: TelemetryField): String {
+    val text = when (val r = f.reading) {
+        is TelemetryReading.Temperature -> stringResource(R.string.reading_celsius, r.celsius)
+        is TelemetryReading.Level -> stringResource(R.string.reading_percent, r.percent)
+        is TelemetryReading.Flag -> stringResource(if (r.on) R.string.on else R.string.off)
+        is TelemetryReading.ThermalLevel -> stringResource(
+            when (r.status) {
+                "none" -> R.string.thermal_none
+                "light" -> R.string.thermal_light
+                "moderate" -> R.string.thermal_moderate
+                "severe" -> R.string.thermal_severe
+                "critical" -> R.string.thermal_critical
+                "emergency" -> R.string.thermal_emergency
+                else -> R.string.thermal_shutdown
+            },
+        )
+        is TelemetryReading.MemoryKib -> "${r.kib} KiB"
+        is TelemetryReading.Invalid -> stringResource(R.string.reading_invalid, r.detail)
+        is TelemetryReading.NotReported -> {
+            val status = stringResource(
+                when (r.status) {
+                    "unavailable" -> R.string.obs_status_unavailable
+                    "unsupported" -> R.string.obs_status_unsupported
+                    "permission_denied" -> R.string.obs_status_permission_denied
+                    else -> R.string.obs_status_unknown
+                },
+            )
+            val detail = r.detail
+            if (detail.isNullOrBlank()) status else stringResource(R.string.reading_not_reported, status, detail)
+        }
+    }
+    return f.staleByMs?.let { stringResource(R.string.reading_stale, text, (it / 1000).toInt()) } ?: text
+}
 
 /** zthermal's read-only snapshot: zones as zthermal read them, failed reads shown with their reason. */
 @Composable

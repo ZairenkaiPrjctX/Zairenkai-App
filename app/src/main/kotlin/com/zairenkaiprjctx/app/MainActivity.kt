@@ -31,6 +31,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -166,7 +170,7 @@ private fun App(c: AppContainer) {
                             selected = !showSettings && tab == t,
                             onClick = { select(t) },
                             icon = { Icon(t.icon, contentDescription = null) },
-                            label = { Text(stringResource(t.title)) },
+                            label = { NavLabel(stringResource(t.title)) },
                             railExpanded = false,
                         )
                     }
@@ -205,7 +209,7 @@ private fun App(c: AppContainer) {
                                     selected = !showSettings && tab == t,
                                     onClick = { select(t) },
                                     icon = { Icon(t.icon, contentDescription = null) },
-                                    label = { Text(stringResource(t.title)) },
+                                    label = { NavLabel(stringResource(t.title)) },
                                 )
                             }
                         }
@@ -241,4 +245,20 @@ private fun App(c: AppContainer) {
             }
         }
     }
+}
+
+/**
+ * One line, shrinking toward 9 sp before it would wrap: five destinations share the bar, and longer
+ * words ("Performance", larger system font) otherwise wrapped or overlapped the icon.
+ */
+@Composable
+private fun NavLabel(text: String) {
+    val style = LocalTextStyle.current
+    Text(
+        text,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+    )
 }

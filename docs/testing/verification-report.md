@@ -1,5 +1,94 @@
 # Verification report
 
+## Module with ztune; first green full-integration run (2026-10-22)
+
+**Verdict: the integrated app built in CI for the first time; the re-pin is verified on the host
+and waits for CI.** Nothing ran on a device.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Full integration on GitHub, at `d0db6b7` (pins Core `4cdfe8e`, Modules `ea138ef`) | CI run 39827139485 | **all jobs green**: anonymous fetch, every component built at its lock, `verify_integration.py build`, contracts re-captured, `:integration-core:test :app:testDebugUnitTest lint assembleDebug assembleRelease`, APK inspection and integration report |
+| Re-pin: Core `8931cbb`, Modules `298311c` (module 0.2.0 with ztune and its source) | `ANDROID_NDK_HOME=… build-components.sh` | exit 0; zip SHA-256 `f4ad8d64…400d`, byte-identical to the build in Zairenkai-Modules from the same commits |
+| Artifacts and notices | `verify_integration.py build` | `build: ok` (now also `licenses/zairenkai-tuning/THIRD_PARTY_NOTICES.txt`, 25 crates) |
+| GPL obligations in the zip | `unzip -l zairenkai.zip` | `bin/ztune`, `licenses/zairenkai-tuning/{LICENSE,NOTICE,SOURCE.md,THIRD_PARTY.md}`, `source/zairenkai-tuning/zairenkai-tuning-0c226b2…-src.tar.gz` |
+| Contracts | `capture-contracts.sh` | exit 0; every core/ and fas/ fixture re-captured on a Linux container at the new pins (Core now reports `tuning.gpu_governor`, `tuning.io_scheduler`, `tuning.telemetry` as `unsupported` without ztune; module version 0.2.0) |
+| Lock | `verify_integration.py lock` | ok |
+| Gradle at the new pins | `./gradlew :integration-core:test` | **not run locally**: Maven Central HTTP 429; CI on this push is the check |
+
+## Public sources, no CI GitHub App (2026-10-22)
+
+**Verdict: verified locally, not yet on GitHub.** Every ZairenkaiPrjctX repository is public
+(`list_repos`, 2026-10-22), so `ci.yml` full-integration and `release.yml` no longer create a
+GitHub App token: they check that the locked repositories can be fetched without credentials
+and build from them. The signing secrets of the `release` environment are unchanged.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Anonymous fetch of every locked repository | `python3 integration/scripts/verify_integration.py access` (no token configured in the session's git) | `access: ok` |
+| Lock and inventory | `python3 integration/scripts/verify_integration.py lock` | `lock: ok` (inventory: 17 repositories, all public, Zairenkai-Tuning added, anime-extensions excluded) |
+| Verifier and secrets-script tests | `python3 -m unittest discover -s integration/scripts/tests` | 17 passed (the two CI App subcommand tests replaced by one) |
+| Shell lint | `shellcheck integration/scripts/*.sh` | clean |
+| Workflow lint | `actionlint .github/workflows/*.yml` | clean |
+| Gradle | `./gradlew :integration-core:test` | **not run**: Maven Central answered HTTP 429 (Too Many Requests) to this session, before compilation. The only Kotlin change is the inventory count in `DataTest` (16 → 17) |
+
+Not verified: a GitHub run of the changed workflows; whether the maintainer deletes the unused
+`ZAIRENKAI_CI_APP_ID` / `ZAIRENKAI_CI_APP_PRIVATE_KEY` values.
+
+## One root module, `zairenkai` (2026-10-22)
+
+**Verdict: verified on the host and in component CI.** Nothing ran on a device; the release
+gate still fails on signing.
+
+Maintainer decision: one root module assembled in Zairenkai-Modules, FAS included, all data in
+`/data/adb/zairenkai`. Pins: Modules `ea138ef` (PR #1), Core `4cdfe8e` (PR #3), FAS `99cfb18`
+(PR #4), all on topic branches.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Core | `cargo test --workspace`, clippy, fmt, shellcheck; CI 39700980963 (PR) and 39701977860 (dispatch at `4cdfe8e`) | 65 passed; all CI jobs green, including the NDK arm64 component |
+| FAS | `cargo test --workspace`, clippy, fmt, shellcheck; CI 39700987721 (PR) and 39701982927 (dispatch at `99cfb18`) | 82 passed; all CI jobs green, including the NDK arm64 component |
+| Modules | `python3 -m unittest discover -s tests`; shellcheck; actionlint | 12 passed; clean. CI `checks` green; CI `module` blocked: the CI GitHub App is not configured in Zairenkai-Modules |
+| Real module | Modules' `assemble.py` over the components of the two dispatch runs; `module_asset.py` | `zairenkai-v0.1.0.zip`, 20 entries, 8 matched to source, SHA-256 `4937db2e…5a2c`. A component from a `pull_request` run (PR merge commit `5994ad3`) was correctly refused |
+| First-install FAS config | real `zfasd check-config` (host build at `99cfb18`) on `defaults/fas-config.toml` | ok (`enabled = false`) |
+| Contracts | `capture-contracts.sh` | `core/modules.json`, `core/modules-installed.json`, `system-modules/catalog.json` re-captured. The other core/fas fixtures were kept: this host is proot on an Android phone, and the new capture recorded that phone's identity (`PROVENANCE.json`) |
+| App | `:integration-core:test`, `:app:testDebugUnitTest`, `lintDebug`, `verify_integration.py lock`, verifier tests | 88 (1 skipped), 29 (1 skipped: native graphics), lint 0 errors, lock ok, 18 passed |
+
+Not verified: `build-components.sh` end to end (no NDK on this aarch64 host; the App's
+`full-integration` job needs the CI GitHub App installed on Zairenkai-Modules); install, boot,
+FAS enable and uninstall on any device or root manager.
+
+## Re-pin to the component merge commits (2026-10-21)
+
+**Verdict: verified on the host.** Nothing ran on a device, and the release gate still fails on
+signing.
+
+The maintainer merged all four component PRs; the record is `integration/repository-audit.md`:
+- ART #2 → `0d8cd72`, dev CI 39631263321 ✓
+- FAS #3 → `be08b2d`, dev CI 39631199256 ✓
+- Core #2 → `11e9742`, dev CI 39646717993 ✓
+- ThermalTools #2 → `3bc71fe`, dev CI 39646811410 ✓
+
+Each merge commit's tree is identical to the PR head that was tested. The lock now pins the merge
+commits, all `"merged": true`.
+
+| Check | Result |
+|---|---|
+| `verify_integration.py lock`, `access` | ok |
+| `ZAIRENKAI_INTERNAL_BUILD=1 build-components.sh` | exit 0; Core zip `f7651bf7…5f41` and FAS zip `9e3503a2…e7d5`, both byte-identical to the builds from the PR heads; `build` ok |
+| `build-components.sh` (distributable) | exit 0; `build` ok; no FAS zip |
+| `capture-contracts.sh` | exit 0; fixtures differ only in timestamps, process ids and the recorded source commits |
+| `:integration-core:test` / `:app:testDebugUnitTest` | 74 / 24 passed, 0 failed |
+| Verifier tests, lint | 7 passed; 0 lint errors |
+| APKs (after rebasing onto the maintainer's release-signing commits) | debug 37,993,601 bytes `d7cd658d…d1fa`; release unsigned 30,315,188 bytes `e05333b3…678c` |
+| `apk` (debug, release) | ok |
+| Verifier and setup-script tests | 17 passed (includes the maintainer's `test_setup_actions_secrets.py`) |
+| Release gate (local, no signing secrets here) | **fails on 2**: APK unsigned; catalog unsigned. The trust list now holds the maintainer's key `4330305a…` (key id checked against the public key) |
+
+CI: run 39645071811, a dispatch at `8168526` (the maintainer's head, still on the topic-branch
+pins), passed all three jobs, **including full-integration**. It is the first CI run that built
+the native components. A run at the merge-commit pins follows this commit.
+
+
 ## Licence basis: authorship, Anthropic terms, AOSP NOTICE (2026-10-21)
 
 **Verdict:** the licence declarations are consistent and audited. Signing, the full CI job and

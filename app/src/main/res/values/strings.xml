@@ -345,4 +345,21 @@
     <string name="module_distribution">Distribution</string>
     <string name="module_distribution_ok">Licensed for distribution</string>
     <string name="module_distribution_internal">Internal development build only, not for distribution</string>
+    <!-- Core telemetry fields (units from zcore-domain: battery_temp is milli-degrees Celsius). -->
+    <string name="core_field_thermal_status">Thermal status (framework, via Core)</string>
+    <string name="core_field_battery_temp">Battery temperature</string>
+    <string name="core_field_battery_level">Battery level</string>
+    <string name="core_field_charging">Charging</string>
+    <string name="reading_celsius">%1$.1f °C</string>
+    <string name="reading_percent">%1$d %%</string>
+    <string name="reading_stale">%1$s (stale: %2$d s past its validity)</string>
+    <string name="reading_invalid">Invalid reading, not shown: %1$s</string>
+    <string name="reading_not_reported">%1$s: %2$s</string>
+    <string name="obs_status_unavailable">Unavailable</string>
+    <string name="obs_status_unsupported">Not supported on this device</string>
+    <string name="obs_status_permission_denied">Permission denied</string>
+    <string name="obs_status_unknown">Not measured yet</string>
+    <string name="profile_confirmed">Confirmed: zfasd now reports %1$s.</string>
+    <string name="profile_not_reflected">Not confirmed: zfasd reports %1$s (requested %2$s).</string>
+    <string name="profile_unreadable">Not confirmed: zfasd\'s status could not be read afterwards.</string>
 </resources>

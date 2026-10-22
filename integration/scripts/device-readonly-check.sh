@@ -52,17 +52,21 @@ if [ "$ROOT" = 1 ]; then
   su_ 'magisk -V'
   su_ '/data/adb/ksud module list'
   su_ '/data/adb/apd module list'
-  for id in zairenkai_core zairenkai_fas; do
+  # zairenkai is the single module; the separate zairenkai_core / zairenkai_fas are superseded
+  # and listed only to spot leftovers.
+  for id in zairenkai zairenkai_core zairenkai_fas; do
     for d in /data/adb/modules /data/adb/modules_update; do
       su_ "ls -la $d/$id"
       su_ "cat $d/$id/module.prop"
     done
   done
+  su_ 'cat /data/adb/modules/zairenkai/components.json'
   su_ 'getenforce'
-  su_ '/data/adb/modules/zairenkai_core/bin/zcored ctl --dir /data/adb/zairenkai-core health'
-  su_ '/data/adb/modules/zairenkai_fas/bin/zfasd ctl --dir /data/adb/zairenkai-fas status'
-  su_ 'cat /data/adb/zairenkai-core/failed'
-  su_ 'tail -n 50 /data/adb/zairenkai-core/zcored.log'
+  su_ '/data/adb/modules/zairenkai/bin/zcored ctl --dir /data/adb/zairenkai/core health'
+  su_ '/data/adb/modules/zairenkai/bin/zfasd ctl --dir /data/adb/zairenkai/fas status'
+  su_ 'cat /data/adb/zairenkai/core/failed /data/adb/zairenkai/fas/failed'
+  su_ 'tail -n 50 /data/adb/zairenkai/core/zcored.log'
+  su_ 'tail -n 50 /data/adb/zairenkai/fas/zfasd.log'
 fi
 echo "== SELinux denials in the current log buffer (avc)"
 "${ADB[@]}" logcat -d -b all 2>/dev/null | grep -i 'avc:.*denied' | grep -iE 'zairenkai|zcored|zfasd|zthermal|zart' || echo "(none matching)"

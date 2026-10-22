@@ -557,39 +557,51 @@ class SystemModuleTest {
     }
 }
 
-/** The catalog build-components.sh produced from the real Core and FAS module zips. */
+/** The catalog build-components.sh produced from the real zairenkai module zip. */
 class SystemModuleCatalogContractTest {
     @Test
     fun theBuiltCatalogMatchesTheLockAndClaimsNoValidation() {
         val c = ModuleCatalog.parse(contract("system-modules/catalog.json"))
-        assertEquals("zairenkai_core", c.base?.id)
+        assertEquals("zairenkai", c.base?.id)
         val lock = kotlinx.serialization.json.Json.parseToJsonElement(repoFile("integration/repository-lock.json"))
         val commits = (lock as kotlinx.serialization.json.JsonObject)["components"]!!.let { it as kotlinx.serialization.json.JsonArray }
             .associate { e ->
                 val o = e as kotlinx.serialization.json.JsonObject
                 (o["id"] as kotlinx.serialization.json.JsonPrimitive).content to (o["commit"] as kotlinx.serialization.json.JsonPrimitive).content
             }
-        assertEquals(commits["zairenkai-core-module"], c.byId("zairenkai_core")!!.source.commit)
+        assertEquals(commits["zairenkai-module"], c.byId("zairenkai")!!.source.commit)
         for (m in c.modules) {
             assertTrue("${m.id} claims a validation that never happened", m.validatedOn.isEmpty())
-            assertTrue(m.sourceMatched.containsAll(listOf("customize.sh", "META-INF/com/google/android/update-binary")))
+            assertTrue(m.sourceMatched.containsAll(listOf("customize.sh", "service.sh", "META-INF/com/google/android/update-binary")))
             assertFalse("no /system overlay", m.entries.keys.any { it.startsWith("system/") })
             assertEquals("arm64-v8a", m.requirements.abi)
         }
-        // The default (distributable) build packages Core only: FAS has no licence yet.
-        assertEquals(listOf("zairenkai_core"), c.modules.map { it.id })
-        assertEquals("distributable", c.byId("zairenkai_core")!!.distribution)
+        // One module, carrying both daemons, ztune and every component's licence files.
+        assertEquals(listOf("zairenkai"), c.modules.map { it.id })
+        val z = c.byId("zairenkai")!!
+        assertEquals("distributable", z.distribution)
+        for (e in listOf("bin/zcored", "bin/zfasd", "components.json", "defaults/fas-config.toml", "licenses/zairenkai-core/LICENSE", "licenses/zairenkai-fas/LICENSE")) {
+            assertTrue("$e missing from the module", e in z.entries)
+        }
+        // ztune is GPL-3.0-only: its licence and Corresponding Source travel with the binary.
+        val source = Regex("source/zairenkai-tuning/zairenkai-tuning-[0-9a-f]{40}-src\\.tar\\.gz")
+        assertEquals(1, z.entries.keys.count { source.matches(it) })
+        for (e in listOf("bin/ztune", "licenses/zairenkai-tuning/LICENSE", "licenses/zairenkai-tuning/SOURCE.md")) {
+            assertTrue("$e missing from the module", e in z.entries)
+        }
     }
 
     @Test
-    fun theSpecKeepsFasInternalWithItsConflict() {
+    fun theSpecShipsOneModuleWithFasAndItsConflicts() {
         val spec = kotlinx.serialization.json.Json.parseToJsonElement(repoFile("integration/system-modules.json")) as kotlinx.serialization.json.JsonObject
         val mods = (spec["modules"] as kotlinx.serialization.json.JsonArray).map { it as kotlinx.serialization.json.JsonObject }
-        fun field(id: String, k: String) = (mods.single { (it["id"] as kotlinx.serialization.json.JsonPrimitive).content == id }[k] as kotlinx.serialization.json.JsonPrimitive).content
-        assertEquals("distributable", field("zairenkai_core", "distribution"))
-        assertEquals("internal", field("zairenkai_fas", "distribution"))
-        val fas = mods.single { (it["id"] as kotlinx.serialization.json.JsonPrimitive).content == "zairenkai_fas" }
-        assertTrue(fas.toString().contains("fas_rs"))
+        val m = mods.single()
+        assertEquals("zairenkai", (m["id"] as kotlinx.serialization.json.JsonPrimitive).content)
+        assertEquals("distributable", (m["distribution"] as kotlinx.serialization.json.JsonPrimitive).content)
+        val text = m.toString()
+        // FAS's own conflict, and the separate modules this one replaces.
+        for (id in listOf("fas_rs", "zairenkai_core", "zairenkai_fas")) assertTrue("conflict $id", text.contains("\"id\":\"$id\""))
+        assertTrue(text.contains("fas.control") && text.contains("core.health"))
     }
 
     @Test

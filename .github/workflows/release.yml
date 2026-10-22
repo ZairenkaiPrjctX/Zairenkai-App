@@ -33,8 +33,6 @@ jobs:
       - name: Require the dev branch and every release secret
         env:
           REF: ${{ github.ref }}
-          APP_ID: ${{ vars.ZAIRENKAI_CI_APP_ID }}
-          HAS_ZAIRENKAI_CI_APP_PRIVATE_KEY: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY != '' }}
           HAS_ZAIRENKAI_MODULE_SIGNING_KEY: ${{ secrets.ZAIRENKAI_MODULE_SIGNING_KEY != '' }}
           HAS_ZAIRENKAI_RELEASE_KEYSTORE_BASE64: ${{ secrets.ZAIRENKAI_RELEASE_KEYSTORE_BASE64 != '' }}
           HAS_ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD != '' }}
@@ -43,8 +41,7 @@ jobs:
         run: |
           missing=""
           [ "$REF" = refs/heads/dev ] || missing="$missing branch-dev(ran-on-$REF)"
-          [[ $APP_ID =~ ^[0-9]+$ ]] || missing="$missing ZAIRENKAI_CI_APP_ID(variable,numeric)"
-          for name in ZAIRENKAI_CI_APP_PRIVATE_KEY ZAIRENKAI_MODULE_SIGNING_KEY ZAIRENKAI_RELEASE_KEYSTORE_BASE64 \
+          for name in ZAIRENKAI_MODULE_SIGNING_KEY ZAIRENKAI_RELEASE_KEYSTORE_BASE64 \
             ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD ZAIRENKAI_RELEASE_KEY_ALIAS ZAIRENKAI_RELEASE_KEY_PASSWORD; do
             has="HAS_$name"
             [ "${!has}" = true ] || missing="$missing $name"
@@ -79,21 +76,8 @@ jobs:
             exit 1
           fi
           echo "module-signing key ${key_id:0:16}… is trusted; the release keystore opens."
-      - id: token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          app-id: ${{ vars.ZAIRENKAI_CI_APP_ID }} # the numeric App ID, not the OAuth Client ID (v3.3.0 marks app-id deprecated but still reads it)
-          private-key: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY }}
-          owner: ZairenkaiPrjctX
-          repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source
-          permission-contents: read
-      - name: Let git use the token
-        env:
-          TOKEN: ${{ steps.token.outputs.token }}
-        run: |
-          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
-          echo "::add-mask::$auth"
-          git config --global "http.https://github.com/.extraheader" "AUTHORIZATION: basic $auth"
+      - name: Every locked repository can be fetched anonymously
+        run: python3 integration/scripts/verify_integration.py access
       - name: Rust, Android targets and NDK (checksum verified)
         run: |
           rustup toolchain install stable --profile minimal -t aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
@@ -114,11 +98,10 @@ jobs:
           ZAIRENKAI_RELEASE_KEY_ALIAS: ${{ secrets.ZAIRENKAI_RELEASE_KEY_ALIAS }}
           ZAIRENKAI_RELEASE_KEY_PASSWORD: ${{ secrets.ZAIRENKAI_RELEASE_KEY_PASSWORD }}
         run: ./gradlew --no-daemon :integration-core:test :app:testDebugUnitTest lint assembleRelease
-      - name: Remove keys and token
+      - name: Remove keys
         if: always()
         run: |
           rm -f "$RUNNER_TEMP/module-signing.pem" "$RUNNER_TEMP/release.jks"
-          git config --global --unset-all "http.https://github.com/.extraheader" || true
       - name: Verify the APK signature with apksigner
         run: |
           apksigner=$(printf '%s\n' "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
@@ -146,7 +129,7 @@ jobs:
         if: failure()
         run: |
           { echo "## Release failed: nothing was published"
-            echo "The step marked failed above holds the reason. Keys and the token were removed."
+            echo "The step marked failed above holds the reason. Keys were removed."
             echo "Check the configuration with integration/scripts/setup-actions-secrets.sh status."
             if [ -f integration/out/integration-report.md ]; then cat integration/out/integration-report.md; fi
           } >> "$GITHUB_STEP_SUMMARY"

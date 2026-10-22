@@ -6,65 +6,47 @@
 |---|---|---|---|
 | `reduced` | Unit and UI tests, lint, a debug APK **without** native components (`-Pzairenkai.allowMissingComponents=true`) | nothing | "reduced build (no native components)" |
 | `scripts` | shellcheck, Python compile, the source-lock check (`verify_integration.py lock`), the verifier's own tests | nothing | |
-| `full-integration` | Every component at its locked commit (`build-components.sh`), contracts re-captured from the real binaries, tests, lint, debug and release APKs **with** native components required, APK inspection and the integration report | the CI GitHub App | "full integration build" |
+| `full-integration` | Every component at its locked commit (`build-components.sh`), contracts re-captured from the real binaries, tests, lint, debug and release APKs **with** native components required, APK inspection and the integration report | nothing (the locked repositories are public) | "full integration build" |
 
 A green `reduced` job says nothing about the integrated app. Only `full-integration` does.
 
-`full-integration` builds the **distributable profile**: Core is the only module. FAS is
-internal-only, and is built only locally with `ZAIRENKAI_INTERNAL_BUILD=1`
-(`docs/integration/fas-provenance.md`). No CI job builds it.
+`full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
+locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
+with its own `scripts/build-android.sh`, and Modules' `scripts/assemble.py` packages them
+(`docs/integration/system-module.md`).
 
-**Status, 2026-10-21:**
+**Status, 2026-10-22:** every locked repository is public (`list_repos`, 2026-10-22), so the job
+no longer uses the CI GitHub App: it fetches them without credentials (next section). No run has
+exercised this version of the job yet: Unverified.
+
+**Earlier status, 2026-10-21:**
 - run 39622352061 (f34246c) and run 39623939493 (b9ce39b): `scripts` and `reduced` passed;
   `full-integration` failed at "Require the CI GitHub App", because the App does not exist yet;
 - no CI run has built the native components or the module zips yet. Only local builds have
   (`docs/testing/verification-report.md`).
 
-## Why the full build needs credentials
+## Fetching the locked sources
 
-Zairenkai-Core, Zairenkai-FAS and Zairenkai-ART are private (`list_repos`, 2026-10-21).
-ThermalTools and Database-Source are public. `GITHUB_TOKEN` can read only this repository, so
-the job uses a GitHub App installation token that is:
-- **read only:** `permission-contents: read`, nothing else;
-- **limited** to the five component repositories;
-- **short-lived:** about one hour, and revoked when the job ends
-  (`actions/create-github-app-token` v3.3.0, pinned by SHA);
-- **header only:** git receives it as an HTTP header (`http.extraheader`, masked). It never
-  appears in a URL, the workspace, `.git/config` or an artifact. The step after the build
-  removes it.
+Every repository in `integration/repository-lock.json` (Core, FAS, ART, ThermalTools,
+Database-Source, Modules) and every component Modules locks is public (`list_repos`,
+2026-10-22; anonymous `git ls-remote` from a session, 2026-10-22). The job therefore holds no
+token for them: `actions/checkout` keeps no credentials (`persist-credentials: false`), and
+`build-components.sh` fetches each locked commit over plain HTTPS. The workflow has only
+`contents: read` on this repository.
 
-Without the App, the job **fails** with "Full integration build blocked: the CI GitHub App is
-not configured". It never falls back to the reduced build.
+If a locked repository becomes private again, `verify_integration.py access` **fails** the job
+("Locked repositories must be publicly readable"); it never falls back to the reduced build.
+Making a component private would need a new, reviewed fetch credential; the former CI GitHub App
+steps were removed on 2026-10-22.
 
-## Setting it up (maintainer, once)
+The former values `ZAIRENKAI_CI_APP_ID` and `ZAIRENKAI_CI_APP_PRIVATE_KEY` are no longer read
+by any workflow. `setup-actions-secrets.sh status` names them as unused; the maintainer may
+delete them and uninstall the App (`docs/build/secrets-and-variables.md`).
 
-Every secret and variable, with an install script: `docs/build/secrets-and-variables.md`.
+Pull requests from forks can run the job too, as it needs no secret.
 
-1. Create a dedicated GitHub App owned by ZairenkaiPrjctX with **Repository permissions →
-   Contents: Read-only** and **Metadata: Read-only** (GitHub adds Metadata automatically), and
-   nothing else: no organization or account permissions, no webhook, no user authorization.
-2. Install it on **only** these five repositories ("Only select repositories"):
-   Zairenkai-Core, Zairenkai-FAS, Zairenkai-ART, Zairenkai-ThermalTools and
-   Zairenkai-Database-Source. The workflow also asks for exactly these five, with
-   `permission-contents: read`, so the token cannot reach anything else.
-3. In Zairenkai-App → Settings → Secrets and variables → Actions:
-   - variable `ZAIRENKAI_CI_APP_ID` = the App's **App ID** (the number on the App's settings
-     page), **not** its Client ID (`Iv…`);
-   - secret `ZAIRENKAI_CI_APP_PRIVATE_KEY` = a private key generated for the App (the whole
-     PEM). For `release.yml`, add the same two in the `release` environment, or at repository
-     level.
-   Never commit the key, paste it into an issue or log, or put it in a build artifact. Delete the
-   downloaded `.pem` once it is stored.
-4. Make `full integration build (locked sources, native components)` a required check on
-   `dev`.
-
-The workflows pass the App ID as the action's `app-id` input. `actions/create-github-app-token`
-v3.3.0 marks `app-id` deprecated in favour of `client-id` and prints a warning, but still reads
-it (`main.js`: `getInput("client-id") || getInput("app-id")`), and GitHub accepts either
-identifier for App authentication. Checked in the action's source at the pinned SHA
-`64ab729a`, 2026-10-21.
-
-Pull requests from forks get no secrets, so the job does not run for them.
+Make `full integration build (locked sources, native components)` a required check on `dev`
+(maintainer, repository settings).
 
 ## What the full job checks
 
@@ -74,8 +56,8 @@ Pull requests from forks get no secrets, so the job does not run for them.
   - full 40-character SHAs, `url` equal to `https://github.com/<repository>.git`, boolean
     `merged`, supported ABIs;
   - no duplicates, no missing mandatory component, agreement with the inventory.
-- **`access`:** every locked repository answers `git ls-remote` with the job's credentials.
-  The failure message says the App is needed.
+- **`access`:** every locked repository answers `git ls-remote` without credentials. The
+  failure message says locked repositories must be publicly readable.
 - **`build`:**
   - each checkout's `HEAD` equals its locked commit;
   - every file in `components.json` matches its SHA-256;

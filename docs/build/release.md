@@ -1,26 +1,36 @@
 # Release process and signing
 
-**Status (2026-10-21): no release can be produced, and none is ready.** The licences are
-settled: App, ART, Core, FAS and ThermalTools are Apache-2.0 (`docs/integration/license-inventory.md`).
-The release gate (`verify_integration.py report <apk> --release`) now lists three blockers. All
-three need keys that only the maintainer can create:
+**Status (2026-10-22): no release has been produced, and none is ready.** The licences are
+settled: App, ART, Core, FAS and ThermalTools are Apache-2.0, Zairenkai-Tuning (not yet in the
+app's lock) GPL-3.0-only (`docs/integration/license-inventory.md`).
+
+On 2026-10-21 the release gate (`verify_integration.py report <apk> --release`) listed three
+blockers. One is resolved: `integration/module-trust.json` now holds the maintainer's
+module-signing public key (`4330305a…`, added 2026-10-21), and the gate fails on the trust list
+only while it is empty (`verify_integration.py`, `check_apk`). Its last local run, at the
+component merge commits (2026-10-21, `docs/testing/verification-report.md`), failed on the two
+remaining blockers only. It has not been re-run since the single-module re-pin of 2026-10-22:
 
 | Blocker | What resolves it |
 |---|---|
-| The APK is unsigned | A release keystore in the protected `release` environment (below) |
-| The module catalog is unsigned | A module-signing key in the `release` environment |
-| `integration/module-trust.json` lists no key | Add the module-signing public key in a reviewed pull request |
+| The APK is unsigned | A signed build from `release.yml` with the keystore in the `release` environment (below) |
+| The module catalog is unsigned | A catalog signed in `release.yml` with `ZAIRENKAI_MODULE_SIGNING_KEY` |
 
-The gate also fails on any internal build, and on any APK carrying a module other than
-`zairenkai_core` (FAS stays internal: `docs/integration/fas-provenance.md`).
+The secrets are reported set (`setup-actions-secrets.sh status`, 2026-10-22, names only); whether
+the stored key matches the trusted public key is checked only when `release.yml` runs, and it has
+never run.
+
+The gate also fails on any APK carrying a module other than the single `zairenkai` module
+(Zairenkai-Modules, with zcored, zfasd and the GPL-3.0 ztune with its source:
+`docs/integration/fas-provenance.md`, `docs/integration/license-inventory.md`).
 
 The gate is not the whole readiness question. Release readiness also needs:
-- the full-integration CI job green on the release commit (`docs/build/ci.md`; it has never run,
-  because the CI GitHub App does not exist yet);
+- the full-integration CI job green on the release commit (`docs/build/ci.md`; it no longer needs
+  a GitHub App since 2026-10-22, and has not passed on GitHub yet);
 - the Core-only hardware validation record (`docs/testing/device-validation.md`; no device has
   run it);
-- the Core, ThermalTools, ART and FAS topic branches merged, and the lock re-pinned to the merge
-  commits.
+- the Core, ThermalTools, ART and FAS topic branches merged and the lock re-pinned to the merge
+  commits: **done** 2026-10-21 (`11e9742`, `3bc71fe`, `0d8cd72`, `be08b2d`).
 
 Until all of this holds, builds are **engineering artifacts, not for distribution**:
 - debug APK: signed with the Android debug key;
@@ -64,8 +74,7 @@ Then:
 2. Store the private PEM as the secret `ZAIRENKAI_MODULE_SIGNING_KEY` in the `release`
    environment, with required reviewers. Keep an offline backup, then delete every other copy.
 3. `sign-module-catalog.sh` refuses any key whose public half is not in the trust list.
-4. This key is separate from the APK keystore and from the CI GitHub App key. Never reuse one for
-   another.
+4. This key is separate from the APK keystore. Never reuse one for the other.
 
 To rotate, add the new key, release, then remove the old key in a later release.
 
@@ -90,13 +99,13 @@ these secrets (`docs/build/secrets-and-variables.md`).
 
 `.github/workflows/release.yml`, run manually from `dev` in the `release` environment:
 1. Lock check. Then, before any build, the job fails if it runs on another branch, if any of the
-   seven values is missing, if the module key is not in the committed trust list, or if the
+   five signing secrets is missing, if the module key is not in the committed trust list, or if the
    keystore does not open with the stored alias and password.
-2. The keys are written to `$RUNNER_TEMP` (mode 600), then the CI GitHub App token
-   (`docs/build/ci.md`).
+2. The keys are written to `$RUNNER_TEMP` (mode 600); the locked repositories are checked to be
+   fetchable without credentials (`docs/build/ci.md`).
 3. `build-components.sh` signs the catalog.
 4. Tests, lint and a signed `assembleRelease`.
-5. The keys and the token are removed.
+5. The keys are removed.
 6. `apksigner verify --verbose --print-certs`; the scheme lines, certificate DN and SHA-256
    digest go into the job summary.
 7. The release gate: `verify_integration.py report --release`. It runs `apksigner verify` again,

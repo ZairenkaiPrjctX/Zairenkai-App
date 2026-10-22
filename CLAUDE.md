@@ -31,9 +31,11 @@ Non-negotiables in this repo:
   list without the maintainer, and never put a private key anywhere in the repository or APK. Never
   write into `/data/adb` directly, never install on startup, and never mark a module ACTIVE
   without reading its state and its runtime.
-- **FAS stays out of distributable builds** until its licence commit is merged and it is
-  validated on hardware (`docs/integration/fas-provenance.md`): only `ZAIRENKAI_INTERNAL_BUILD=1`
-  packages it, labelled internal. Never change FAS files or headers to make an audit pass.
+- **One root module, `zairenkai`** (Zairenkai-Modules), carries zcored, zfasd and ztune; data lives
+  in `/data/adb/zairenkai/{core,fas,tuning}`. ztune is GPL-3.0-only: the app never runs it, links it
+  or copies its code; it ships in the zip with its source. Never add a separately installed Zairenkai module. FAS is
+  distributed in it by the maintainer's decision of 2026-10-22, before hardware validation
+  (`docs/integration/fas-provenance.md`). Never change FAS files or headers to make an audit pass.
 - **Licensing:** the app is Apache-2.0 (`LICENSE`, `NOTICE`). New source files start with
   `SPDX-License-Identifier: Apache-2.0` and `Copyright 2026 ZairenkaiPrjctX contributors`. Never
   change third-party headers or notices (Gradle wrapper, font, AOSP attribution, device data).
@@ -53,15 +55,15 @@ Non-negotiables in this repo:
 | Purpose | Command | Status |
 |---|---|---|
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
-| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified as root (exit 0, 2026-10-21). As non-root (CI): Unverified; failed in CI runs 39639587745/39639605601, fixed 2026-10-22 |
-| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 74 passed, 2026-10-21 |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 24 passed, 2026-10-21 |
+| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins) and as uid 1001 in CI run 39645071811 (2026-10-22). The installed-module fixture step is new and not yet run in CI |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 88 passed, 1 skipped, 2026-10-22 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 28 passed, 1 skipped, 2026-10-22, on aarch64 with a local LEGACY-graphics init script. The skipped `InfoRowNativeLayoutTest` needs NATIVE graphics (not the Robolectric 4.14 default, no Linux aarch64 runtime); only CI (x86-64) runs it |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-21 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
 | Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/access/build/apk/report ok; `--release` fails on 3 blockers (signing), 2026-10-21 |
-| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 17 passed, 2026-10-21 |
-| Actions secrets (maintainer) | `integration/scripts/setup-actions-secrets.sh help\|status\|environment\|app\|module-signing\|keystore` | Verified. Evidence: 10 tests with a fake `gh`, 2026-10-21; `status` against GitHub all ok, exit 0, 2026-10-22 |
+| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 17 passed, 2026-10-22 |
+| Actions secrets (maintainer) | `integration/scripts/setup-actions-secrets.sh help\|status\|environment\|module-signing\|keystore` | Verified. Evidence: 9 tests with a fake `gh`, 2026-10-22 (the CI App subcommand was removed: the locked repositories are public); `status` against GitHub all ok, exit 0, 2026-10-22, before that change |
 | Device check (read only) | `integration/scripts/device-readonly-check.sh [--root]` | Configured (no device available) |
 | Validate agent foundation | `python3 <path-to-.github>/agent-foundation/scripts/validate_agent_setup.py .` | Configured |
 

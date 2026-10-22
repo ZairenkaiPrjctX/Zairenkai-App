@@ -9,7 +9,7 @@
 |---|---|---|
 | Repository | `ZairenkaiPrjctX/Zairenkai-App` | Verified. Evidence: GitHub API |
 | GitHub description | ZairenkaiPrjctX Source | Verified. Evidence: GitHub API |
-| Visibility | private | Verified. Evidence: GitHub API |
+| Visibility | public | Verified. Evidence: `list_repos`, 2026-10-22 (earlier entries said private) |
 | Default branch | `dev` | Verified. Evidence: `git ls-remote`, 2026-10-19 |
 | Purpose | Unified Android app for the Zairenkai components | Verified. Evidence: `app/`, `integration-core/`, `docs/architecture/overview.md` |
 | Application id | `com.zairenkaiprjctx.app`, version 0.1.0 (1), minSdk 29, targetSdk 35 | Verified. Evidence: `aapt2 dump badging`, 2026-10-19 |
@@ -22,8 +22,8 @@
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
 | JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 74 tests, 2026-10-21 |
 | Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 24 Robolectric tests, 2026-10-21. **Unverified** on a device |
-| Organization inventory (16 repositories), lock, scripts | `integration/` | Verified. Evidence: scripts exit 0, re-audit 2026-10-21 |
-| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration **fails** there at "Require the CI GitHub App": no CI run has built native components (`docs/build/ci.md`) |
+| Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
+| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration failed there at "Require the CI GitHub App"; since 2026-10-22 it fetches the public locked repositories without a token (`docs/build/ci.md`). **Unverified** on GitHub: no run of that version yet |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
 
 ## Key facts and limitations
@@ -36,8 +36,11 @@
   Verified. Evidence: Core `docs/adr/0005-root-only-socket.md`.
 - No Android device or emulator was available: install, launch, root prompts and SELinux
   behaviour are **Unverified**.
-- The app can install the Core and FAS root modules through Magisk, KernelSU/KernelSU-Next or
-  APatch. The manager commands were read in each manager's source. Verified. Evidence:
+- The app installs one root module, `zairenkai` (Zairenkai-Modules: zcored, zfasd and the GPL-3.0
+  ztune with its source, data in `/data/adb/zairenkai/{core,fas,tuning}`), through Magisk, KernelSU/KernelSU-Next or APatch.
+  Verified. Evidence: maintainer decision 2026-10-22; `integration/system-modules.json`; catalog
+  fixture built from the real arm64 components (`docs/testing/verification-report.md`,
+  2026-10-22). The separate `zairenkai_core` / `zairenkai_fas` modules are superseded. The manager commands were read in each manager's source. Verified. Evidence:
   `docs/integration/system-module.md`, `SystemModuleTest`. Installation on a device is
   **Unverified**: no device has a validation record.
 - No release channel exists, so the module zips are packaged in the APK. Verified. Evidence:
@@ -48,19 +51,25 @@
   `setup-actions-secrets.sh status`, 2026-10-22.
 - No signed APK or catalog has been built yet: the release gate last ran 2026-10-21, with the APK
   and catalog unsigned. The licence checks pass. Verified. Evidence: the release gate, 2026-10-21.
-- App, ART and FAS are Apache-2.0 (maintainer decision 2026-10-21). The ART and FAS licence
-  commits (ART `31caf46`, `8c6cea2`; FAS `9d87236`, `f6de6ee`, `333365e`) are on their topic
-  branches and not merged; the lock pins the latest of each.
+- App, ART and FAS are Apache-2.0 (maintainer decision 2026-10-21). The licence commits are
+  merged: ART PR #2 (`0d8cd72`), FAS PR #3 (`be08b2d`).
   Verified. Evidence: `integration/repository-lock.json`, `docs/integration/license-inventory.md`.
-- FAS stays internal-only: its licence is not merged, and the first hardware test is Core only.
+- FAS is distributed inside the `zairenkai` module by the maintainer's decision of 2026-10-22,
+  before hardware validation. It installs switched off (`enabled = false`) until the user enables it.
   The provenance audit found no copied GPL code. Verified. Evidence:
   `docs/integration/fas-provenance.md`, 2026-10-21.
-- All seven Actions values are set (CI App ID and key at repository level, five signing secrets in
+- The two CI App values are no longer read by any workflow (the locked repositories are public,
+  2026-10-22); the maintainer may delete them. Values set: CI App ID and key at repository level, five signing secrets in
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
-- Draft PRs Core #2 and ThermalTools #2 bring the pinned topic branches to `dev`; they are not
-  merged. Verified. Evidence: GitHub, 2026-10-21.
+- Core, FAS and Modules are pinned to topic-branch commits (Core PR #3 `8931cbb`, FAS PR #4
+  `99cfb18`, Modules PR #1 `298311c`); ART, ThermalTools and Database-Source stay on `dev` merge
+  commits. Verified. Evidence: `integration/repository-lock.json`, 2026-10-22.
+- The full-integration CI job passed for the first time on `d0db6b7` (run 39827139485: every
+  component built at its locked commit, contracts re-captured, tests, lint, APKs with native
+  components required, integration report), fetching the public sources without a token.
+  Verified. Evidence: CI run 39827139485, 2026-10-22.
 
 ## Authoritative sources
 
@@ -74,13 +83,18 @@
 
 ## Related repositories
 
-- Zairenkai-Core (`34e93e3`, topic branch), Zairenkai-FAS (`333365e`, topic branch), Zairenkai-ART (`8c6cea2`, topic branch),
-  Zairenkai-ThermalTools (`9d4b310`, topic branch) and Zairenkai-Database-Source (`d9c4290`) are
-  integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
-- The other 10 Zairenkai repositories have no runtime capability, and anime-extensions is a separate
-  product. Verified. Evidence: `integration/repository-audit.md` (re-audit 2026-10-21).
-- The Core, ThermalTools, ART and FAS pins are unmerged topic-branch commits. Verified. Evidence:
-  `git log origin/dev..origin/ccr-63f8aa87-1b0paj` in each repository, 2026-10-21.
+- Zairenkai-ART (`0d8cd72`), Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source
+  (`d9c4290`), on `dev`, are integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
+- Zairenkai-Modules (`298311c`, topic branch) is integrated as the module source; Core (`8931cbb`)
+  and FAS (`99cfb18`) are pinned to topic-branch commits (`"merged": false`). Verified.
+  Evidence: `integration/repository-lock.json`, 2026-10-22.
+- Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) ships in
+  the module the app packages, with its source, and is run only by Core. The app shows Core's
+  `tuning.*` capabilities generically and has no tuning-specific client yet. Verified. Evidence:
+  `build-components.sh` and `verify_integration.py build` at the new pins, 2026-10-22.
+- The other 8 Zairenkai repositories have no runtime capability. anime-extensions is a separate
+  product and is excluded from the ecosystem audit (maintainer, 2026-10-22). Verified. Evidence:
+  `integration/repository-audit.md` (re-audit 2026-10-21).
 
 ## Open questions
 

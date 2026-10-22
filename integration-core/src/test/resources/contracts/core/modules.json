@@ -1,7 +1,16 @@
 {
-  "id": "cli-22185-7496828",
+  "id": "cli-22313-3007755",
   "ok": true,
   "result": [
+    {
+      "compatible": false,
+      "detail": "Zairenkai-Modules: module zairenkai is not installed in /data/adb/modules",
+      "health": "not_installed",
+      "id": "zairenkai",
+      "owns": [],
+      "requested_permissions": [],
+      "version": null
+    },
     {
       "compatible": false,
       "detail": "Zairenkai-ThermalTools: paths.thermaltools_binary is not configured",
@@ -52,15 +61,6 @@
       "detail": "Zairenkai-ART: no released component; Core has no adapter for it yet",
       "health": "not_installed",
       "id": "zairenkai_art",
-      "owns": [],
-      "requested_permissions": [],
-      "version": null
-    },
-    {
-      "compatible": false,
-      "detail": "Zairenkai-Modules: no released component; Core has no adapter for it yet",
-      "health": "not_installed",
-      "id": "zairenkai_modules",
       "owns": [],
       "requested_permissions": [],
       "version": null

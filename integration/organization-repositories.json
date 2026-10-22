@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "organization": "ZairenkaiPrjctX",
-  "surveyed": "2026-10-21",
-  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit; re-audited 2026-10-21",
-  "discovered": 16,
+  "surveyed": "2026-10-22",
+  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit; re-audited 2026-10-21; visibility and the new Zairenkai-Tuning repository re-surveyed 2026-10-22 (list_repos, git ls-remote)",
+  "discovered": 17,
   "inaccessible": [],
   "outside_organization_not_inspected": [
     {
@@ -22,24 +22,23 @@
       "name": "Zairenkai-Core",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Core",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "34e93e34440efb90d64d4af1f9f10292d790575c",
+      "audited_commit": "8931cbb6aa3e70dc0197c2840b61842039b03626",
       "code_present": true,
       "languages": [
         "Rust",
         "Shell"
       ],
       "categories": [
-        "system_service_or_privileged_daemon",
-        "root_module"
+        "system_service_or_privileged_daemon"
       ],
-      "disposition": "integrated: privileged control plane reached through root (zcored ctl); not packaged in the APK",
+      "disposition": "integrated: privileged control plane reached through root (zcored ctl); packaged in the zairenkai module by Zairenkai-Modules",
       "integration_status": "implemented",
       "app_capabilities": [
         "core.health",
@@ -49,57 +48,55 @@
         "modules.inventory",
         "core.audit"
       ],
-      "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_core/bin/zcored ctl (protocol v1 JSON)",
-      "runtime_requirements": "root (Magisk/KernelSU) and the zairenkai_core module installed and running; ADR-0005 limits the socket to root clients",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (455368f) has no LICENSE yet",
-      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev."
+      "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai/bin/zcored ctl (protocol v1 JSON)",
+      "runtime_requirements": "root (Magisk/KernelSU/APatch) and the zairenkai module installed and running; ADR-0005 limits the socket to root clients",
+      "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
+      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev. Re-audited 2026-10-21 at 11e9742 (dev): Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21. Re-audited 2026-10-22 at 4cdfe8e (Core PR #3, topic branch): data under /data/adb/zairenkai/core, zfasd found as bin/zfasd of the zairenkai module, module inventory reports zairenkai itself; module/ moved to Zairenkai-Modules, build-android.sh emits a component. Re-audited 2026-10-22 at 8931cbb (Core PR #3): tuning adapter running ztune as a separate process; tuning resources read-only unless ztune authorizes a write."
     },
     {
       "name": "Zairenkai-FAS",
       "full_name": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
       "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "333365ebe97f040a546cc47680d2f26cf92c6152",
+      "audited_commit": "99cfb18ba7f04753b3cda5534b8fa844d86db9d5",
       "code_present": true,
       "languages": [
         "Rust",
-        "Shell",
-        "HTML"
+        "Shell"
       ],
       "categories": [
         "system_service_or_privileged_daemon",
-        "root_module",
         "thermal_and_performance_engine"
       ],
-      "disposition": "integrated: frame-aware scheduling daemon reached through root (zfasd ctl); not packaged",
+      "disposition": "integrated: frame-aware scheduling daemon reached through root (zfasd ctl); packaged in the zairenkai module by Zairenkai-Modules",
       "integration_status": "implemented",
       "app_capabilities": [
         "fas.status (frame statistics, decision, thermal cap)",
         "fas.actions (enable, disable, profile, reset) when Core is not running"
       ],
-      "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai_fas/bin/zfasd ctl (docs/INTEGRATION.md)",
-      "runtime_requirements": "root and the zairenkai_fas module; telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (3c83f0e) has no LICENSE yet",
-      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md."
+      "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai/bin/zfasd ctl (docs/INTEGRATION.md)",
+      "runtime_requirements": "root and the zairenkai module (with bin/zfasd); telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
+      "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
+      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md. Re-audited 2026-10-21 at be08b2d (dev): Merge commit of FAS PR #3 (parents 3c83f0e and 333365e; tree identical to 333365e), verified 2026-10-21. Re-audited 2026-10-22 at 99cfb18 (FAS PR #4, topic branch): data under /data/adb/zairenkai/fas; module/ and WebUI moved to Zairenkai-Modules, build-android.sh emits a component."
     },
     {
       "name": "Zairenkai-ART",
       "full_name": "ZairenkaiPrjctX/Zairenkai-ART",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ART",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "8c6cea27a9c78fb9782dad7bb7f81872a9540f84",
+      "audited_branch": "dev",
+      "audited_commit": "0d8cd7248d7aff3504077b4f3e63af1bf6bf282c",
       "code_present": true,
       "languages": [
         "Rust",
@@ -118,8 +115,8 @@
       ],
       "integration_mechanism": "native executable lib/<abi>/libzart.so built by the repository's scripts/build-android.sh; JSON over stdout",
       "runtime_requirements": "inspect: none (runs as the app uid; some inputs may be denied by SELinux); dexopt-status: root",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE with the AOSP attribution for crates/zart/src/isa.rs); dev (19f658d) has no LICENSE yet",
-      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 8c6cea2: the two licence commits (31caf46, 8c6cea2) on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev."
+      "license": "Apache-2.0 (LICENSE, NOTICE with the AOSP attribution for crates/zart/src/isa.rs) on dev",
+      "evidence": "crates/zart, upstream/, tools/art_upstream.py at the audited commit; dev contains only foundation files Re-audited 2026-10-21 at 8c6cea2: the two licence commits (31caf46, 8c6cea2) on top of dev 19f658d (LICENSE, NOTICE, SPDX headers, no code change); not merged into dev. Re-audited 2026-10-21 at 0d8cd72 (dev): Merge commit of ART PR #2 (parents 19f658d and 8c6cea2; tree identical to 8c6cea2), verified 2026-10-21."
     },
     {
       "name": "Zairenkai-Database-Source",
@@ -158,7 +155,7 @@
       "name": ".github",
       "full_name": "ZairenkaiPrjctX/.github",
       "url": "https://github.com/ZairenkaiPrjctX/.github",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -187,7 +184,7 @@
       "name": "Zairenkai-App",
       "full_name": "ZairenkaiPrjctX/Zairenkai-App",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-App",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -223,8 +220,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "9d4b31017ea1c679ee155aa2df978752e1683fd6",
+      "audited_branch": "dev",
+      "audited_commit": "3bc71fea9d2317db10ee551aede857de1448f90f",
       "code_present": true,
       "languages": [
         "Rust",
@@ -245,14 +242,14 @@
       ],
       "integration_mechanism": "lib/<abi>/libzthermal.so executed as the app uid (`snapshot`), or through root on request (`snapshot --framework`); JSON schema_version 1",
       "runtime_requirements": "Read access to /sys/class/thermal (SELinux may deny the app uid); dumpsys needs shell or root. No writes: the validated control list is empty.",
-      "license": "Apache-2.0 at the audited commit (LICENSE, NOTICE); dev (5358d4d) has no LICENSE yet",
-      "evidence": "crates/zthermal (CLI), crates/zthermal-platform/src/snapshot.rs, schemas/snapshot.schema.json, policy::VALIDATED_CONTROLS empty; 0.2.0 at 9d4b310 (not merged into dev, which holds 0.1.0 at 5358d4d)."
+      "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
+      "evidence": "crates/zthermal (CLI), crates/zthermal-platform/src/snapshot.rs, schemas/snapshot.schema.json, policy::VALIDATED_CONTROLS empty; 0.2.0 at 9d4b310 (not merged into dev, which holds 0.1.0 at 5358d4d). Re-audited 2026-10-21 at 3bc71fe (dev): Merge commit of ThermalTools PR #2 (parents 5358d4d and 9d4b310; tree identical to 9d4b310), verified 2026-10-21."
     },
     {
       "name": "Zairenkai-Sdk",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Sdk",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Sdk",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -276,31 +273,38 @@
       "name": "Zairenkai-Modules",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Modules",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Modules",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
-        "dev"
+        "dev",
+        "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "dev",
-      "audited_commit": "f226502613e6452af503a31ee30edecfbd6d227a",
-      "code_present": false,
-      "languages": [],
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "298311ce44e4c2b3457db4831b92a48e9ee03a1d",
+      "code_present": true,
+      "languages": [
+        "Shell",
+        "Python",
+        "HTML"
+      ],
       "categories": [
-        "documentation_only"
+        "root_module"
       ],
-      "disposition": "not_applicable: no implementation exists yet",
-      "integration_status": "not_applicable",
-      "app_capabilities": [],
-      "integration_mechanism": null,
-      "runtime_requirements": null,
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "Re-audited 2026-10-21: dev @ f226502613e6 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
+      "disposition": "integrated: the single zairenkai root module (zcored, zfasd and ztune), packaged in the APK and installed through the root manager",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "systemmodule.zairenkai (install through the root manager, state, runtime check)"
+      ],
+      "integration_mechanism": "assets/system-modules/zairenkai.zip, installed with the root manager's own installer after the user confirms; catalog signed by a key in integration/module-trust.json",
+      "runtime_requirements": "root manager (Magisk v20.4+, KernelSU/KernelSU-Next, APatch), arm64, API 29+",
+      "license": "Apache-2.0 (LICENSE, NOTICE)",
+      "evidence": "Audited 2026-10-22 at ea138ef (Modules PR #1, topic branch, the first code): module/ scripts, components.lock.json (Core 4cdfe8e, FAS 99cfb18), scripts/assemble.py with 11 tests. Re-audited 2026-10-22 at 298311c (Modules PR #1): Tuning added to components.lock.json; assemble.py requires a GPL component's licence and Corresponding Source; CI checks out the public components without a token."
     },
     {
       "name": "Zairenkai-Intelligence-Engine",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Intelligence-Engine",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Intelligence-Engine",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -324,7 +328,7 @@
       "name": "Zairenkai-License-Server",
       "full_name": "ZairenkaiPrjctX/Zairenkai-License-Server",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-License-Server",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -348,7 +352,7 @@
       "name": "Zairenkai-Graphics-Platform",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Graphics-Platform",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Graphics-Platform",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -372,7 +376,7 @@
       "name": "Zairenkai-Release",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Release",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Release",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -396,7 +400,7 @@
       "name": "Zairenkai-Docs",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Docs",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Docs",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -420,7 +424,7 @@
       "name": "ZairenkaiPrjctX.github.io",
       "full_name": "ZairenkaiPrjctX/ZairenkaiPrjctX.github.io",
       "url": "https://github.com/ZairenkaiPrjctX/ZairenkaiPrjctX.github.io",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -456,15 +460,45 @@
         "Kotlin"
       ],
       "categories": [
-        "separate_product"
+        "separate_product",
+        "excluded"
       ],
-      "disposition": "not_applicable: Aniyomi extensions-lib 16 source extensions (Internet Archive, Jellyfin) for third-party media apps; no relation to device diagnostics or the Zairenkai components",
+      "disposition": "excluded: hard exclusion of the ecosystem audit (maintainer, 2026-10-22). A separate product, never cloned, built, integrated or used as a reference; the record below is from the 2026-10-21 survey and is not refreshed",
       "integration_status": "not_applicable",
       "app_capabilities": [],
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "Apache-2.0 (LICENSE, NOTICE: 'The Anime Source Extensions contributors')",
-      "evidence": "README.md, settings.gradle.kts, src/all/{internetarchive,jellyfin}, sources/registry.json at 049e9b3 (shallow clone through the session's read-only git proxy; the only branch)."
+      "evidence": "README.md, settings.gradle.kts, src/all/{internetarchive,jellyfin}, sources/registry.json at 049e9b3 (shallow clone through the session's read-only git proxy; the only branch). Not inspected again on 2026-10-22 (excluded)."
+    },
+    {
+      "name": "Zairenkai-Tuning",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Tuning",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Tuning",
+      "visibility": "public",
+      "default_branch": "(none)",
+      "branches": [
+        "ccr-63f8aa87-1b0paj"
+      ],
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "0c226b27771c0e0274feb6435b36c8d90487a814",
+      "code_present": true,
+      "languages": [
+        "Rust",
+        "Shell",
+        "Python"
+      ],
+      "categories": [
+        "gpl_component",
+        "system_service_or_privileged_daemon"
+      ],
+      "disposition": "packaged, not called by the app: GPL-3.0-only executable ztune (telemetry, SoC identity, exact-device tuning profiles), shipped with its Corresponding Source inside the zairenkai module (Modules 298311c, Tuning 0c226b2) and run only by Core as a separate process. The app reaches it only through Core",
+      "integration_status": "implemented",
+      "app_capabilities": [],
+      "integration_mechanism": "indirect: the app installs the zairenkai module that carries bin/ztune; Core runs ztune capabilities|telemetry|apply with a fixed argv and reads the zairenkai.tuning schema 1 JSON",
+      "runtime_requirements": "root module zairenkai (Modules bd1eb06 or later); writes only with a Tier D device_validated profile, none shipped",
+      "license": "GPL-3.0-only (LICENSE, NOTICE, SPDX headers); adapts RvSystem-Monitor, Lynx and KonaBess (docs/PROVENANCE.md)",
+      "evidence": "crates/, docs/CONTRACT.md, docs/PROVENANCE.md, profiles/index.json ([]) at 0c226b2; git ls-remote shows only the topic branch, no default branch, 2026-10-22. No code from it enters this Apache-2.0 repository."
     }
   ]
 }
