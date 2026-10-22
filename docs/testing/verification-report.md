@@ -1,5 +1,24 @@
 # Verification report
 
+## Public sources, no CI GitHub App (2026-10-22)
+
+**Verdict: verified locally, not yet on GitHub.** Every ZairenkaiPrjctX repository is public
+(`list_repos`, 2026-10-22), so `ci.yml` full-integration and `release.yml` no longer create a
+GitHub App token: they check that the locked repositories can be fetched without credentials
+and build from them. The signing secrets of the `release` environment are unchanged.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Anonymous fetch of every locked repository | `python3 integration/scripts/verify_integration.py access` (no token configured in the session's git) | `access: ok` |
+| Lock and inventory | `python3 integration/scripts/verify_integration.py lock` | `lock: ok` (inventory: 17 repositories, all public, Zairenkai-Tuning added, anime-extensions excluded) |
+| Verifier and secrets-script tests | `python3 -m unittest discover -s integration/scripts/tests` | 17 passed (the two CI App subcommand tests replaced by one) |
+| Shell lint | `shellcheck integration/scripts/*.sh` | clean |
+| Workflow lint | `actionlint .github/workflows/*.yml` | clean |
+| Gradle | `./gradlew :integration-core:test` | **not run**: Maven Central answered HTTP 429 (Too Many Requests) to this session, before compilation. The only Kotlin change is the inventory count in `DataTest` (16 → 17) |
+
+Not verified: a GitHub run of the changed workflows; whether the maintainer deletes the unused
+`ZAIRENKAI_CI_APP_ID` / `ZAIRENKAI_CI_APP_PRIVATE_KEY` values.
+
 ## One root module, `zairenkai` (2026-10-22)
 
 **Verdict: verified on the host and in component CI.** Nothing ran on a device; the release

@@ -97,27 +97,16 @@ class SetupScriptTest(unittest.TestCase):
     def test_help_documents_every_subcommand(self):
         r = self.run_script("help")
         self.assertEqual(r.returncode, 0)
-        for sub in ("status", "environment", "app", "module-signing", "keystore", "help"):
+        for sub in ("status", "environment", "module-signing", "keystore", "help"):
             self.assertIn(f"\n  {sub}", r.stdout)
 
     def test_unknown_subcommand_fails(self):
         self.assertEqual(self.run_script("ci-app").returncode, 2)
 
-    def test_app_rejects_client_id_and_non_numeric_id(self):
-        pem = self.tmp / "app.pem"
-        pem.write_text("unused")
-        for app_id, msg in (("Iv23liAbc", "Client ID"), ("12a", "is a number")):
-            r = self.run_script("app", app_id, str(pem))
-            self.assertNotEqual(r.returncode, 0)
-            self.assertIn(msg, r.stderr)
-        self.assertEqual(self.calls(), "")
-
-    def test_app_rejects_a_key_that_is_not_an_app_rsa_key(self):
-        pem = self.tmp / "local.pem"
-        subprocess.run(["openssl", "ecparam", "-name", "prime256v1", "-genkey", "-noout", "-out", str(pem)], check=True)
-        r = self.run_script("app", "123456", str(pem))
-        self.assertNotEqual(r.returncode, 0)
-        self.assertIn("not an RSA private key", r.stderr)
+    def test_the_former_ci_app_subcommand_is_gone(self):
+        # The component repositories are public: CI fetches them without a GitHub App token.
+        r = self.run_script("app", "123456", "unused.pem")
+        self.assertEqual(r.returncode, 2)
         self.assertEqual(self.calls(), "")
 
     def test_module_signing_needs_the_release_environment(self):
@@ -189,14 +178,20 @@ class SetupScriptTest(unittest.TestCase):
         self.assertIn("MISSING  environment release branch policy", r.stdout)
         self.assertNotIn("Not Found", r.stdout)
         (self.state / "policies").write_text("dev\n")
-        (self.state / "variables").write_text("ZAIRENKAI_CI_APP_ID\n")
-        (self.state / "secrets").write_text("ZAIRENKAI_CI_APP_PRIVATE_KEY\n")
         (self.state / "env_secrets").write_text("\n".join([
             "ZAIRENKAI_MODULE_SIGNING_KEY", "ZAIRENKAI_RELEASE_KEYSTORE_BASE64", "ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD",
             "ZAIRENKAI_RELEASE_KEY_ALIAS", "ZAIRENKAI_RELEASE_KEY_PASSWORD"]) + "\n")
         r = self.run_script("status")
         self.assertEqual(r.returncode, 0, r.stdout)
         self.assertNotIn("MISSING", r.stdout)
+        self.assertNotIn("ZAIRENKAI_CI_APP", r.stdout)
+        # Values of the former CI App are named as unused, never required.
+        (self.state / "variables").write_text("ZAIRENKAI_CI_APP_ID\n")
+        (self.state / "secrets").write_text("ZAIRENKAI_CI_APP_PRIVATE_KEY\n")
+        r = self.run_script("status")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("unused   ZAIRENKAI_CI_APP_ID", r.stdout)
+        self.assertIn("unused   ZAIRENKAI_CI_APP_PRIVATE_KEY", r.stdout)
 
 
 if __name__ == "__main__":

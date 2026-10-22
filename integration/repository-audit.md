@@ -1,5 +1,16 @@
 # Organization repository audit
 
+## Re-survey, 2026-10-22
+
+`list_repos` returns 17 repositories in `ZairenkaiPrjctX`, **all public** (earlier surveys
+recorded most of them as private). Changes:
+
+| Repository | Change | Effect on the app |
+|---|---|---|
+| Zairenkai-Tuning | **new**: GPL-3.0-only `ztune` (telemetry, SoC identity, exact-device tuning profiles), only branch `ccr-63f8aa87-1b0paj` @ `0c226b2`, no default branch | Not integrated: run by Core as a separate process and packaged with its Corresponding Source by Modules `bd1eb06` (topic branch). The app's lock still pins Modules `ea138ef`, without it |
+| all component repositories | public | CI fetches the locked commits without the CI GitHub App token (`docs/build/ci.md`) |
+| anime-extensions | excluded from the ecosystem audit by the maintainer | Not inspected again; never cloned, built, integrated or used as a reference |
+
 ## Merges and re-pin, 2026-10-21 (later the same day)
 
 The four component pull requests were merged by the maintainer. Each merge commit's parents and

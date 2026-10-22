@@ -18,7 +18,7 @@ env:
   NDK_SHA256: 601246087a682d1944e1e16dd85bc6e49560fe8b6d61255be2829178c8ed15d9
 
 jobs:
-  # REDUCED BUILD. No access to the other repositories and no native components: zart, zthermal,
+  # REDUCED BUILD. Does not fetch the other repositories, so no native components: zart, zthermal,
   # the module zips and the device asset are absent, and their features report
   # NATIVE_COMPONENT_UNAVAILABLE. Fast feedback only; it is not the integrated app.
   reduced:
@@ -51,48 +51,21 @@ jobs:
       - run: python3 -m unittest discover -s integration/scripts/tests
 
   # FULL INTEGRATION BUILD. Every component from its locked commit, the app with native
-  # components required (no allowMissingComponents), then the integration report. The other
-  # repositories are private: a GitHub App installation token, read-only and limited to them,
-  # fetches them. Without that App this job FAILS (it does not skip), because a green reduced
-  # build is not evidence that the integrated app builds.
+  # components required (no allowMissingComponents), then the integration report. Every locked
+  # repository is public, so the job fetches them anonymously: no token, no secret. A repository
+  # that cannot be fetched FAILS the job (it does not skip), because a green reduced build is not
+  # evidence that the integrated app builds.
   full-integration:
     name: full integration build (locked sources, native components)
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    # Secrets are not given to pull requests from forks; such PRs cannot run this job.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Validate the source lock
         run: python3 integration/scripts/verify_integration.py lock
-      - name: Require the CI GitHub App
-        env:
-          APP_ID: ${{ vars.ZAIRENKAI_CI_APP_ID }}
-          HAS_KEY: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY != '' }}
-        run: |
-          if [ -z "$APP_ID" ] || [ "$HAS_KEY" != "true" ]; then
-            echo "::error::Full integration build blocked: the CI GitHub App is not configured (variable ZAIRENKAI_CI_APP_ID, secret ZAIRENKAI_CI_APP_PRIVATE_KEY). See docs/build/ci.md."
-            exit 1
-          fi
-      - name: Read-only token for the component repositories
-        id: token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          app-id: ${{ vars.ZAIRENKAI_CI_APP_ID }} # the numeric App ID, not the OAuth Client ID (v3.3.0 marks app-id deprecated but still reads it)
-          private-key: ${{ secrets.ZAIRENKAI_CI_APP_PRIVATE_KEY }}
-          owner: ZairenkaiPrjctX
-          repositories: Zairenkai-Core,Zairenkai-FAS,Zairenkai-ART,Zairenkai-ThermalTools,Zairenkai-Database-Source,Zairenkai-Modules
-          permission-contents: read
-      - name: Let git use the token (header only; never in a URL or a file in the workspace)
-        env:
-          TOKEN: ${{ steps.token.outputs.token }}
-        run: |
-          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
-          echo "::add-mask::$auth"
-          git config --global "http.https://github.com/.extraheader" "AUTHORIZATION: basic $auth"
-      - name: Every locked repository can be fetched
+      - name: Every locked repository can be fetched anonymously
         run: python3 integration/scripts/verify_integration.py access
       - name: Rust, Android targets and NDK (checksum verified)
         run: |
@@ -113,9 +86,6 @@ jobs:
         run: integration/scripts/capture-contracts.sh
       - name: Tests, lint and APKs with native components required
         run: ./gradlew --no-daemon :integration-core:test :app:testDebugUnitTest lint assembleDebug assembleRelease
-      - name: Drop the token from git
-        if: always()
-        run: git config --global --unset-all "http.https://github.com/.extraheader" || true
       - name: Inspect the APK and write the integration report
         run: |
           python3 integration/scripts/verify_integration.py apk app/build/outputs/apk/release/app-release-unsigned.apk

@@ -15,8 +15,8 @@ The gate also fails on any APK carrying a module other than the single `zairenka
 (Zairenkai-Modules, with zcored and zfasd: `docs/integration/fas-provenance.md`).
 
 The gate is not the whole readiness question. Release readiness also needs:
-- the full-integration CI job green on the release commit (`docs/build/ci.md`; it has never run,
-  because the CI GitHub App does not exist yet);
+- the full-integration CI job green on the release commit (`docs/build/ci.md`; it no longer needs
+  a GitHub App since 2026-10-22, and has not passed on GitHub yet);
 - the Core-only hardware validation record (`docs/testing/device-validation.md`; no device has
   run it);
 - the Core, ThermalTools, ART and FAS topic branches merged and the lock re-pinned to the merge
@@ -64,8 +64,7 @@ Then:
 2. Store the private PEM as the secret `ZAIRENKAI_MODULE_SIGNING_KEY` in the `release`
    environment, with required reviewers. Keep an offline backup, then delete every other copy.
 3. `sign-module-catalog.sh` refuses any key whose public half is not in the trust list.
-4. This key is separate from the APK keystore and from the CI GitHub App key. Never reuse one for
-   another.
+4. This key is separate from the APK keystore. Never reuse one for the other.
 
 To rotate, add the new key, release, then remove the old key in a later release.
 
@@ -90,13 +89,13 @@ these secrets (`docs/build/secrets-and-variables.md`).
 
 `.github/workflows/release.yml`, run manually from `dev` in the `release` environment:
 1. Lock check. Then, before any build, the job fails if it runs on another branch, if any of the
-   seven values is missing, if the module key is not in the committed trust list, or if the
+   five signing secrets is missing, if the module key is not in the committed trust list, or if the
    keystore does not open with the stored alias and password.
-2. The keys are written to `$RUNNER_TEMP` (mode 600), then the CI GitHub App token
-   (`docs/build/ci.md`).
+2. The keys are written to `$RUNNER_TEMP` (mode 600); the locked repositories are checked to be
+   fetchable without credentials (`docs/build/ci.md`).
 3. `build-components.sh` signs the catalog.
 4. Tests, lint and a signed `assembleRelease`.
-5. The keys and the token are removed.
+5. The keys are removed.
 6. `apksigner verify --verbose --print-certs`; the scheme lines, certificate DN and SHA-256
    digest go into the job summary.
 7. The release gate: `verify_integration.py report --release`. It runs `apksigner verify` again,

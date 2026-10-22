@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "organization": "ZairenkaiPrjctX",
-  "surveyed": "2026-10-21",
-  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit; re-audited 2026-10-21",
-  "discovered": 16,
+  "surveyed": "2026-10-22",
+  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit; re-audited 2026-10-21; visibility and the new Zairenkai-Tuning repository re-surveyed 2026-10-22 (list_repos, git ls-remote)",
+  "discovered": 17,
   "inaccessible": [],
   "outside_organization_not_inspected": [
     {
@@ -22,7 +22,7 @@
       "name": "Zairenkai-Core",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Core",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -57,7 +57,7 @@
       "name": "Zairenkai-FAS",
       "full_name": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -89,7 +89,7 @@
       "name": "Zairenkai-ART",
       "full_name": "ZairenkaiPrjctX/Zairenkai-ART",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-ART",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -155,7 +155,7 @@
       "name": ".github",
       "full_name": "ZairenkaiPrjctX/.github",
       "url": "https://github.com/ZairenkaiPrjctX/.github",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -184,7 +184,7 @@
       "name": "Zairenkai-App",
       "full_name": "ZairenkaiPrjctX/Zairenkai-App",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-App",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -249,7 +249,7 @@
       "name": "Zairenkai-Sdk",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Sdk",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Sdk",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -273,7 +273,7 @@
       "name": "Zairenkai-Modules",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Modules",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Modules",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev",
@@ -304,7 +304,7 @@
       "name": "Zairenkai-Intelligence-Engine",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Intelligence-Engine",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Intelligence-Engine",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -328,7 +328,7 @@
       "name": "Zairenkai-License-Server",
       "full_name": "ZairenkaiPrjctX/Zairenkai-License-Server",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-License-Server",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -352,7 +352,7 @@
       "name": "Zairenkai-Graphics-Platform",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Graphics-Platform",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Graphics-Platform",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -376,7 +376,7 @@
       "name": "Zairenkai-Release",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Release",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Release",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -400,7 +400,7 @@
       "name": "Zairenkai-Docs",
       "full_name": "ZairenkaiPrjctX/Zairenkai-Docs",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Docs",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -424,7 +424,7 @@
       "name": "ZairenkaiPrjctX.github.io",
       "full_name": "ZairenkaiPrjctX/ZairenkaiPrjctX.github.io",
       "url": "https://github.com/ZairenkaiPrjctX/ZairenkaiPrjctX.github.io",
-      "visibility": "private",
+      "visibility": "public",
       "default_branch": "dev",
       "branches": [
         "dev"
@@ -460,15 +460,45 @@
         "Kotlin"
       ],
       "categories": [
-        "separate_product"
+        "separate_product",
+        "excluded"
       ],
-      "disposition": "not_applicable: Aniyomi extensions-lib 16 source extensions (Internet Archive, Jellyfin) for third-party media apps; no relation to device diagnostics or the Zairenkai components",
+      "disposition": "excluded: hard exclusion of the ecosystem audit (maintainer, 2026-10-22). A separate product, never cloned, built, integrated or used as a reference; the record below is from the 2026-10-21 survey and is not refreshed",
       "integration_status": "not_applicable",
       "app_capabilities": [],
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "Apache-2.0 (LICENSE, NOTICE: 'The Anime Source Extensions contributors')",
-      "evidence": "README.md, settings.gradle.kts, src/all/{internetarchive,jellyfin}, sources/registry.json at 049e9b3 (shallow clone through the session's read-only git proxy; the only branch)."
+      "evidence": "README.md, settings.gradle.kts, src/all/{internetarchive,jellyfin}, sources/registry.json at 049e9b3 (shallow clone through the session's read-only git proxy; the only branch). Not inspected again on 2026-10-22 (excluded)."
+    },
+    {
+      "name": "Zairenkai-Tuning",
+      "full_name": "ZairenkaiPrjctX/Zairenkai-Tuning",
+      "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Tuning",
+      "visibility": "public",
+      "default_branch": "(none)",
+      "branches": [
+        "ccr-63f8aa87-1b0paj"
+      ],
+      "audited_branch": "ccr-63f8aa87-1b0paj",
+      "audited_commit": "0c226b27771c0e0274feb6435b36c8d90487a814",
+      "code_present": true,
+      "languages": [
+        "Rust",
+        "Shell",
+        "Python"
+      ],
+      "categories": [
+        "gpl_component",
+        "system_service_or_privileged_daemon"
+      ],
+      "disposition": "not integrated in the app yet: GPL-3.0-only executable ztune (telemetry, SoC identity, exact-device tuning profiles), run by Core as a separate process and packaged with its Corresponding Source in the zairenkai module by Zairenkai-Modules (topic branch). The app's lock still pins a Modules commit without it",
+      "integration_status": "not_applicable",
+      "app_capabilities": [],
+      "integration_mechanism": "none in the app; Core runs ztune capabilities|telemetry|apply with a fixed argv and reads the zairenkai.tuning schema 1 JSON",
+      "runtime_requirements": "root module zairenkai (Modules bd1eb06 or later); writes only with a Tier D device_validated profile, none shipped",
+      "license": "GPL-3.0-only (LICENSE, NOTICE, SPDX headers); adapts RvSystem-Monitor, Lynx and KonaBess (docs/PROVENANCE.md)",
+      "evidence": "crates/, docs/CONTRACT.md, docs/PROVENANCE.md, profiles/index.json ([]) at 0c226b2; git ls-remote shows only the topic branch, no default branch, 2026-10-22. No code from it enters this Apache-2.0 repository."
     }
   ]
 }

@@ -67,7 +67,7 @@ class LockTest(unittest.TestCase):
         r = run("access", env={"ZAIRENKAI_LOCK": str(p)})
         self.assertEqual(r.returncode, 1)
         self.assertIn("cannot fetch", r.stdout)
-        self.assertIn("contents:read", r.stdout)
+        self.assertIn("publicly readable", r.stdout)
 
 
 class BuildTest(unittest.TestCase):

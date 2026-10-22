@@ -9,7 +9,7 @@
 |---|---|---|
 | Repository | `ZairenkaiPrjctX/Zairenkai-App` | Verified. Evidence: GitHub API |
 | GitHub description | ZairenkaiPrjctX Source | Verified. Evidence: GitHub API |
-| Visibility | private | Verified. Evidence: GitHub API |
+| Visibility | public | Verified. Evidence: `list_repos`, 2026-10-22 (earlier entries said private) |
 | Default branch | `dev` | Verified. Evidence: `git ls-remote`, 2026-10-19 |
 | Purpose | Unified Android app for the Zairenkai components | Verified. Evidence: `app/`, `integration-core/`, `docs/architecture/overview.md` |
 | Application id | `com.zairenkaiprjctx.app`, version 0.1.0 (1), minSdk 29, targetSdk 35 | Verified. Evidence: `aapt2 dump badging`, 2026-10-19 |
@@ -22,8 +22,8 @@
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
 | JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 74 tests, 2026-10-21 |
 | Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 24 Robolectric tests, 2026-10-21. **Unverified** on a device |
-| Organization inventory (16 repositories), lock, scripts | `integration/` | Verified. Evidence: scripts exit 0, re-audit 2026-10-21 |
-| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration **fails** there at "Require the CI GitHub App": no CI run has built native components (`docs/build/ci.md`) |
+| Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
+| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration failed there at "Require the CI GitHub App"; since 2026-10-22 it fetches the public locked repositories without a token (`docs/build/ci.md`). **Unverified** on GitHub: no run of that version yet |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
 
 ## Key facts and limitations
@@ -58,7 +58,8 @@
   before hardware validation. It installs switched off (`enabled = false`) until the user enables it.
   The provenance audit found no copied GPL code. Verified. Evidence:
   `docs/integration/fas-provenance.md`, 2026-10-21.
-- All seven Actions values are set (CI App ID and key at repository level, five signing secrets in
+- The two CI App values are no longer read by any workflow (the locked repositories are public,
+  2026-10-22); the maintainer may delete them. Values set: CI App ID and key at repository level, five signing secrets in
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
@@ -83,8 +84,13 @@
 - Zairenkai-Modules (`ea138ef`, topic branch) is integrated as the module source; Core (`4cdfe8e`)
   and FAS (`99cfb18`) are pinned to their topic-branch PR heads (`"merged": false`). Verified.
   Evidence: `integration/repository-lock.json`, 2026-10-22.
-- The other 9 Zairenkai repositories have no runtime capability, and anime-extensions is a separate
-  product. Verified. Evidence: `integration/repository-audit.md` (re-audit 2026-10-21).
+- Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) is run by
+  Core and packaged by Modules (`bd1eb06`, topic branch); the app's lock still pins Modules
+  `ea138ef`, without it, and the app has no tuning client yet. Verified. Evidence:
+  `integration/organization-repositories.json`, 2026-10-22.
+- The other 8 Zairenkai repositories have no runtime capability. anime-extensions is a separate
+  product and is excluded from the ecosystem audit (maintainer, 2026-10-22). Verified. Evidence:
+  `integration/repository-audit.md` (re-audit 2026-10-21).
 
 ## Open questions
 

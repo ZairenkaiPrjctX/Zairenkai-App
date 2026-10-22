@@ -17,7 +17,7 @@
 #                                                   size, SHA-256 and per-entry digests (module_asset.py)
 #   integration/out/components.json               what was built, from which commit, with SHA-256
 #
-# Requires: git with read access to the private ZairenkaiPrjctX repositories, Rust with the
+# Requires: git (the locked ZairenkaiPrjctX repositories are public), Rust with the
 # aarch64/armv7/x86_64 Android targets, ANDROID_NDK_HOME (NDK r27d is what the component repos
 # use), python3 >= 3.11. Sources are fetched by commit into integration/out/src; nothing is
 # pushed. The fetched build script is the one reviewed at that commit; a different commit fails.

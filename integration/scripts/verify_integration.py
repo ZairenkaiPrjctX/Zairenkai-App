@@ -120,9 +120,9 @@ def check_access() -> list:
         r = subprocess.run(["git", "ls-remote", "--heads", url], capture_output=True, text=True, timeout=120,
                            env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
         if r.returncode != 0:
-            # git's message may name the URL but never a credential (tokens go in a header).
-            errors.append(f"access: cannot fetch {url} (git exit {r.returncode}). A private repository needs the "
-                          "CI GitHub App token with contents:read on it.")
+            # Every locked repository is public and fetched without credentials.
+            errors.append(f"access: cannot fetch {url} (git exit {r.returncode}). Locked repositories must be "
+                          "publicly readable; CI holds no token for them.")
     return errors
 
 
