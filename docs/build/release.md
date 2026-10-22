@@ -1,15 +1,24 @@
 # Release process and signing
 
-**Status (2026-10-21): no release can be produced, and none is ready.** The licences are
-settled: App, ART, Core, FAS and ThermalTools are Apache-2.0 (`docs/integration/license-inventory.md`).
-The release gate (`verify_integration.py report <apk> --release`) now lists three blockers. All
-three need keys that only the maintainer can create:
+**Status (2026-10-22): no release has been produced, and none is ready.** The licences are
+settled: App, ART, Core, FAS and ThermalTools are Apache-2.0, Zairenkai-Tuning (not yet in the
+app's lock) GPL-3.0-only (`docs/integration/license-inventory.md`).
+
+On 2026-10-21 the release gate (`verify_integration.py report <apk> --release`) listed three
+blockers. One is resolved: `integration/module-trust.json` now holds the maintainer's
+module-signing public key (`4330305a…`, added 2026-10-21), and the gate fails on the trust list
+only while it is empty (`verify_integration.py`, `check_apk`). Its last local run, at the
+component merge commits (2026-10-21, `docs/testing/verification-report.md`), failed on the two
+remaining blockers only. It has not been re-run since the single-module re-pin of 2026-10-22:
 
 | Blocker | What resolves it |
 |---|---|
-| The APK is unsigned | A release keystore in the protected `release` environment (below) |
-| The module catalog is unsigned | A module-signing key in the `release` environment |
-| `integration/module-trust.json` lists no key | Add the module-signing public key in a reviewed pull request |
+| The APK is unsigned | A signed build from `release.yml` with the keystore in the `release` environment (below) |
+| The module catalog is unsigned | A catalog signed in `release.yml` with `ZAIRENKAI_MODULE_SIGNING_KEY` |
+
+The secrets are reported set (`setup-actions-secrets.sh status`, 2026-10-22, names only); whether
+the stored key matches the trusted public key is checked only when `release.yml` runs, and it has
+never run.
 
 The gate also fails on any APK carrying a module other than the single `zairenkai` module
 (Zairenkai-Modules, with zcored and zfasd: `docs/integration/fas-provenance.md`).
