@@ -599,4 +599,6 @@
     <string name="settings_search">Search settings…</string>
     <string name="settings_results">Results</string>
     <string name="settings_no_results">No setting matches that.</string>
+    <string name="brand_logo">Zairenkai logo</string>
+    <string name="brand_tagline">One app for your device\'s performance, heat and runtime</string>
 </resources>

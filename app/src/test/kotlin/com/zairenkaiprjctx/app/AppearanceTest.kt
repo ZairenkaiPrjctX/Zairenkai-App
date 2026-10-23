@@ -13,6 +13,8 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performTextInput
 import androidx.core.graphics.ColorUtils
 import androidx.test.core.app.ApplicationProvider
@@ -118,7 +120,7 @@ class AppearanceTest {
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.onNodeWithText("Search settings…").performTextInput("wallpaper")
         compose.waitForIdle()
-        compose.onNodeWithText("Wallpaper").performClick()
+        compose.onNodeWithText("Wallpaper").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         // The button is further down the wallpaper page: scroll to it, which also proves the page is open.
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Choose a photo"))

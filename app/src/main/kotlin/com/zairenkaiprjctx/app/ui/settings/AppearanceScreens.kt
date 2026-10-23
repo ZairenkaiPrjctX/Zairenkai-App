@@ -361,22 +361,18 @@ fun ThemeEditorScreen(vm: SettingsViewModel, editId: String?, padding: PaddingVa
 
 private val ColorSaver = androidx.compose.runtime.saveable.Saver<Color, Int>(save = { it.toArgb() }, restore = { Color(it) })
 
-/** A launcher icon drawn as Android shows it: the brand mark on its background, in a squircle. */
+/** A launcher icon drawn as Android shows it: the Zairenkai mark on its background, in a squircle. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun IconPreview(background: Color, foreground: Color, size: Dp) {
-    Box(Modifier.size(size).clip(MaterialShapes.Cookie4Sided.toShape()).background(background), contentAlignment = Alignment.Center) {
-        // The mark spans half of an adaptive icon's visible area, as on the launcher.
-        Canvas(Modifier.size(size * 0.46f)) {
-            // The Z mark of ic_launcher_foreground (viewport 36..72 of 108), scaled to this box.
-            val k = this.size.width / 36f
-            val p = androidx.compose.ui.graphics.Path().apply {
-                moveTo(0f, 0f); lineTo(36f * k, 0f); lineTo(36f * k, 7f * k); lineTo(10f * k, 29f * k); lineTo(36f * k, 29f * k)
-                lineTo(36f * k, 36f * k); lineTo(0f, 36f * k); lineTo(0f, 29f * k); lineTo(26f * k, 7f * k); lineTo(0f, 7f * k); close()
-            }
-            drawPath(p, foreground)
-        }
-    }
+    val default = background == LauncherIcon.MIDNIGHT.background
+    com.zairenkaiprjctx.app.design.ZairenkaiLogo(
+        size = size,
+        background = if (default) com.zairenkaiprjctx.app.design.ZairenkaiMark.background else androidx.compose.ui.graphics.SolidColor(background),
+        foreground = if (default) Color.White else foreground,
+        spark = if (default) Color(0xFF65D3FF) else foreground,
+        shape = MaterialShapes.Cookie4Sided.toShape(),
+    )
 }
 
 /** Settings › Appearance › Wallpaper: built-in gradients or a photo, fit or fill, and how much it is dimmed. */

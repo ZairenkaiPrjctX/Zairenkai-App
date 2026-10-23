@@ -576,4 +576,6 @@
     <string name="settings_search">Cari setelan…</string>
     <string name="settings_results">Hasil</string>
     <string name="settings_no_results">Tidak ada setelan yang cocok.</string>
+    <string name="brand_logo">Logo Zairenkai</string>
+    <string name="brand_tagline">Satu aplikasi untuk performa, suhu, dan runtime perangkat Anda</string>
 </resources>

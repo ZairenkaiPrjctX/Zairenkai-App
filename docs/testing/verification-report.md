@@ -8,8 +8,8 @@ launcher icon switching on real launchers, Google Fonts download and the photo p
 
 | Check | Command / evidence | Result |
 |---|---|---|
-| App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 43 passed, 10 skipped (screenshot gallery) |
-| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 53 passed, 0 skipped; 56 PNGs |
+| App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 43 passed, 11 skipped (screenshot gallery) |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 54 passed, 0 skipped; 57 PNGs |
 | JVM tests | `./gradlew :integration-core:test` | 99 passed (unchanged) |
 | Lint | `./gradlew lint` | 0 errors; 24 warnings, all `GradleDependency` / `AndroidGradlePluginVersion` |
 | Build | `./gradlew assembleDebug assembleRelease -Pzairenkai.allowMissingComponents=true` | both APKs built |

@@ -234,6 +234,27 @@ class ScreenshotGallery {
         tour("stress-id")
     }
 
+    /** The logo, large, and every launcher variant, on light and dark. */
+    @Test
+    fun brandLogo() {
+        compose.setContent {
+            ZairenkaiTheme(ThemeSettings(ThemeMode.DARK, dynamicColor = false)) {
+                Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+                    Column(Modifier.padding(24.dp).padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(24.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                        com.zairenkaiprjctx.app.design.ZairenkaiLogo(220.dp)
+                        androidx.compose.material3.Text("Zairenkai", style = MaterialTheme.typography.displaySmall)
+                        com.zairenkaiprjctx.app.appearance.LauncherIcon.entries.chunked(5).forEach { row ->
+                            androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                row.forEach { com.zairenkaiprjctx.app.ui.settings.IconPreview(it.background, it.foreground, 60.dp) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        shoot("brand-logo")
+    }
+
     @Test
     fun aiPreviewLight() = aiPreview(ThemeMode.LIGHT, "preview-ai-chat-light")
 

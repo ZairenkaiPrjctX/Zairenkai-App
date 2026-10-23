@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Zairenkai mark: a Z whose diagonal is a wave, with a spark. 108 dp adaptive-icon grid. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
+        android:pathData="M36,40 L68,40 C60,46 62,53 54,55 C46,57 48,64 40,70 L72,70"
+        android:strokeColor="#FF00513F"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="7.5" />
+    <path
         android:fillColor="#FF00513F"
-        android:pathData="M36,36h36v7L46,65h26v7H36v-7l26,-22H36z" />
+        android:pathData="M71,27 Q71.6,30.4 75,31 Q71.6,31.6 71,35 Q70.4,31.6 67,31 Q70.4,30.4 71,27 Z" />
 </vector>

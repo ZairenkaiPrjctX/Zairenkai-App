@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -52,7 +54,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.fillMaxWidth
 
 /** One searchable setting: where it lives and the words it is found by. */
 private data class SettingEntry(@androidx.annotation.StringRes val title: Int, @androidx.annotation.StringRes val place: Int, val target: Overlay, val keywords: String)
@@ -80,6 +81,15 @@ fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, paddin
     val resources = androidx.compose.ui.platform.LocalResources.current
     var query by rememberSaveable { mutableStateOf("") }
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
+        item {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
+                com.zairenkaiprjctx.app.design.ZairenkaiLogo(56.dp, label = stringResource(R.string.brand_logo))
+                Column {
+                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(R.string.brand_tagline), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
         item {
             OutlinedTextField(
                 value = query,

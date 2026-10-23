@@ -100,6 +100,21 @@ behaviour was studied, and everything here is written for this app.
   1.6.x is pinned.
 - **Search:** Settings has a search box over every appearance setting, language and the module.
 
+## Logo
+
+The Zairenkai mark is a **Z whose diagonal is a wave**, with a small spark: one continuous
+stroke (width 7.5 on the 108-unit adaptive-icon grid, round caps and joins) in white on a deep
+teal-to-black gradient (`#0E5568` → `#0B2433` → `#0A1218`), and a cyan spark (`#65D3FF`).
+
+| Where | Source |
+|---|---|
+| Launcher icon (default) | `res/drawable/ic_launcher_foreground.xml`, `ic_launcher_background.xml`; monochrome layer `ic_launcher_monochrome.xml` (Android 13 themed icons) |
+| Icon variants (Settings › Appearance › App icon) | `ic_launcher_foreground_<variant>.xml`, same geometry in each variant's colours |
+| In the app | `design/Logo.kt` (`ZairenkaiLogo`, `ZairenkaiMark`): the same paths drawn in Compose, used in the Settings header and the icon picker |
+| Vector original | `docs/brand/zairenkai-logo.svg` (also the module WebUI's `logo.svg` in Zairenkai-Modules) |
+
+Keep the geometry identical everywhere; change it in `ZairenkaiMark` and the SVG together.
+
 ## Typography: Google Sans Flex
 
 - **File:** `res/font/google_sans_flex.ttf`, the variable font (wght 1–1000, opsz 1–144, wdth,
