@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearWavyProgressIndicator
@@ -65,10 +67,17 @@ fun RingGauge(
             color = color,
             amplitude = amplitude(),
         )
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(value, style = ZairenkaiTextStyles.ringValue, textAlign = TextAlign.Center)
+        // The text stays inside the ring: it shrinks with a large font instead of crossing the track.
+        Column(Modifier.width(size * 0.7f), horizontalAlignment = Alignment.CenterHorizontally) {
+            FitText(value, ZairenkaiTextStyles.ringValue.copy(textAlign = TextAlign.Center), maxLines = 1, minFontSize = 12.sp)
             if (caption != null) {
-                Text(caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                FitText(
+                    caption,
+                    MaterialTheme.typography.labelSmall.copy(textAlign = TextAlign.Center),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    minFontSize = 8.sp,
+                )
             }
         }
     }

@@ -4,6 +4,17 @@ package com.zairenkaiprjctx.app.ui
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
+import com.zairenkaiprjctx.app.design.Detail
+import com.zairenkaiprjctx.app.design.HeroDefaults
+import com.zairenkaiprjctx.app.design.HeroPanel
+import com.zairenkaiprjctx.app.design.LocalStatusColors
+import com.zairenkaiprjctx.app.design.ShapeBadge
+import com.zairenkaiprjctx.app.design.entrance
+import com.zairenkaiprjctx.app.design.rememberEntrance
+import com.zairenkaiprjctx.app.design.visual
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -66,7 +77,7 @@ fun rootStateLabel(s: RootState): String = stringResource(
     },
 )
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SystemScreen(
     vm: SystemViewModel,
@@ -87,32 +98,30 @@ fun SystemScreen(
     val context = LocalContext.current
     LaunchedEffect(snapshot.refreshedAtMs) { vm.loadModules() }
 
+    val entrance = rememberEntrance()
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
-            SegmentedGroup(title = stringResource(R.string.system_access)) {
-                row {
-                    GroupRow(
-                        stringResource(R.string.root_access),
-                        supporting = rootStateLabel(root),
-                        icon = ZairenkaiGlyphs.shield,
-                        emphasized = root == RootState.GRANTED,
-                        status = if (root == RootState.GRANTED) AvailabilityState.AVAILABLE else AvailabilityState.ROOT_REQUIRED,
-                    )
-                }
-                row {
-                    GroupContent {
-                        Supporting(stringResource(R.string.root_note))
-                        if (root == RootState.GRANTED) {
-                            OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
-                        } else {
-                            Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
-                        }
-                    }
+            val granted = root == RootState.GRANTED
+            val state = if (granted) AvailabilityState.AVAILABLE else AvailabilityState.ROOT_REQUIRED
+            HeroPanel(
+                overline = stringResource(R.string.root_access),
+                headline = rootStateLabel(root),
+                supporting = stringResource(state.visual().label),
+                modifier = Modifier.entrance(entrance, 0),
+                colors = if (granted) HeroDefaults.primary() else HeroDefaults.status(LocalStatusColors.current.warning),
+                decoration = MaterialShapes.Clover8Leaf,
+                trailing = { ShapeBadge(ZairenkaiGlyphs.shield, MaterialShapes.Cookie9Sided, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, size = 64.dp) },
+            ) {
+                Detail(stringResource(R.string.root_note), maxLines = 5)
+                if (granted) {
+                    OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
+                } else if (root != RootState.UNAVAILABLE) {
+                    Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
                 }
             }
         }
         item {
-            SegmentedGroup(title = stringResource(R.string.system_components)) {
+            SegmentedGroup(title = stringResource(R.string.system_components), icon = ZairenkaiGlyphs.nodes, modifier = Modifier.entrance(entrance, 1)) {
                 row {
                     GroupRow(
                         stringResource(R.string.module_title),
@@ -140,10 +149,10 @@ fun SystemScreen(
                             when (m) {
                                 is CoreCall.Ok -> m.value.forEach { mod ->
                                     InfoRow(mod.id, "${mod.health}${mod.version?.let { " · $it" } ?: ""}", code = true)
-                                    if (mod.detail.isNotBlank()) Supporting(mod.detail)
+                                    if (mod.detail.isNotBlank()) Detail(mod.detail, maxLines = 2)
                                 }
                                 null -> ProgressRow(stringResource(R.string.loading))
-                                else -> Supporting(m.describeFailure())
+                                else -> Detail(m.describeFailure())
                             }
                         }
                     }
@@ -151,7 +160,7 @@ fun SystemScreen(
             }
         }
         item {
-            SegmentedGroup(title = stringResource(R.string.search_title)) {
+            SegmentedGroup(title = stringResource(R.string.search_title), icon = ZairenkaiGlyphs.database, modifier = Modifier.entrance(entrance, 2)) {
                 row {
                     GroupContent {
                         OutlinedTextField(
@@ -168,37 +177,37 @@ fun SystemScreen(
                         )
                         if (query.length >= 2 && results.isEmpty()) Supporting(stringResource(R.string.search_none))
                         results.forEach { DeviceCard(it) }
-                        afid?.getOrNull()?.let { Supporting(it.license.attribution) }
+                        afid?.getOrNull()?.let { Detail(it.license.attribution, maxLines = 2) }
                     }
                 }
             }
         }
         item {
             val inv = c.inventory
-            SegmentedGroup(title = pluralStringResource(R.plurals.ecosystem_title, inv?.repositories?.size ?: 0, inv?.repositories?.size ?: 0)) {
+            SegmentedGroup(title = pluralStringResource(R.plurals.ecosystem_title, inv?.repositories?.size ?: 0, inv?.repositories?.size ?: 0), icon = ZairenkaiGlyphs.nodes, modifier = Modifier.entrance(entrance, 3)) {
                 row {
                     GroupContent {
                         if (inv == null) {
                             Supporting(stringResource(R.string.ecosystem_missing))
                         } else {
-                            Supporting(stringResource(R.string.ecosystem_note, inv.surveyed))
+                            Detail(stringResource(R.string.ecosystem_note, inv.surveyed))
                             inv.repositories.forEach { r ->
                                 ExpandableSection(r.name, summary = r.integrationStatus) {
                                     InfoRow(r.auditedBranch, r.auditedCommit.take(12), code = true)
-                                    Supporting(r.disposition)
-                                    r.appCapabilities.forEach { Supporting("• $it") }
+                                    Detail(r.disposition)
+                                    r.appCapabilities.forEach { Detail("• $it", maxLines = 2) }
                                 }
                             }
-                            inv.outside.forEach { Supporting(stringResource(R.string.ecosystem_outside, it.fullName)) }
+                            inv.outside.forEach { Detail(stringResource(R.string.ecosystem_outside, it.fullName), maxLines = 2) }
                         }
                     }
                 }
             }
         }
-        item { Diagnostics(vm, snapshot, root, context) }
-        item { Licences(c) { licence = it } }
+        item { Box(Modifier.entrance(entrance, 4)) { Diagnostics(vm, snapshot, root, context) } }
+        item { Box(Modifier.entrance(entrance, 5)) { Licences(c) { licence = it } } }
         item {
-            SegmentedGroup(title = stringResource(R.string.system_app)) {
+            SegmentedGroup(title = stringResource(R.string.system_app), icon = ZairenkaiIcons.settings, modifier = Modifier.entrance(entrance, 6)) {
                 row { GroupRow(stringResource(R.string.nav_settings), supporting = stringResource(R.string.system_settings_row), icon = ZairenkaiIcons.settings, onClick = openSettings, chevron = true) }
             }
         }
@@ -236,15 +245,15 @@ private fun Licences(c: com.zairenkaiprjctx.app.AppContainer, show: (String) -> 
         "licenses/zairenkai-app/LICENSE" to R.string.licence_app_view,
         "licenses/zairenkai-app/NOTICE" to R.string.licence_app_notice,
     ).filter { c.assetExists(it.first) }
-    SegmentedGroup(title = stringResource(R.string.licences_title)) {
+    SegmentedGroup(title = stringResource(R.string.licences_title), icon = ZairenkaiGlyphs.document) {
         row {
             GroupContent {
-                Supporting(stringResource(R.string.licence_project))
-                Supporting(stringResource(R.string.licence_font))
-                afid?.let { Supporting(stringResource(R.string.licence_data, it.license.spdx, it.license.attribution)) }
-                Supporting(stringResource(R.string.licence_zart))
-                Supporting(stringResource(R.string.licence_zthermal))
-                Supporting(stringResource(R.string.licence_libs))
+                Detail(stringResource(R.string.licence_project))
+                Detail(stringResource(R.string.licence_font))
+                afid?.let { Detail(stringResource(R.string.licence_data, it.license.spdx, it.license.attribution)) }
+                Detail(stringResource(R.string.licence_zart))
+                Detail(stringResource(R.string.licence_zthermal))
+                Detail(stringResource(R.string.licence_libs))
             }
         }
         documents.forEach { (path, label) ->
@@ -256,7 +265,7 @@ private fun Licences(c: com.zairenkaiprjctx.app.AppContainer, show: (String) -> 
 @Composable
 private fun Diagnostics(vm: SystemViewModel, snapshot: RegistrySnapshot, root: RootState, context: android.content.Context) {
     val c = vm.container
-    SegmentedGroup(title = stringResource(R.string.diagnostics_title)) {
+    SegmentedGroup(title = stringResource(R.string.diagnostics_title), icon = ZairenkaiGlyphs.pulse) {
         row {
             GroupContent {
                 val comp = c.components
@@ -266,7 +275,7 @@ private fun Diagnostics(vm: SystemViewModel, snapshot: RegistrySnapshot, root: R
                 InfoRow(stringResource(R.string.key_zthermal), comp?.zthermalCommit?.let { "${comp.zthermalVersion} @ ${it.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
                 InfoRow(stringResource(R.string.key_zthermal_exe), stringResource(if (c.zthermalPath != null) R.string.present else R.string.missing_abi))
                 InfoRow(stringResource(R.string.key_afid_data), comp?.afidCommit?.take(12) ?: stringResource(R.string.not_packaged), code = true)
-                Supporting(stringResource(R.string.diagnostics_note))
+                Detail(stringResource(R.string.diagnostics_note))
             }
         }
         row {

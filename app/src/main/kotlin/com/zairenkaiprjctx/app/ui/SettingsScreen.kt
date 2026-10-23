@@ -39,8 +39,9 @@ import com.zairenkaiprjctx.app.design.ConnectedChoice
 import com.zairenkaiprjctx.app.design.GroupContent
 import com.zairenkaiprjctx.app.design.GroupRow
 import com.zairenkaiprjctx.app.design.SegmentedGroup
-import com.zairenkaiprjctx.app.design.Supporting
+import com.zairenkaiprjctx.app.design.Detail
 import com.zairenkaiprjctx.app.design.ThemeMode
+import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 
 @Composable
@@ -51,7 +52,7 @@ fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, paddin
     val dynamicSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
-            SegmentedGroup(title = stringResource(R.string.settings_appearance)) {
+            SegmentedGroup(title = stringResource(R.string.settings_appearance), icon = ZairenkaiGlyphs.sliders) {
                 row {
                     GroupContent {
                         Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleSmall)
@@ -82,7 +83,7 @@ fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, paddin
             }
         }
         item {
-            SegmentedGroup(title = stringResource(R.string.settings_language)) {
+            SegmentedGroup(title = stringResource(R.string.settings_language), icon = ZairenkaiGlyphs.document) {
                 row {
                     GroupContent {
                         val activity = context.findActivity()
@@ -94,7 +95,7 @@ fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, paddin
                             onSelect = { i -> if (languages[i] != current && activity != null) AppLanguage.set(activity, languages[i]) },
                             enabled = activity != null,
                         )
-                        Supporting(stringResource(R.string.settings_language_note))
+                        Detail(stringResource(R.string.settings_language_note))
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             OutlinedButton(onClick = {
                                 context.startActivity(Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null)))
@@ -105,10 +106,10 @@ fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, paddin
             }
         }
         item {
-            SegmentedGroup(title = stringResource(R.string.module_title)) {
+            SegmentedGroup(title = stringResource(R.string.module_title), icon = ZairenkaiGlyphs.box) {
                 row {
                     GroupContent {
-                        Supporting(stringResource(if (declined) R.string.module_settings_declined else R.string.module_settings_note))
+                        Detail(stringResource(if (declined) R.string.module_settings_declined else R.string.module_settings_note))
                         Row(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
                             OutlinedButton(onClick = openModule) { Text(stringResource(R.string.module_settings_open)) }
                             if (declined) OutlinedButton(onClick = modules::reconsider) { Text(stringResource(R.string.module_settings_reoffer)) }

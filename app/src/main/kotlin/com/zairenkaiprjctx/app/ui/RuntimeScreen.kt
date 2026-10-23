@@ -23,7 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.R
+import com.zairenkaiprjctx.app.design.Detail
+import com.zairenkaiprjctx.app.design.TileGrid
 import com.zairenkaiprjctx.app.design.Emphasis
+import com.zairenkaiprjctx.app.design.ZairenkaiTextStyles
 import com.zairenkaiprjctx.app.design.ExpandableSection
 import com.zairenkaiprjctx.app.design.HeroStatusCard
 import com.zairenkaiprjctx.app.design.InfoRow
@@ -61,7 +64,7 @@ fun RuntimeScreen(vm: RuntimeViewModel, snapshot: RegistrySnapshot, padding: Pad
                 headline = vm.artApexVersion?.toString() ?: stringResource(R.string.not_reported),
                 supporting = stringResource(R.string.art_version),
                 state = if (vm.artApexVersion != null) AvailabilityState.AVAILABLE else null,
-            ) { Supporting(stringResource(R.string.art_module_source)) }
+            ) { Detail(stringResource(R.string.art_module_source), maxLines = 2) }
         }
         item {
             when (val r = inspect) {
@@ -73,7 +76,7 @@ fun RuntimeScreen(vm: RuntimeViewModel, snapshot: RegistrySnapshot, padding: Pad
         item {
             val record = snapshot.byId("art.dexopt_status")
             SectionCard(stringResource(R.string.dexopt_title), trailing = { record?.let { StatusBadge(it.availability.state) } }) {
-                record?.availability?.reason?.let { if (it.isNotBlank()) Supporting(it) }
+                record?.availability?.reason?.let { if (it.isNotBlank()) Detail(it) }
                 val invalid = pkg.isNotEmpty() && !PackageNames.isValid(pkg)
                 OutlinedTextField(
                     value = pkg,
@@ -95,7 +98,7 @@ fun RuntimeScreen(vm: RuntimeViewModel, snapshot: RegistrySnapshot, padding: Pad
                 when (val d = dexopt) {
                     is ZartResult.Ok -> when (val o = d.value) {
                         is Obs.Value -> {
-                            Text(o.value.packageName, style = MaterialTheme.typography.titleSmall)
+                            Text(o.value.packageName, style = ZairenkaiTextStyles.code)
                             (o.value.primary + o.value.secondary).forEach { f ->
                                 InfoRow("Dex", f.path + (f.visibility?.let { " ($it)" } ?: ""), code = true)
                                 f.statuses.forEach { s ->
@@ -103,9 +106,9 @@ fun RuntimeScreen(vm: RuntimeViewModel, snapshot: RegistrySnapshot, padding: Pad
                                 }
                             }
                         }
-                        is Obs.Missing -> Supporting("${o.status}: ${o.detail}")
+                        is Obs.Missing -> Detail("${o.status}: ${o.detail}")
                     }
-                    is ZartResult.Failed -> Supporting(d.detail)
+                    is ZartResult.Failed -> Detail(d.detail)
                     null -> Unit
                 }
             }
@@ -118,9 +121,12 @@ fun RuntimeScreen(vm: RuntimeViewModel, snapshot: RegistrySnapshot, padding: Pad
 @Composable
 private fun InspectCard(r: ZartReport) {
     SectionCard(stringResource(R.string.art_inspect_title, r.zartVersion), trailing = { StatusBadge(AvailabilityState.AVAILABLE) }) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
-            MetricTile(stringResource(R.string.key_api_level), r.apiLevel.show(), r.apiLevel.source, emphasis = Emphasis.HIGH)
-            MetricTile(stringResource(R.string.key_page_size), r.pageSizeBytes.show { "${it / 1024} KiB" }, r.pageSizeBytes.source)
+        TileGrid(listOf(0, 1)) { i, m ->
+            if (i == 0) {
+                MetricTile(stringResource(R.string.key_api_level), r.apiLevel.show(), r.apiLevel.source, m, emphasis = Emphasis.HIGH)
+            } else {
+                MetricTile(stringResource(R.string.key_page_size), r.pageSizeBytes.show { "${it / 1024} KiB" }, r.pageSizeBytes.source, m)
+            }
         }
         InfoRow(stringResource(R.string.key_process), "${r.uid.show()} · ${r.selinuxContext.show()}", code = true)
         when (val m = r.artModule) {
@@ -136,7 +142,7 @@ private fun InspectCard(r: ZartReport) {
         r.isa.forEach { i ->
             InfoRow(stringResource(R.string.art_variant, i.abi), i.variant.show(), code = true)
             InfoRow(stringResource(R.string.art_features, i.abi), i.features.show(), code = true)
-            i.arm64?.findings?.forEach { f -> Supporting("${f.severity.uppercase()} · ${f.id}: ${f.message}") }
+            i.arm64?.findings?.forEach { f -> Detail("${f.severity.uppercase()} · ${f.id}: ${f.message}") }
         }
         when (val p = r.artProperties) {
             is Obs.Value -> ExpandableSection(stringResource(R.string.art_properties, p.value.size)) {
@@ -144,6 +150,6 @@ private fun InspectCard(r: ZartReport) {
             }
             is Obs.Missing -> InfoRow(stringResource(R.string.art_properties, 0), p.show())
         }
-        Supporting(stringResource(R.string.art_inspect_note))
+        Detail(stringResource(R.string.art_inspect_note))
     }
 }

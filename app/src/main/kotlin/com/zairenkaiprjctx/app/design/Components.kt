@@ -71,6 +71,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.zairenkaiprjctx.app.R
 import com.zairenkaiprjctx.integration.model.AvailabilityState
 import com.zairenkaiprjctx.integration.registry.CapabilityRecord
@@ -109,11 +110,11 @@ private fun glyphPolygon(state: AvailabilityState) = when (state) {
 /** Large status mark for hero surfaces: tone + expressive shape + icon. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun StatusGlyph(state: AvailabilityState, modifier: Modifier = Modifier) {
+fun StatusGlyph(state: AvailabilityState, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 56.dp) {
     val v = state.visual()
     val tone = v.tone(LocalStatusColors.current)
-    Surface(color = tone.container, contentColor = tone.content, shape = glyphPolygon(state).toShape(), modifier = modifier.size(56.dp)) {
-        Box(contentAlignment = Alignment.Center) { Icon(v.icon, contentDescription = null, modifier = Modifier.size(26.dp)) }
+    Surface(color = tone.container, contentColor = tone.content, shape = glyphPolygon(state).toShape(), modifier = modifier.size(size)) {
+        Box(contentAlignment = Alignment.Center) { Icon(v.icon, contentDescription = null, modifier = Modifier.size(size * 0.46f)) }
     }
 }
 
@@ -182,49 +183,10 @@ fun SectionCard(
                 itemVerticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.semantics { heading() })
                 trailing?.invoke()
             }
             content()
-        }
-    }
-}
-
-/**
- * The most prominent surface of a screen: an overline, a headline and one supporting line, with
- * a trailing visual (status glyph, ring gauge or the AI mark). Tonal, not saturated: colour is
- * kept for the status and the measured value.
- */
-@Composable
-fun HeroPanel(
-    overline: String,
-    headline: String,
-    supporting: String?,
-    modifier: Modifier = Modifier,
-    trailing: (@Composable () -> Unit)? = null,
-    content: (@Composable () -> Unit)? = null,
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = ZairenkaiShapes.hero,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Column(
-            Modifier.padding(ZairenkaiSpacing.xl).animateContentSize(ZairenkaiMotion.spatial()),
-            verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
-                    Text(overline, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    Text(headline, style = MaterialTheme.typography.headlineMedium)
-                    if (supporting != null) {
-                        Text(supporting, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                trailing?.invoke()
-            }
-            content?.invoke()
         }
     }
 }
@@ -262,27 +224,42 @@ fun MetricTile(
     modifier: Modifier = Modifier,
     emphasis: Emphasis = Emphasis.NORMAL,
     meter: Float? = null,
+    valueStyle: TextStyle = ZairenkaiTextStyles.metric,
 ) {
     val cs = MaterialTheme.colorScheme
-    val bg = if (emphasis == Emphasis.HIGH) cs.primaryContainer else cs.surfaceContainerHighest
+    val bg = if (emphasis == Emphasis.HIGH) cs.primaryContainer else cs.surfaceContainerHigh
     val fg = if (emphasis == Emphasis.HIGH) cs.onPrimaryContainer else cs.onSurface
-    Surface(color = bg, contentColor = fg, shape = ZairenkaiShapes.metric, modifier = modifier.widthIn(min = 140.dp)) {
+    Surface(color = bg, contentColor = fg, shape = ZairenkaiShapes.metric, modifier = modifier) {
         Column(Modifier.padding(ZairenkaiSpacing.l).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(label, style = MaterialTheme.typography.labelMedium)
+            Text(label, style = MaterialTheme.typography.labelLarge, color = fg.copy(alpha = 0.78f), maxLines = 3, overflow = TextOverflow.Ellipsis)
             val spec = ZairenkaiMotion.fastEffects<Float>()
             AnimatedContent(targetState = value, transitionSpec = { fadeIn(spec) togetherWith fadeOut(spec) }, label = "metric") {
-                Text(it, style = ZairenkaiTextStyles.metric)
+                // Readings are short; a state written out shrinks first, then wraps to a second line.
+                FitText(it, valueStyle, maxLines = 2, minFontSize = 15.sp)
             }
             if (meter != null) Meter(meter, Modifier.padding(vertical = ZairenkaiSpacing.xs), color = if (emphasis == Emphasis.HIGH) cs.onPrimaryContainer else cs.primary)
-            if (caption != null) Text(caption, style = MaterialTheme.typography.bodySmall)
+            if (caption != null) Text(caption, style = MaterialTheme.typography.bodySmall, color = fg.copy(alpha = 0.78f), maxLines = 3, overflow = TextOverflow.Ellipsis)
         }
     }
 }
 
-/** Whether [InfoRow] keeps its 42 % / 58 % columns: only when the longest unbreakable word of each fits. */
-internal fun infoRowSideBySide(keyLongestWord: Int, valueLongestWord: Int, width: Int, gap: Int): Boolean {
+/**
+ * Whether [InfoRow] keeps its 42 % / 58 % columns: only when the longest unbreakable word of each
+ * fits its column, and neither text needs more than two lines there. A long sentence in a narrow
+ * column became a tall strip of short lines; it now gets the full width under its label.
+ */
+internal fun infoRowSideBySide(
+    keyLongestWord: Int,
+    valueLongestWord: Int,
+    width: Int,
+    gap: Int,
+    keyWidth: Int = 0,
+    valueWidth: Int = 0,
+): Boolean {
     val keyColumn = (width * 0.42f).toInt()
-    return keyLongestWord <= keyColumn && valueLongestWord <= width - keyColumn - gap
+    val valueColumn = width - keyColumn - gap
+    return keyLongestWord <= keyColumn && valueLongestWord <= valueColumn &&
+        keyWidth <= keyColumn * 2 && valueWidth <= valueColumn * 2
 }
 
 /** Width in px of the widest whitespace-separated word of [text], laid out on one line. */
@@ -291,27 +268,41 @@ private fun longestWordWidth(measurer: TextMeasurer, text: String, style: TextSt
         measurer.measure(it, style, softWrap = false, maxLines = 1).size.width
     } ?: 0
 
+/** Width in px of all of [text] on one line. */
+private fun lineWidth(measurer: TextMeasurer, text: String, style: TextStyle): Int =
+    measurer.measure(text, style, softWrap = false, maxLines = 1).size.width
+
 /**
- * Key/value row for technical details; [code] switches the value to monospace.
- * Label and value side by side (42 % / 58 %) when every word fits its column; otherwise the label
- * stacks above the value at full width. Property names, paths and package names have no break
- * points, and a fixed split wrapped them one character per line on narrow screens. Code values are
- * selectable so long identifiers can be copied.
+ * Key/value row for technical details; [code] switches the value to monospace, and [shorten]
+ * shows a long identifier (a digest, a key id) by its start and end with a copy button.
+ * Label and value side by side (42 % / 58 %) only when both fit there in at most two lines
+ * without breaking a word; otherwise the label stacks above the value at full width. Property
+ * names, paths and package names have no break points, and a fixed split wrapped them one
+ * character per line on narrow screens. Code values are selectable so they can be copied.
  */
 @Composable
-fun InfoRow(key: String, value: String?, code: Boolean = false, numeric: Boolean = false) {
+fun InfoRow(key: String, value: String?, code: Boolean = false, numeric: Boolean = false, shorten: Boolean = false) {
     val shown = value ?: stringResource(R.string.not_reported)
+    if (shorten && value != null) {
+        Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
+            Text(key, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            CodeValue(value)
+        }
+        return
+    }
     val keyStyle = MaterialTheme.typography.bodyMedium
     val valueStyle = when {
         code -> ZairenkaiTextStyles.code
         numeric -> ZairenkaiTextStyles.numeric
         else -> MaterialTheme.typography.bodyMedium
     }
-    // Longest whitespace-separated word, measured on one line: the columns are kept only when no
-    // word has to be broken, whatever break opportunities the line breaker would find inside it.
+    // Measured on one line: the columns are kept only when no word has to be broken and no text
+    // needs more than two lines, whatever break opportunities the line breaker would find.
     val measurer = rememberTextMeasurer()
     val keyWord = remember(key, keyStyle, measurer) { longestWordWidth(measurer, key, keyStyle) }
     val valueWord = remember(shown, valueStyle, measurer) { longestWordWidth(measurer, shown, valueStyle) }
+    val keyLine = remember(key, keyStyle, measurer) { lineWidth(measurer, key, keyStyle) }
+    val valueLine = remember(shown, valueStyle, measurer) { lineWidth(measurer, shown, valueStyle) }
     val row = @Composable {
         Layout(
             content = {
@@ -325,7 +316,7 @@ fun InfoRow(key: String, value: String?, code: Boolean = false, numeric: Boolean
             val gap = ZairenkaiSpacing.s.roundToPx()
             val keyColumn = (width * 0.42f).toInt()
             val valueColumn = width - keyColumn - gap
-            val sideBySide = constraints.hasBoundedWidth && infoRowSideBySide(keyWord, valueWord, width, gap)
+            val sideBySide = constraints.hasBoundedWidth && infoRowSideBySide(keyWord, valueWord, width, gap, keyLine, valueLine)
             if (sideBySide) {
                 val kp = k.measure(Constraints(maxWidth = keyColumn))
                 val vp = v.measure(Constraints(maxWidth = valueColumn))
@@ -337,9 +328,10 @@ fun InfoRow(key: String, value: String?, code: Boolean = false, numeric: Boolean
                 val bounded = Constraints(maxWidth = if (constraints.hasBoundedWidth) width else Constraints.Infinity)
                 val kp = k.measure(bounded)
                 val vp = v.measure(bounded)
-                layout(maxOf(kp.width, vp.width).coerceAtMost(constraints.maxWidth), kp.height + vp.height) {
+                val spacing = ZairenkaiSpacing.xs.roundToPx() / 2
+                layout(maxOf(kp.width, vp.width).coerceAtMost(constraints.maxWidth), kp.height + spacing + vp.height) {
                     kp.placeRelative(0, 0)
-                    vp.placeRelative(0, kp.height)
+                    vp.placeRelative(0, kp.height + spacing)
                 }
             }
         }
@@ -352,19 +344,20 @@ fun Supporting(text: String) {
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-/** A registry record as a row: name, the registry's reason, and the status badge. */
+/**
+ * A registry record as a row: its status shape, the name, the registry's reason (clamped, with
+ * "Show more" for long engineering detail) and the status badge, which names the state.
+ */
 @Composable
 fun CapabilityItem(r: CapabilityRecord, horizontalPadding: androidx.compose.ui.unit.Dp = ZairenkaiSpacing.l) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = horizontalPadding, vertical = ZairenkaiSpacing.m),
-        verticalAlignment = Alignment.CenterVertically,
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = horizontalPadding, vertical = ZairenkaiSpacing.s),
         horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
     ) {
+        StatusGlyph(r.availability.state, Modifier.padding(top = 2.dp), size = 32.dp)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(r.name, style = MaterialTheme.typography.titleSmall)
-            if (r.availability.reason.isNotBlank()) {
-                Text(r.availability.reason, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Text(r.name, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (r.availability.reason.isNotBlank()) Detail(r.availability.reason, maxLines = 2)
             StatusBadge(r.availability.state, Modifier.padding(top = ZairenkaiSpacing.xs))
         }
     }
@@ -375,8 +368,8 @@ fun CapabilityItem(r: CapabilityRecord, horizontalPadding: androidx.compose.ui.u
 fun UnavailableCard(record: CapabilityRecord?, detail: String? = null, action: (@Composable () -> Unit)? = null) {
     if (record == null) return
     SectionCard(record.name, emphasis = Emphasis.LOW, trailing = { StatusBadge(record.availability.state) }) {
-        if (record.availability.reason.isNotBlank()) Supporting(record.availability.reason)
-        if (detail != null && detail != record.availability.reason) Supporting(detail)
+        if (record.availability.reason.isNotBlank()) Detail(record.availability.reason)
+        if (detail != null && detail != record.availability.reason) Detail(detail)
         action?.invoke()
     }
 }
@@ -399,8 +392,17 @@ fun ExpandableSection(title: String, initiallyExpanded: Boolean = false, summary
                 .semantics { stateDescription = state },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-            if (summary != null) Text(summary, style = ZairenkaiTextStyles.numeric, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            if (summary != null) {
+                Text(
+                    summary,
+                    style = ZairenkaiTextStyles.numeric,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = ZairenkaiSpacing.s).widthIn(max = 140.dp),
+                )
+            }
             Icon(ZairenkaiIcons.expand, contentDescription = null, modifier = Modifier.padding(start = ZairenkaiSpacing.s).rotate(angle))
         }
         AnimatedVisibility(expanded, enter = expandVertically(ZairenkaiMotion.spatial()) + fadeIn(ZairenkaiMotion.effects()), exit = shrinkVertically(ZairenkaiMotion.spatial()) + fadeOut(ZairenkaiMotion.effects())) {
@@ -426,7 +428,7 @@ fun ProgressRow(label: String) {
         } else {
             LoadingIndicator(Modifier.size(32.dp))
         }
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f, fill = false))
     }
 }
 
@@ -473,7 +475,7 @@ fun ActionTile(icon: ImageVector, label: String, value: String, onClick: () -> U
             GlyphBadge(icon)
             Column(Modifier.semantics(mergeDescendants = true) {}) {
                 Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(value, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                FitText(value, MaterialTheme.typography.titleLarge, minFontSize = 14.sp)
             }
         }
     }

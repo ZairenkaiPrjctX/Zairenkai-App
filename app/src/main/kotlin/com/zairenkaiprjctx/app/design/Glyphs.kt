@@ -276,4 +276,69 @@ object ZairenkaiGlyphs {
     val chevron: ImageVector = glyph("chevron") {
         stroke(2f) { moveTo(9.5f, 6f); lineTo(15.5f, 12f); lineTo(9.5f, 18f) }
     }
+
+    /** Leaf: the power saver profile. */
+    val leaf: ImageVector = glyph("leaf") {
+        stroke {
+            moveTo(5f, 19f)
+            curveTo(5f, 10f, 10f, 5f, 19.5f, 4.5f)
+            curveTo(19f, 14f, 14f, 19f, 5f, 19f)
+            close()
+        }
+        stroke { moveTo(5f, 19f); lineTo(13.5f, 10.5f) }
+    }
+
+    /** Lightning bolt: the performance profile. */
+    val bolt: ImageVector = glyph("bolt") {
+        stroke {
+            moveTo(13.5f, 2.8f)
+            lineTo(5.8f, 13.3f)
+            lineTo(11.6f, 13.3f)
+            lineTo(10.5f, 21.2f)
+            lineTo(18.2f, 10.7f)
+            lineTo(12.4f, 10.7f)
+            close()
+        }
+    }
+
+    /** Scales: the balanced profile. */
+    val balance: ImageVector = glyph("balance") {
+        stroke {
+            moveTo(12f, 4f); lineTo(12f, 20f)
+            moveTo(8f, 20f); lineTo(16f, 20f)
+            moveTo(5f, 7f); lineTo(19f, 7f)
+            moveTo(5f, 7f); lineTo(2.8f, 13f)
+            moveTo(5f, 7f); lineTo(7.2f, 13f)
+            moveTo(19f, 7f); lineTo(16.8f, 13f)
+            moveTo(19f, 7f); lineTo(21.2f, 13f)
+        }
+        stroke {
+            moveTo(2.8f, 13f); arcTo(2.2f, 2.2f, 0f, false, false, 7.2f, 13f)
+            moveTo(16.8f, 13f); arcTo(2.2f, 2.2f, 0f, false, false, 21.2f, 13f)
+        }
+    }
+
+    /** Stopwatch: the fast response profile. */
+    val timer: ImageVector = glyph("timer") {
+        stroke { circle(12f, 13.5f, 7.5f) }
+        stroke { moveTo(12f, 13.5f); lineTo(12f, 9.5f); moveTo(9.8f, 3f); lineTo(14.2f, 3f); moveTo(12f, 3f); lineTo(12f, 6f) }
+    }
+
+    /** Loop arrows: the adaptive profile. */
+    val loop: ImageVector = glyph("loop") {
+        stroke {
+            moveTo(19.2f, 10.5f)
+            arcTo(7.4f, 7.4f, 0f, false, false, 5.6f, 8.2f)
+            moveTo(4.8f, 13.5f)
+            arcTo(7.4f, 7.4f, 0f, false, false, 18.4f, 15.8f)
+        }
+        stroke { moveTo(5.2f, 4.4f); lineTo(5.6f, 8.2f); lineTo(9.4f, 7.8f) }
+        stroke { moveTo(18.8f, 19.6f); lineTo(18.4f, 15.8f); lineTo(14.6f, 16.2f) }
+    }
+
+    /** Two sheets: copy to the clipboard. */
+    val copy: ImageVector = glyph("copy") {
+        stroke { roundRect(8.5f, 8.5f, 19.5f, 19.5f, 2.2f) }
+        stroke { moveTo(15.5f, 5.5f); lineTo(15.5f, 5.2f); arcTo(1.8f, 1.8f, 0f, false, false, 13.7f, 3.4f); lineTo(6.2f, 3.4f); arcTo(1.8f, 1.8f, 0f, false, false, 4.4f, 5.2f); lineTo(4.4f, 12.7f); arcTo(1.8f, 1.8f, 0f, false, false, 6.2f, 14.5f); lineTo(6.5f, 14.5f) }
+    }
 }

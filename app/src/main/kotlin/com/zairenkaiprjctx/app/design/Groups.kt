@@ -64,15 +64,36 @@ class SegmentedGroupScope internal constructor() {
     }
 }
 
-/** Small primary-coloured label above a group, announced as a heading. */
+/** The title above a group, with an optional glyph and a short trailing summary, announced as a heading. */
 @Composable
-fun GroupHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = ZairenkaiSpacing.l, top = ZairenkaiSpacing.s, bottom = ZairenkaiSpacing.xs).semantics { heading() },
-    )
+fun GroupHeader(title: String, modifier: Modifier = Modifier, icon: ImageVector? = null, summary: String? = null) {
+    Row(
+        modifier.fillMaxWidth().padding(start = ZairenkaiSpacing.xs, end = ZairenkaiSpacing.xs, top = ZairenkaiSpacing.m, bottom = ZairenkaiSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s),
+    ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        }
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).semantics { heading() },
+        )
+        if (summary != null) {
+            Text(
+                summary,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 160.dp),
+            )
+        }
+    }
 }
 
 /**
@@ -83,12 +104,14 @@ fun GroupHeader(title: String, modifier: Modifier = Modifier) {
 fun SegmentedGroup(
     modifier: Modifier = Modifier,
     title: String? = null,
+    icon: ImageVector? = null,
+    summary: String? = null,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     content: SegmentedGroupScope.() -> Unit,
 ) {
     val rows = SegmentedGroupScope().apply(content).rows
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ZairenkaiShapes.segmentGap)) {
-        if (title != null) GroupHeader(title)
+        if (title != null) GroupHeader(title, icon = icon, summary = summary)
         rows.forEachIndexed { i, row ->
             Surface(
                 color = containerColor,
@@ -126,6 +149,9 @@ fun GlyphBadge(icon: ImageVector, modifier: Modifier = Modifier, emphasized: Boo
 /**
  * One row of a segmented group: optional glyph, headline, supporting text and a trailing slot.
  * With [onClick] the whole row is the touch target and [chevron] marks rows that open a page.
+ * Text never pushes the trailing control off the row: the headline keeps two lines, the
+ * supporting text four, each ending in an ellipsis; an [action] (a button) goes under the text,
+ * where a long label has the full width.
  */
 @Composable
 fun GroupRow(
@@ -137,6 +163,7 @@ fun GroupRow(
     onClick: (() -> Unit)? = null,
     chevron: Boolean = false,
     status: com.zairenkaiprjctx.integration.model.AvailabilityState? = null,
+    action: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val clickable = if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier
@@ -147,14 +174,21 @@ fun GroupRow(
     ) {
         if (icon != null) GlyphBadge(icon, emphasized = emphasized)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(headline, style = MaterialTheme.typography.titleMedium)
+            Text(headline, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             if (!supporting.isNullOrBlank()) {
-                Text(supporting, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    supporting,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 4,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
             }
             // Status sits under the text: a long label must never squeeze the headline.
             if (status != null) StatusBadge(status, Modifier.padding(top = ZairenkaiSpacing.xs))
+            if (action != null) Box(Modifier.padding(top = ZairenkaiSpacing.s)) { action() }
         }
-        if (trailing != null) Box(Modifier.widthIn(max = 168.dp)) { trailing() }
+        if (trailing != null) Box(Modifier.widthIn(max = 120.dp)) { trailing() }
         if (chevron) Icon(ZairenkaiGlyphs.chevron, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

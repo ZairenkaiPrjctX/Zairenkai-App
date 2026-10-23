@@ -4,6 +4,18 @@ package com.zairenkaiprjctx.app.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.zairenkaiprjctx.app.design.ChoiceCard
+import com.zairenkaiprjctx.app.design.Detail
+import com.zairenkaiprjctx.app.design.GroupHeader
+import com.zairenkaiprjctx.app.design.HeroDefaults
+import com.zairenkaiprjctx.app.design.TileGrid
+import com.zairenkaiprjctx.app.design.entrance
+import com.zairenkaiprjctx.app.design.rememberEntrance
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -86,6 +98,15 @@ fun FasProfileName.description(): Int = when (this) {
 fun profileName(wire: String?): String =
     FasProfileName.fromWire(wire)?.let { stringResource(it.title()) } ?: wire ?: stringResource(R.string.not_reported)
 
+/** The glyph of each profile on its card. */
+fun FasProfileName.glyph(): ImageVector = when (this) {
+    FasProfileName.POWER_SAVER -> ZairenkaiGlyphs.leaf
+    FasProfileName.BALANCED -> ZairenkaiGlyphs.balance
+    FasProfileName.PERFORMANCE -> ZairenkaiGlyphs.bolt
+    FasProfileName.FAST_RESPONSE -> ZairenkaiGlyphs.timer
+    FasProfileName.ADAPTIVE -> ZairenkaiGlyphs.loop
+}
+
 @Composable
 fun PerformanceScreen(vm: PerformanceViewModel, snapshot: RegistrySnapshot, padding: PaddingValues, goToRoot: () -> Unit) {
     LaunchedEffect(snapshot.refreshedAtMs) { vm.load() }
@@ -95,22 +116,25 @@ fun PerformanceScreen(vm: PerformanceViewModel, snapshot: RegistrySnapshot, padd
     val tuning by vm.tuning.collectAsStateWithLifecycle()
     val coreReady = health is CoreCall.Ok
     val current = (fas as? FasCall.Ok)?.value
+    val entrance = rememberEntrance()
 
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
-            when (val f = fas) {
-                is FasCall.Ok -> FasHero(f.value)
-                null -> SectionCard(stringResource(R.string.perf_fas)) { ProgressRow(stringResource(R.string.loading)) }
-                else -> UnavailableCard(snapshot.byId("fas.status"), f.describeFailure()) {
-                    if (f is FasCall.NoRoot) OutlinedButton(onClick = goToRoot) { Text(stringResource(R.string.root_settings)) }
+            Box(Modifier.entrance(entrance, 0)) {
+                when (val f = fas) {
+                    is FasCall.Ok -> FasHero(f.value)
+                    null -> SectionCard(stringResource(R.string.perf_fas)) { ProgressRow(stringResource(R.string.loading)) }
+                    else -> UnavailableCard(snapshot.byId("fas.status"), f.describeFailure()) {
+                        if (f is FasCall.NoRoot) OutlinedButton(onClick = goToRoot) { Text(stringResource(R.string.root_settings)) }
+                    }
                 }
             }
         }
-        item { Profiles(vm, coreReady, fasReady = current != null, current) }
-        item { ServiceControls(vm, coreReady, current) }
+        item { Box(Modifier.entrance(entrance, 1)) { Profiles(vm, coreReady, fasReady = current != null, current) } }
+        item { Box(Modifier.entrance(entrance, 2)) { ServiceControls(vm, coreReady, current) } }
         item {
             when (val h = health) {
-                is CoreCall.Ok -> SegmentedGroup(title = stringResource(R.string.perf_core)) {
+                is CoreCall.Ok -> SegmentedGroup(title = stringResource(R.string.perf_core), icon = ZairenkaiGlyphs.tiles, modifier = Modifier.entrance(entrance, 3)) {
                     row {
                         GroupRow(
                             h.value.state,
@@ -123,7 +147,7 @@ fun PerformanceScreen(vm: PerformanceViewModel, snapshot: RegistrySnapshot, padd
                         GroupContent {
                             InfoRow(stringResource(R.string.key_policy), h.value.policyVersion, code = true)
                             InfoRow(stringResource(R.string.key_leases), h.value.leases.toString(), numeric = true)
-                            h.value.reasons.forEach { Supporting("• $it") }
+                            h.value.reasons.forEach { Detail("• $it", maxLines = 2) }
                         }
                     }
                 }
@@ -149,6 +173,8 @@ private fun FasHero(s: FasStatus) {
         overline = stringResource(R.string.perf_fas),
         headline = profileName(s.profile),
         supporting = stringResource(if (s.observeOnly) R.string.fas_observe_only else if (s.running) R.string.fas_running else R.string.fas_stopped),
+        colors = HeroDefaults.tertiary(),
+        decoration = MaterialShapes.SoftBurst,
         trailing = {
             RingGauge(
                 progress = if (fps != null && target != null && target > 0) (fps / target).toFloat() else null,
@@ -163,7 +189,7 @@ private fun FasHero(s: FasStatus) {
         },
     ) {
         // The ring carries the frame rate; this line says where it comes from, or why there is none.
-        Supporting(
+        Detail(
             when {
                 s.telemetryError != null -> stringResource(R.string.fas_telemetry_error, s.telemetryError!!)
                 fps == null -> stringResource(R.string.fas_fps_unavailable)
@@ -188,7 +214,7 @@ private fun FasHero(s: FasStatus) {
                 step.decision.bottleneck?.let { InfoRow(stringResource(R.string.fas_bottleneck), it) }
                 step.thermal?.let { InfoRow(stringResource(R.string.fas_thermal_cap), "${it.levelCap ?: "?"}${if (it.suspended) " · suspended" else ""} · ${it.reason}") }
             }
-            s.errors.forEach { Supporting("• $it") }
+            s.errors.forEach { Detail("• $it", maxLines = 2) }
         }
     }
 }
@@ -200,38 +226,29 @@ private fun FasHero(s: FasStatus) {
  */
 @Composable
 private fun Profiles(vm: PerformanceViewModel, coreReady: Boolean, fasReady: Boolean, current: FasStatus?) {
-    SegmentedGroup(title = stringResource(R.string.controls_profile)) {
-        row {
-            GroupContent {
-                Supporting(
-                    stringResource(
-                        when {
-                            coreReady -> R.string.controls_via_core
-                            fasReady -> R.string.controls_direct
-                            else -> R.string.controls_none
-                        },
-                    ),
-                )
-            }
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+        GroupHeader(stringResource(R.string.controls_profile), icon = ZairenkaiGlyphs.sliders)
+        Detail(
+            stringResource(
+                when {
+                    coreReady -> R.string.controls_via_core
+                    fasReady -> R.string.controls_direct
+                    else -> R.string.controls_none
+                },
+            ),
+            modifier = Modifier.padding(horizontal = ZairenkaiSpacing.xs),
+        )
         if (coreReady || fasReady) {
-            FasProfileName.entries.forEach { p ->
-                row {
-                    val isCurrent = current?.profile == p.wire
-                    GroupRow(
-                        headline = stringResource(p.title()) + if (p.experimental) " · " + stringResource(R.string.experimental) else "",
-                        supporting = stringResource(p.description()),
-                        icon = ZairenkaiGlyphs.sliders,
-                        emphasized = isCurrent,
-                        onClick = { if (coreReady) vm.preview(CoreOperation.FasSetProfile(p)) else vm.setProfileDirect(p) },
-                        modifier = Modifier.semantics { selected = isCurrent; role = Role.RadioButton },
-                        trailing = if (isCurrent) {
-                            { Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                        } else {
-                            null
-                        },
-                    )
-                }
+            TileGrid(FasProfileName.entries, Modifier.selectableGroup()) { p, m ->
+                ChoiceCard(
+                    icon = p.glyph(),
+                    title = stringResource(p.title()),
+                    body = stringResource(p.description()),
+                    selected = current?.profile == p.wire,
+                    onClick = { if (coreReady) vm.preview(CoreOperation.FasSetProfile(p)) else vm.setProfileDirect(p) },
+                    modifier = m,
+                    tag = if (p.experimental) stringResource(R.string.experimental) else null,
+                )
             }
         }
     }
@@ -244,7 +261,7 @@ private fun Profiles(vm: PerformanceViewModel, coreReady: Boolean, fasReady: Boo
 @Composable
 private fun ServiceControls(vm: PerformanceViewModel, coreReady: Boolean, current: FasStatus?) {
     if (!coreReady && current == null) return
-    SegmentedGroup(title = stringResource(R.string.controls)) {
+    SegmentedGroup(title = stringResource(R.string.controls), icon = ZairenkaiGlyphs.gauge) {
         row {
             val enabled = current?.enabled
             GroupRow(
@@ -302,48 +319,46 @@ private fun TuningSection(result: CoreCall<TuningTelemetry>?, snapshot: Registry
         null -> SectionCard(stringResource(R.string.tuning_title)) { ProgressRow(stringResource(R.string.loading)) }
         is CoreCall.Ok -> {
             val t = result.value
-            SegmentedGroup(title = stringResource(R.string.tuning_title)) {
-                row { ReadingRow(stringResource(R.string.tuning_cpu), t.cpu.load, percent = true) }
-                row {
-                    val used = t.memory.used.long
-                    val total = t.memory.total.long
-                    GroupContent {
-                        Text(stringResource(R.string.tuning_memory), style = MaterialTheme.typography.titleSmall)
-                        if (used != null && total != null && total > 0) {
-                            Meter(used.toFloat() / total)
-                            Supporting(stringResource(R.string.tuning_memory_value, gib(used), gib(total)))
-                        } else {
-                            Supporting(readingProblem(t.memory.used))
-                        }
+            Column(verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+                GroupHeader(stringResource(R.string.tuning_title), icon = ZairenkaiGlyphs.pulse)
+                TileGrid(listOf(0, 1)) { i, m ->
+                    if (i == 0) {
+                        val v = t.cpu.load.number
+                        MetricTile(
+                            stringResource(R.string.tuning_cpu),
+                            v?.let { "%.0f %%".format(it) } ?: "—",
+                            if (v == null) readingProblem(t.cpu.load) else null,
+                            m,
+                            meter = v?.let { (it / 100).toFloat() },
+                        )
+                    } else {
+                        val used = t.memory.used.long
+                        val total = t.memory.total.long
+                        val known = used != null && total != null && total > 0
+                        MetricTile(
+                            stringResource(R.string.tuning_memory),
+                            if (known) gib(used!!) else "—",
+                            if (known) stringResource(R.string.tuning_memory_of, gib(total!!)) else readingProblem(t.memory.used),
+                            m,
+                            meter = if (known) used!!.toFloat() / total!! else null,
+                        )
                     }
                 }
-                row {
-                    GroupContent {
-                        InfoRow(stringResource(R.string.tuning_gpu_governor), t.gpu.governor.text ?: readingProblem(t.gpu.governor))
-                        InfoRow(stringResource(R.string.tuning_gpu_freq), t.gpu.curFreq.long?.let { "${it / 1_000_000} MHz" } ?: readingProblem(t.gpu.curFreq), numeric = true)
-                        t.storage.firstOrNull()?.let { InfoRow(stringResource(R.string.tuning_io, it.device), it.scheduler.text ?: readingProblem(it.scheduler), code = true) }
-                        InfoRow(stringResource(R.string.tuning_soc), t.soc.family)
-                        Supporting(stringResource(R.string.tuning_source, t.component.version))
+                SegmentedGroup {
+                    row {
+                        GroupContent {
+                            InfoRow(stringResource(R.string.tuning_gpu_governor), t.gpu.governor.text ?: readingProblem(t.gpu.governor))
+                            InfoRow(stringResource(R.string.tuning_gpu_freq), t.gpu.curFreq.long?.let { "${it / 1_000_000} MHz" } ?: readingProblem(t.gpu.curFreq), numeric = true)
+                            t.storage.firstOrNull()?.let { InfoRow(stringResource(R.string.tuning_io, it.device), it.scheduler.text ?: readingProblem(it.scheduler), code = true) }
+                            InfoRow(stringResource(R.string.tuning_soc), t.soc.family)
+                            Detail(stringResource(R.string.tuning_source, t.component.version))
+                        }
                     }
                 }
             }
         }
         is CoreCall.Error -> UnavailableCard(record, if (result.tuningNotInstalled) stringResource(R.string.tuning_not_installed) else result.describeFailure())
         else -> UnavailableCard(record, result.describeFailure())
-    }
-}
-
-@Composable
-private fun ReadingRow(label: String, r: TuningReading, percent: Boolean) {
-    GroupContent {
-        Text(label, style = MaterialTheme.typography.titleSmall)
-        val v = r.number
-        if (v != null) {
-            if (percent) Meter((v / 100).toFloat())
-            Supporting(if (percent) "%.0f %%".format(v) else "%.1f".format(v))
-        } else {
-            Supporting(readingProblem(r))
-        }
     }
 }
 
@@ -374,8 +389,8 @@ private fun ActionDialog(state: ActionState, vm: PerformanceViewModel) {
                 body = {
                     Column(verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
                         Text(stringResource(R.string.dry_run_result, state.result.outcome, d?.verdict ?: "—"))
-                        d?.rules?.forEach { Supporting("${it.verdict.uppercase()} · ${it.rule}: ${it.explanation}") }
-                        if (state.result.message.isNotBlank()) Supporting(state.result.message)
+                        d?.rules?.forEach { Detail("${it.verdict.uppercase()} · ${it.rule}: ${it.explanation}") }
+                        if (state.result.message.isNotBlank()) Detail(state.result.message)
                         if (!allowed) Text(stringResource(R.string.dry_run_refused), color = MaterialTheme.colorScheme.error)
                     }
                 },

@@ -4,6 +4,21 @@ package com.zairenkaiprjctx.app.ui
 
 import android.os.PowerManager
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.zairenkaiprjctx.app.design.Detail
+import com.zairenkaiprjctx.app.design.TileGrid
+import com.zairenkaiprjctx.app.design.InfoChip
+import com.zairenkaiprjctx.app.design.ShapeBadge
+import com.zairenkaiprjctx.app.design.StatTile
+import com.zairenkaiprjctx.app.design.TileDefaults
+import com.zairenkaiprjctx.app.design.entrance
+import com.zairenkaiprjctx.app.design.rememberEntrance
+import com.zairenkaiprjctx.app.design.visual
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,7 +38,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.AppContainer
 import com.zairenkaiprjctx.app.R
 import com.zairenkaiprjctx.app.Tab
-import com.zairenkaiprjctx.app.design.ActionTile
 import com.zairenkaiprjctx.app.design.CapabilityItem
 import com.zairenkaiprjctx.app.design.ExpandableSection
 import com.zairenkaiprjctx.app.design.GroupContent
@@ -84,7 +98,7 @@ fun CapabilityRecord.group(): CapabilityGroup = when {
     else -> CapabilityGroup.ATTENTION
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(c: AppContainer, main: MainViewModel, modules: SystemModuleViewModel, padding: PaddingValues, openModule: () -> Unit, open: (Tab) -> Unit) {
     val snapshot by main.registry.collectAsStateWithLifecycle()
@@ -102,51 +116,74 @@ fun HomeScreen(c: AppContainer, main: MainViewModel, modules: SystemModuleViewMo
     val settled = baseState?.phase in setOf(InstallPhase.ACTIVE, InstallPhase.INSTALL_PENDING_REBOOT, InstallPhase.INSTALLED_NOT_INITIALIZED, InstallPhase.DEGRADED)
     val moduleOffer = base != null && !declined && !settled && (root == RootState.GRANTED || modules.managerAppHint != null)
     val steps = nextSteps(records, root, thermal)
+    // Android reports "unknown" when the SoC fields are not set; that is not a name to show.
+    val soc = listOfNotNull(p.socManufacturer, p.socModel).filter { it.isNotBlank() && it != android.os.Build.UNKNOWN }.joinToString(" ").ifBlank { null }
+    val entrance = rememberEntrance()
 
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
             HeroPanel(
                 overline = stringResource(R.string.home_device),
                 headline = "${p.manufacturer} ${p.model}".trim(),
-                supporting = stringResource(R.string.android_version, p.androidRelease, p.sdkInt),
+                supporting = null,
+                modifier = Modifier.entrance(entrance, 0),
                 trailing = {
                     RingGauge(
                         progress = if (records.isEmpty()) null else ready.toFloat() / records.size,
                         value = if (records.isEmpty()) "…" else "$ready",
                         caption = if (records.isEmpty()) null else pluralStringResource(R.plurals.home_ring_caption, records.size, records.size),
                         label = if (records.isEmpty()) stringResource(R.string.home_health_probing) else pluralStringResource(R.plurals.home_ready_summary, records.size, ready, records.size),
+                        size = 112.dp,
                     )
                 },
             ) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                    InfoChip(stringResource(R.string.home_chip_android, p.androidRelease, p.sdkInt), icon = ZairenkaiGlyphs.phone)
+                    soc?.let { InfoChip(it, icon = ZairenkaiGlyphs.chip) }
+                    p.supportedAbis.firstOrNull()?.let { InfoChip(it, icon = ZairenkaiGlyphs.nodes) }
+                }
                 ExpandableSection(stringResource(R.string.home_device_details)) {
                     InfoRow(stringResource(R.string.key_codename), p.deviceCodename, code = true)
-                    InfoRow(stringResource(R.string.key_soc), listOfNotNull(p.socManufacturer, p.socModel).joinToString(" ").ifBlank { null })
+                    InfoRow(stringResource(R.string.key_soc), soc)
                     InfoRow(stringResource(R.string.key_abis), p.supportedAbis.joinToString(", "))
-                    Supporting(stringResource(R.string.home_device_source))
+                    Detail(stringResource(R.string.home_device_source))
                 }
             }
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
-                ActionTile(ZairenkaiGlyphs.thermometer, stringResource(R.string.home_tile_thermal), thermalStatusLabel(thermal), { open(Tab.THERMAL) }, Modifier.weight(1f))
-                ActionTile(ZairenkaiGlyphs.shield, stringResource(R.string.root_access), rootStateLabel(root), { open(Tab.SYSTEM) }, Modifier.weight(1f))
+            val pending = stringResource(R.string.loading)
+            val stateOf = @Composable { id: String -> snapshot.byId(id)?.availability?.state?.let { stringResource(it.visual().label) } ?: pending }
+            Column(Modifier.entrance(entrance, 1)) {
+                TileGrid(listOf(0, 1, 2, 3)) { i, m ->
+                    when (i) {
+                        0 -> StatTile(ZairenkaiGlyphs.thermometer, stringResource(R.string.home_tile_thermal), thermalStatusLabel(thermal), { open(Tab.THERMAL) }, m, TileDefaults.tertiary(), MaterialShapes.Sunny)
+                        1 -> StatTile(ZairenkaiGlyphs.shield, stringResource(R.string.root_access), rootStateLabel(root), { open(Tab.SYSTEM) }, m, TileDefaults.primary(), MaterialShapes.Cookie9Sided)
+                        2 -> StatTile(ZairenkaiGlyphs.gauge, stringResource(R.string.home_tile_fas), stateOf("fas.status"), { open(Tab.PERFORMANCE) }, m, TileDefaults.secondary(), MaterialShapes.Clover4Leaf)
+                        else -> StatTile(ZairenkaiGlyphs.tiles, stringResource(R.string.home_tile_core), stateOf("core.health"), { open(Tab.PERFORMANCE) }, m, TileDefaults.neutral(), MaterialShapes.Cookie6Sided)
+                    }
+                }
             }
         }
         if (moduleOffer || steps.isNotEmpty()) {
             item {
-                SegmentedGroup(title = stringResource(R.string.home_suggested)) {
+                SegmentedGroup(title = stringResource(R.string.home_suggested), icon = ZairenkaiGlyphs.spark, modifier = Modifier.entrance(entrance, 2)) {
                     if (moduleOffer) {
                         row {
                             GroupContent {
-                                val rootFeatures = records.filter { it.privilege == Privilege.ROOT && !it.id.startsWith("systemmodule.") }
-                                Text(stringResource(R.string.module_offer_title), style = MaterialTheme.typography.titleMedium)
-                                if (baseState?.phase == InstallPhase.MODULE_AVAILABLE) {
-                                    Supporting(stringResource(R.string.module_offer_body, baseState.manager?.family?.displayName ?: "", base.features.joinToString { snapshot.byId(it)?.name ?: it }))
-                                } else {
-                                    modules.managerAppHint?.let { Supporting(stringResource(R.string.module_offer_manager_hint, it)) }
-                                    Supporting(stringResource(R.string.module_offer_features, rootFeatures.joinToString { it.name }))
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+                                    ShapeBadge(ZairenkaiGlyphs.box, MaterialShapes.Cookie9Sided, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
+                                    Text(stringResource(R.string.module_offer_title), style = MaterialTheme.typography.titleMedium, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                                 }
-                                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                                val features = if (baseState?.phase == InstallPhase.MODULE_AVAILABLE) {
+                                    Detail(stringResource(R.string.module_offer_body, baseState.manager?.family?.displayName ?: "", base.features.joinToString { snapshot.byId(it)?.name ?: it }))
+                                    emptyList()
+                                } else {
+                                    modules.managerAppHint?.let { Detail(stringResource(R.string.module_offer_manager_hint, it)) }
+                                    Detail(stringResource(R.string.module_offer_intro))
+                                    records.filter { it.privilege == Privilege.ROOT && !it.id.startsWith("systemmodule.") }.map { it.name }
+                                }
+                                if (features.isNotEmpty()) FeatureChips(features)
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
                                     Button(onClick = openModule) {
                                         Text(stringResource(if (baseState?.phase == InstallPhase.MODULE_AVAILABLE) R.string.module_offer_review else R.string.module_offer_setup))
                                     }
@@ -165,7 +202,7 @@ fun HomeScreen(c: AppContainer, main: MainViewModel, modules: SystemModuleViewMo
                                         supporting = pluralStringResource(R.plurals.home_step_root_body, waiting.size, waiting.size, waiting.take(3).joinToString { it.name }),
                                         icon = ZairenkaiGlyphs.shield,
                                         emphasized = true,
-                                        trailing = { FilledTonalButton(onClick = main::requestRoot) { Text(stringResource(R.string.home_step_root_action)) } },
+                                        action = { FilledTonalButton(onClick = main::requestRoot) { Text(stringResource(R.string.home_step_root_action)) } },
                                     )
                                 }
                                 NextStep.COOL_DOWN -> GroupRow(
@@ -183,7 +220,12 @@ fun HomeScreen(c: AppContainer, main: MainViewModel, modules: SystemModuleViewMo
             }
         }
         item {
-            SegmentedGroup(title = stringResource(R.string.home_health)) {
+            SegmentedGroup(
+                title = stringResource(R.string.home_health),
+                icon = ZairenkaiGlyphs.pulse,
+                summary = if (records.isEmpty()) null else "$ready / ${records.size}",
+                modifier = Modifier.entrance(entrance, 3),
+            ) {
                 if (records.isEmpty()) {
                     row { GroupContent { ProgressRow(stringResource(R.string.home_health_probing)) } }
                 }
@@ -203,20 +245,31 @@ fun HomeScreen(c: AppContainer, main: MainViewModel, modules: SystemModuleViewMo
                                     ),
                                     initiallyExpanded = g == CapabilityGroup.ATTENTION,
                                     summary = list.size.toString(),
-                                ) { list.forEach { CapabilityItem(it, horizontalPadding = ZairenkaiSpacing.xs) } }
+                                ) { list.forEach { CapabilityItem(it, horizontalPadding = 0.dp) } }
                             }
                         }
                     }
                 }
             }
         }
-        item { DeviceDbMatch(c, afid) }
+        item { DeviceDbMatch(c, afid, Modifier.entrance(entrance, 4)) }
+    }
+}
+
+/** Names as one-line chips; past [max], the rest is counted. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun FeatureChips(names: List<String>, max: Int = 6) {
+    Text(stringResource(R.string.module_offer_unlocks), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+        names.take(max).forEach { InfoChip(it, color = MaterialTheme.colorScheme.secondaryContainer) }
+        if (names.size > max) InfoChip(pluralStringResource(R.plurals.chips_more, names.size - max, names.size - max))
     }
 }
 
 @Composable
-private fun DeviceDbMatch(c: AppContainer, afid: Result<AfidCatalog>?) {
-    SegmentedGroup(title = stringResource(R.string.home_afid)) {
+private fun DeviceDbMatch(c: AppContainer, afid: Result<AfidCatalog>?, modifier: Modifier = Modifier) {
+    SegmentedGroup(title = stringResource(R.string.home_afid), icon = ZairenkaiGlyphs.database, modifier = modifier) {
         row {
             GroupContent {
                 if (afid == null) {
@@ -225,7 +278,7 @@ private fun DeviceDbMatch(c: AppContainer, afid: Result<AfidCatalog>?) {
                 }
                 val catalog = afid.getOrNull()
                 if (catalog == null) {
-                    Supporting(stringResource(R.string.home_afid_missing, afid.exceptionOrNull()?.message ?: ""))
+                    Detail(stringResource(R.string.home_afid_missing, afid.exceptionOrNull()?.message ?: ""))
                     return@GroupContent
                 }
                 val matches = catalog.lookup(c.platform.deviceCodename)
@@ -235,8 +288,8 @@ private fun DeviceDbMatch(c: AppContainer, afid: Result<AfidCatalog>?) {
                     matches.forEach { DeviceCard(it) }
                 }
                 ExpandableSection(stringResource(R.string.home_afid_source)) {
-                    Supporting(stringResource(R.string.home_afid_unverified, catalog.generatedFrom.commit.take(12)))
-                    Supporting(catalog.license.attribution)
+                    Detail(stringResource(R.string.home_afid_unverified, catalog.generatedFrom.commit.take(12)))
+                    Detail(catalog.license.attribution)
                 }
             }
         }
@@ -245,7 +298,7 @@ private fun DeviceDbMatch(c: AppContainer, afid: Result<AfidCatalog>?) {
 
 @Composable
 fun DeviceCard(d: AfidDevice) {
-    Text(d.productNames.joinToString(" / ").ifBlank { d.codename }, style = MaterialTheme.typography.titleSmall, modifier = Modifier)
+    Text(d.productNames.joinToString(" / ").ifBlank { d.codename }, style = MaterialTheme.typography.titleSmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
     InfoRow(stringResource(R.string.key_codename), d.codename, code = true)
     InfoRow(stringResource(R.string.key_brand_inferred), d.brandId)
     InfoRow(stringResource(R.string.key_soc), listOfNotNull(d.soc.platform, d.soc.architecture).joinToString(" · ").ifBlank { null })

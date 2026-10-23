@@ -197,7 +197,7 @@ private fun App(c: AppContainer) {
                 topBar = {
                     Column {
                         MediumFlexibleTopAppBar(
-                            title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            title = { BarTitle(title) },
                             subtitle = subtitle?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
                             navigationIcon = {
                                 if (showOverlay) {
@@ -268,6 +268,19 @@ private fun App(c: AppContainer) {
             }
         }
     }
+}
+
+/** The app-bar title on one line, shrinking toward 18 sp before a long name ends in an ellipsis. */
+@Composable
+private fun BarTitle(text: String) {
+    val style = LocalTextStyle.current
+    Text(
+        text,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = style.fontSize, stepSize = 1.sp),
+    )
 }
 
 /**

@@ -4,6 +4,18 @@ package com.zairenkaiprjctx.app.ui.ai
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
+import com.zairenkaiprjctx.app.design.Detail
+import com.zairenkaiprjctx.app.design.GroupHeader
+import com.zairenkaiprjctx.app.design.ShapeBadge
+import com.zairenkaiprjctx.app.design.TileGrid
+import com.zairenkaiprjctx.app.design.entrance
+import com.zairenkaiprjctx.app.design.rememberEntrance
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,11 +81,11 @@ import com.zairenkaiprjctx.integration.registry.RegistrySnapshot
 const val AI_CAPABILITY = "intelligence.analysis"
 
 /** Questions the user can tap; until a model runs on the device each opens the screen with the answer. */
-enum class AiPrompt(@StringRes val text: Int, val opens: Tab) {
-    HOT(R.string.ai_prompt_hot, Tab.THERMAL),
-    PROFILE(R.string.ai_prompt_profile, Tab.PERFORMANCE),
-    CONTROL(R.string.ai_prompt_control, Tab.HOME),
-    ROOT(R.string.ai_prompt_root, Tab.SYSTEM),
+enum class AiPrompt(@StringRes val text: Int, val opens: Tab, val icon: ImageVector) {
+    HOT(R.string.ai_prompt_hot, Tab.THERMAL, ZairenkaiGlyphs.thermometer),
+    PROFILE(R.string.ai_prompt_profile, Tab.PERFORMANCE, ZairenkaiGlyphs.sliders),
+    CONTROL(R.string.ai_prompt_control, Tab.HOME, ZairenkaiGlyphs.tiles),
+    ROOT(R.string.ai_prompt_root, Tab.SYSTEM, ZairenkaiGlyphs.shield),
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -86,29 +98,23 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
     val dir = LocalLayoutDirection.current
     val start = padding.calculateStartPadding(dir)
     val end = padding.calculateEndPadding(dir)
+    val entrance = rememberEntrance()
     Column(Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(start = start, end = end, top = padding.calculateTopPadding(), bottom = ZairenkaiSpacing.l),
             verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
         ) {
-            item { AiIntro(record?.availability?.state) }
-            item { HowItWorks() }
-            item { ModelStatus(record?.availability?.reason) }
+            item { Box(Modifier.entrance(entrance, 0)) { AiIntro(record?.availability?.state) } }
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                    Text(
-                        stringResource(R.string.ai_try),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = ZairenkaiSpacing.l).semantics { heading() },
-                    )
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
-                        AiPrompt.entries.forEach { p -> PromptChip(stringResource(p.text)) { open(p.opens) } }
-                    }
-                    Supporting(stringResource(if (ready) R.string.ai_try_note_ready else R.string.ai_try_note))
+                Column(Modifier.entrance(entrance, 1), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+                    GroupHeader(stringResource(R.string.ai_try), icon = ZairenkaiGlyphs.spark)
+                    TileGrid(AiPrompt.entries) { p, m -> PromptCard(p, m) { open(p.opens) } }
+                    Detail(stringResource(if (ready) R.string.ai_try_note_ready else R.string.ai_try_note), Modifier.padding(horizontal = ZairenkaiSpacing.xs))
                 }
             }
+            item { Box(Modifier.entrance(entrance, 2)) { HowItWorks() } }
+            item { Box(Modifier.entrance(entrance, 3)) { ModelStatus(record?.availability?.reason) } }
             items(turns, key = { it.id }) { t -> AiTurnView(t, onDecide = vm::decide) }
         }
         AiComposer(
@@ -120,17 +126,21 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
 
 @Composable
 private fun AiIntro(state: AvailabilityState?) {
+    val cs = MaterialTheme.colorScheme
     Column(
         Modifier.fillMaxWidth().padding(top = ZairenkaiSpacing.s),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
     ) {
-        // The mark stays still: it moves only while a model is actually working.
-        AiOrb(size = 88.dp, active = false)
+        Box(contentAlignment = Alignment.Center) {
+            // A soft halo behind the mark; the mark stays still until a model is actually working.
+            Box(Modifier.size(196.dp).background(Brush.radialGradient(listOf(cs.primary.copy(alpha = 0.24f), cs.primary.copy(alpha = 0.06f), Color.Transparent))))
+            AiOrb(size = 112.dp, active = false)
+        }
         Text(
             stringResource(R.string.ai_tagline),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.titleMedium,
+            color = cs.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier.widthIn(max = 420.dp),
         )
@@ -138,9 +148,22 @@ private fun AiIntro(state: AvailabilityState?) {
     }
 }
 
+/** A suggested question as a card: glyph and question; it opens the screen that answers it today. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun PromptCard(prompt: AiPrompt, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    Surface(onClick = onClick, color = cs.surfaceContainerHigh, shape = ZairenkaiShapes.metric, modifier = modifier) {
+        Column(Modifier.padding(ZairenkaiSpacing.l), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+            ShapeBadge(prompt.icon, MaterialShapes.Cookie6Sided, cs.secondaryContainer, cs.onSecondaryContainer, size = 40.dp)
+            Text(stringResource(prompt.text), style = MaterialTheme.typography.bodyLarge, maxLines = 4, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
 @Composable
 private fun HowItWorks() {
-    SegmentedGroup(title = stringResource(R.string.ai_how)) {
+    SegmentedGroup(title = stringResource(R.string.ai_how), icon = ZairenkaiGlyphs.lock) {
         row { GroupRow(stringResource(R.string.ai_how_device), supporting = stringResource(R.string.ai_how_device_body), icon = ZairenkaiGlyphs.lock) }
         row { GroupRow(stringResource(R.string.ai_how_tools), supporting = stringResource(R.string.ai_how_tools_body), icon = ZairenkaiGlyphs.tool) }
         row { GroupRow(stringResource(R.string.ai_how_approve), supporting = stringResource(R.string.ai_how_approve_body), icon = ZairenkaiGlyphs.approve) }
@@ -149,7 +172,7 @@ private fun HowItWorks() {
 
 @Composable
 private fun ModelStatus(reason: String?) {
-    SegmentedGroup(title = stringResource(R.string.ai_model)) {
+    SegmentedGroup(title = stringResource(R.string.ai_model), icon = ZairenkaiGlyphs.chip) {
         row {
             GroupRow(
                 stringResource(R.string.ai_model_name),
@@ -160,19 +183,9 @@ private fun ModelStatus(reason: String?) {
         }
         // The registry's own reason, for whoever wants the engineering detail.
         if (!reason.isNullOrBlank()) {
-            row { GroupContent { ExpandableSection(stringResource(R.string.ai_why)) { Supporting(reason) } } }
+            row { GroupContent { ExpandableSection(stringResource(R.string.ai_why)) { Detail(reason, maxLines = 6) } } }
         }
     }
-}
-
-@Composable
-fun PromptChip(text: String, onClick: () -> Unit) {
-    SuggestionChip(
-        onClick = onClick,
-        label = { Text(text, style = MaterialTheme.typography.labelLarge) },
-        icon = { Icon(ZairenkaiGlyphs.spark, contentDescription = null, modifier = Modifier.size(18.dp)) },
-        shape = ZairenkaiShapes.pill,
-    )
 }
 
 /** Message field and send button, pinned above the navigation bar. */
@@ -243,17 +256,17 @@ fun ToolCallCard(turn: AiTurn.Tool) {
         Column(Modifier.padding(ZairenkaiSpacing.l), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
                 Icon(ZairenkaiGlyphs.tool, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                Text(stringResource(R.string.ai_tool_request), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-                Text(stringResource(turn.status.label()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.ai_tool_request), style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text(stringResource(turn.status.label()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Text(turn.name, style = ZairenkaiTextStyles.code)
+            Text(turn.name, style = ZairenkaiTextStyles.code, maxLines = 2, overflow = TextOverflow.Ellipsis)
             turn.arguments.forEach { (k, v) -> InfoRow(k, v, code = true) }
         }
     }
 }
 
 /** A device change proposed by the model: Core's decision first, then the user's explicit answer. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun ApprovalCard(turn: AiTurn.Approval, onDecide: (String, Boolean) -> Unit) {
     val cs = MaterialTheme.colorScheme
@@ -271,9 +284,9 @@ fun ApprovalCard(turn: AiTurn.Approval, onDecide: (String, Boolean) -> Unit) {
             Text(turn.title, style = MaterialTheme.typography.titleMedium)
             Text(turn.summary, style = MaterialTheme.typography.bodyMedium)
             InfoRow(stringResource(R.string.ai_approval_core), turn.coreVerdict ?: stringResource(R.string.not_reported))
-            turn.rules.forEach { Supporting("• $it") }
+            turn.rules.forEach { Detail("• $it", maxLines = 2) }
             when (turn.state) {
-                ApprovalState.PENDING -> Row(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                ApprovalState.PENDING -> FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
                     // Core's dry run must allow the change before the user can approve it.
                     Button(onClick = { onDecide(turn.id, true) }, enabled = turn.coreVerdict == "allow") { Text(stringResource(R.string.ai_approve)) }
                     OutlinedButton(onClick = { onDecide(turn.id, false) }) { Text(stringResource(R.string.ai_reject)) }

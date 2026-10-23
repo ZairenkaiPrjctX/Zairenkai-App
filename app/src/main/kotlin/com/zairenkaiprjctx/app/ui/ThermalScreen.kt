@@ -3,6 +3,27 @@
 package com.zairenkaiprjctx.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.zairenkaiprjctx.app.design.Detail
+import com.zairenkaiprjctx.app.design.GroupHeader
+import com.zairenkaiprjctx.app.design.HeroDefaults
+import com.zairenkaiprjctx.app.design.InfoChip
+import com.zairenkaiprjctx.app.design.LocalStatusColors
+import com.zairenkaiprjctx.app.design.MetricTile
+import com.zairenkaiprjctx.app.design.ZairenkaiTextStyles
+import androidx.compose.material3.MaterialTheme
+import com.zairenkaiprjctx.app.design.StatusTone
+import com.zairenkaiprjctx.app.design.TileGrid
+import com.zairenkaiprjctx.app.design.ZairenkaiStatusColors
+import com.zairenkaiprjctx.app.design.entrance
+import com.zairenkaiprjctx.app.design.rememberEntrance
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.R
@@ -40,6 +62,7 @@ import com.zairenkaiprjctx.integration.fas.FasCall
 import com.zairenkaiprjctx.integration.registry.RegistrySnapshot
 import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsResult
 
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ThermalScreen(vm: ThermalViewModel, perf: PerformanceViewModel, snapshot: RegistrySnapshot, padding: PaddingValues) {
     DisposableEffect(Unit) {
@@ -52,14 +75,19 @@ fun ThermalScreen(vm: ThermalViewModel, perf: PerformanceViewModel, snapshot: Re
     val headroom = snapshot.byId("android.thermal_headroom")
     val statusRecord = snapshot.byId("android.thermal_status")
 
+    val entrance = rememberEntrance()
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
             val usable = headroom?.availability?.usable == true
             val h = sample?.headroom
+            val status = LocalStatusColors.current
             HeroPanel(
                 overline = stringResource(R.string.thermal_android),
                 headline = thermalStatusLabel(sample?.status),
                 supporting = statusRecord?.availability?.state?.let { stringResource(it.visual().label) },
+                modifier = Modifier.entrance(entrance, 0),
+                colors = HeroDefaults.status(thermalTone(sample?.status, status)),
+                decoration = MaterialShapes.Sunny,
                 trailing = {
                     if (usable) {
                         // Headroom 1.0 is where Android expects severe throttling: the ring fills toward it.
@@ -70,42 +98,40 @@ fun ThermalScreen(vm: ThermalViewModel, perf: PerformanceViewModel, snapshot: Re
                             label = h?.let { stringResource(R.string.thermal_headroom_label, "%.2f".format(it)) } ?: stringResource(R.string.thermal_headroom),
                         )
                     } else {
-                        statusRecord?.availability?.state?.let { StatusGlyph(it) }
+                        statusRecord?.availability?.state?.let { StatusGlyph(it, size = 72.dp) }
                     }
                 },
             ) {
-                InfoRow(stringResource(R.string.battery_saver), stringResource(if (sample?.powerSave == true) R.string.on else R.string.off))
-                if (usable) Supporting(stringResource(R.string.thermal_headroom_note)) else headroom?.let { Supporting(it.availability.reason) }
-                Supporting(stringResource(R.string.thermal_android_source))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                    InfoChip(
+                        stringResource(R.string.thermal_chip_saver, stringResource(if (sample?.powerSave == true) R.string.on else R.string.off)),
+                        icon = ZairenkaiGlyphs.battery,
+                    )
+                }
+                if (usable) Detail(stringResource(R.string.thermal_headroom_note)) else headroom?.let { Detail(it.availability.reason) }
+                Detail(stringResource(R.string.thermal_android_source), maxLines = 2)
             }
         }
         item {
-            when (val t = core) {
-                is CoreCall.Ok -> SegmentedGroup(title = stringResource(R.string.thermal_core)) {
-                    row {
-                        GroupContent {
-                            CORE_FIELDS.forEach { (key, label) ->
-                                t.value.reading(key)?.let { f ->
-                                    InfoRow(stringResource(label), telemetryText(f), numeric = true)
-                                    (f.reading as? TelemetryReading.Level)?.let { Meter(it.percent / 100f) }
-                                }
-                            }
-                        }
-                    }
-                    row {
-                        GroupContent {
-                            Supporting(stringResource(R.string.thermal_core_source))
+            Box(Modifier.entrance(entrance, 1)) {
+                when (val t = core) {
+                    is CoreCall.Ok -> Column(verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+                        GroupHeader(stringResource(R.string.thermal_core), icon = ZairenkaiGlyphs.tiles)
+                        val fields = CORE_FIELDS.mapNotNull { (key, label) -> t.value.reading(key)?.let { label to it } }
+                        TileGrid(fields) { (label, f), m -> ReadingTile(label, f, m) }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Detail(stringResource(R.string.thermal_core_source), Modifier.weight(1f), maxLines = 2)
                             TextButton(onClick = vm::reloadCore) { Text(stringResource(R.string.action_refresh)) }
                         }
                     }
+                    null -> SectionCard(stringResource(R.string.thermal_core)) { ProgressRow(stringResource(R.string.loading)) }
+                    else -> UnavailableCard(snapshot.byId("core.health"), t.describeFailure())
                 }
-                null -> SectionCard(stringResource(R.string.thermal_core)) { ProgressRow(stringResource(R.string.loading)) }
-                else -> UnavailableCard(snapshot.byId("core.health"), t.describeFailure())
             }
         }
         item {
             val step = (fas as? FasCall.Ok)?.value?.step
-            SegmentedGroup(title = stringResource(R.string.thermal_fas_cap)) {
+            SegmentedGroup(title = stringResource(R.string.thermal_fas_cap), icon = ZairenkaiGlyphs.gauge, modifier = Modifier.entrance(entrance, 2)) {
                 row {
                     GroupContent {
                         val th = step?.thermal
@@ -114,15 +140,39 @@ fun ThermalScreen(vm: ThermalViewModel, perf: PerformanceViewModel, snapshot: Re
                             InfoRow(stringResource(R.string.key_boost_suspended), stringResource(if (th.suspended) R.string.on else R.string.off))
                             InfoRow(stringResource(R.string.key_reason), th.reason)
                         } else {
-                            Supporting(snapshot.byId("fas.status")?.availability?.reason?.takeIf { it.isNotBlank() } ?: stringResource(R.string.thermal_fas_hint))
+                            Detail(snapshot.byId("fas.status")?.availability?.reason?.takeIf { it.isNotBlank() } ?: stringResource(R.string.thermal_fas_hint))
                         }
                     }
                 }
             }
         }
-        item { ThermalToolsCard(vm, snapshot) }
-        item { UnavailableCard(snapshot.byId("thermaltools.control")) }
+        item { Box(Modifier.entrance(entrance, 3)) { ThermalToolsCard(vm, snapshot) } }
+        item { Box(Modifier.entrance(entrance, 4)) { UnavailableCard(snapshot.byId("thermaltools.control")) } }
     }
+}
+
+/** The tone of the thermal hero: calm up to light throttling, warning at moderate, error from severe. */
+fun thermalTone(status: Int?, colors: ZairenkaiStatusColors): StatusTone = when {
+    status == null || status < 0 -> colors.unavailable
+    status <= android.os.PowerManager.THERMAL_STATUS_LIGHT -> colors.success
+    status == android.os.PowerManager.THERMAL_STATUS_MODERATE -> colors.warning
+    else -> colors.error
+}
+
+/** One Core reading as a tile: the value (or why there is none) big, the daemon's detail clamped. */
+@Composable
+private fun ReadingTile(@StringRes label: Int, f: TelemetryField, modifier: Modifier) {
+    val (value, detail) = telemetryParts(f)
+    val measured = f.reading !is TelemetryReading.NotReported && f.reading !is TelemetryReading.Invalid
+    MetricTile(
+        stringResource(label),
+        value,
+        detail,
+        modifier,
+        meter = (f.reading as? TelemetryReading.Level)?.let { it.percent / 100f },
+        // A state in words is not a measurement: it gets the title size, not the big figure.
+        valueStyle = if (measured) ZairenkaiTextStyles.metric else MaterialTheme.typography.titleMedium,
+    )
 }
 
 private fun celsius(milli: Long): String = "%.1f °C".format(milli / 1000.0)
@@ -136,13 +186,16 @@ private val CORE_FIELDS = listOf(
     "low_power_mode" to R.string.battery_saver,
 )
 
-/** A reading in the user's language and unit; invalid values are named as such, never shown as measurements. */
+/**
+ * A reading in the user's language and unit, split into a short value and an optional detail;
+ * invalid values are named as such, never shown as measurements.
+ */
 @Composable
-private fun telemetryText(f: TelemetryField): String {
-    val text = when (val r = f.reading) {
-        is TelemetryReading.Temperature -> stringResource(R.string.reading_celsius, r.celsius)
-        is TelemetryReading.Level -> stringResource(R.string.reading_percent, r.percent)
-        is TelemetryReading.Flag -> stringResource(if (r.on) R.string.on else R.string.off)
+private fun telemetryParts(f: TelemetryField): Pair<String, String?> {
+    val (text, detail) = when (val r = f.reading) {
+        is TelemetryReading.Temperature -> stringResource(R.string.reading_celsius, r.celsius) to null
+        is TelemetryReading.Level -> stringResource(R.string.reading_percent, r.percent) to null
+        is TelemetryReading.Flag -> stringResource(if (r.on) R.string.on else R.string.off) to null
         is TelemetryReading.ThermalLevel -> stringResource(
             when (r.status) {
                 "none" -> R.string.thermal_none
@@ -153,23 +206,20 @@ private fun telemetryText(f: TelemetryField): String {
                 "emergency" -> R.string.thermal_emergency
                 else -> R.string.thermal_shutdown
             },
-        )
-        is TelemetryReading.MemoryKib -> "${r.kib} KiB"
-        is TelemetryReading.Invalid -> stringResource(R.string.reading_invalid, r.detail)
-        is TelemetryReading.NotReported -> {
-            val status = stringResource(
-                when (r.status) {
-                    "unavailable" -> R.string.obs_status_unavailable
-                    "unsupported" -> R.string.obs_status_unsupported
-                    "permission_denied" -> R.string.obs_status_permission_denied
-                    else -> R.string.obs_status_unknown
-                },
-            )
-            val detail = r.detail
-            if (detail.isNullOrBlank()) status else stringResource(R.string.reading_not_reported, status, detail)
-        }
+        ) to null
+        is TelemetryReading.MemoryKib -> "${r.kib} KiB" to null
+        is TelemetryReading.Invalid -> stringResource(R.string.reading_invalid_short) to r.detail
+        is TelemetryReading.NotReported -> stringResource(
+            when (r.status) {
+                "unavailable" -> R.string.obs_status_unavailable
+                "unsupported" -> R.string.obs_status_unsupported
+                "permission_denied" -> R.string.obs_status_permission_denied
+                else -> R.string.obs_status_unknown
+            },
+        ) to r.detail?.takeIf { it.isNotBlank() }
     }
-    return f.staleByMs?.let { stringResource(R.string.reading_stale, text, (it / 1000).toInt()) } ?: text
+    val stale = f.staleByMs?.let { (it / 1000).toInt() }?.let { pluralStringResource(R.plurals.reading_stale_short, it, it) }
+    return text to listOfNotNull(stale, detail).joinToString(" · ").ifBlank { null }
 }
 
 /** zthermal's read-only snapshot: zones as zthermal read them, failed reads shown with their reason. */
@@ -184,7 +234,7 @@ private fun ThermalToolsCard(vm: ThermalViewModel, snapshot: RegistrySnapshot) {
         is ThermalToolsResult.Failed -> UnavailableCard(record, r.detail)
         is ThermalToolsResult.Ok -> {
             val s = r.value
-            SegmentedGroup(title = stringResource(R.string.thermaltools_title)) {
+            SegmentedGroup(title = stringResource(R.string.thermaltools_title), icon = ZairenkaiGlyphs.thermometer) {
                 row {
                     GroupRow(
                         s.summary.hottest?.let { celsius(it.millicelsius) } ?: stringResource(R.string.not_reported),
@@ -199,17 +249,17 @@ private fun ThermalToolsCard(vm: ThermalViewModel, snapshot: RegistrySnapshot) {
                         if (s.summary.zones > 0) Meter(s.summary.zonesValid.toFloat() / s.summary.zones)
                         InfoRow(stringResource(R.string.thermaltools_framework), s.summary.frameworkStatus ?: s.sources.firstOrNull { it.source == "dumpsys thermalservice" }?.status)
                         s.summary.batteryMillicelsius?.let { InfoRow(stringResource(R.string.thermaltools_battery), celsius(it), numeric = true) }
-                        if (s.accessDenied) Supporting(stringResource(R.string.thermaltools_denied))
+                        if (s.accessDenied) Detail(stringResource(R.string.thermaltools_denied))
                         ExpandableSection(stringResource(R.string.thermaltools_zone_list, s.zones.size)) {
                             s.zones.sortedByDescending { it.temperature.millicelsius ?: Long.MIN_VALUE }.forEach { z ->
                                 InfoRow(
                                     z.type ?: z.path.substringAfterLast('/'),
-                                    z.temperature.millicelsius?.let(::celsius) ?: "${z.temperature.status}: ${z.temperature.reason.orEmpty()}",
+                                    z.temperature.millicelsius?.let(::celsius) ?: listOfNotNull(z.temperature.status, z.temperature.reason?.takeIf { it.isNotBlank() }).joinToString(": "),
                                     numeric = true,
                                 )
                             }
                         }
-                        Supporting(stringResource(R.string.thermaltools_source, s.toolVersion))
+                        Detail(stringResource(R.string.thermaltools_source, s.toolVersion), maxLines = 2)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
                             OutlinedButton(onClick = { vm.loadThermalTools() }, enabled = !busy) { Text(stringResource(R.string.action_refresh)) }
                             if (vm.rootGranted) {

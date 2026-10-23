@@ -20,6 +20,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ApplicationProvider
 import com.zairenkaiprjctx.app.design.ConnectedChoice
@@ -119,8 +121,9 @@ class RedesignTest {
         }
         val approve = compose.onAllNodesWithText("Approve")
         approve[0].assertIsNotEnabled()
-        approve[1].assertIsEnabled().performClick()
-        compose.onAllNodesWithText("Reject")[0].performClick()
+        // The second card is below the fold of the 470 dp test screen: invoke the click actions.
+        approve[1].assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+        compose.onAllNodesWithText("Reject")[0].performSemanticsAction(SemanticsActions.OnClick)
         assertEquals(listOf("allowed" to true, "denied" to false), answers)
     }
 

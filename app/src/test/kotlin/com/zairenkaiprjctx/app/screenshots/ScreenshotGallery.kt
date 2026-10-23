@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -100,12 +103,17 @@ class ScreenshotGallery {
             shoot("$prefix-${i + 2}-$tab")
         }
         // Pages opened from System and the app bar.
-        compose.onAllNodesWithText(app.getString(R.string.nav_runtime)).onFirst().performClick()
+        val runtime = app.getString(R.string.nav_runtime)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText(runtime))
+        compose.onAllNodesWithText(runtime).onFirst().performClick()
         shoot("$prefix-6-runtime")
         back()
         compose.onNodeWithContentDescription(app.getString(R.string.action_open_settings)).performClick()
         shoot("$prefix-7-settings")
-        compose.onNodeWithText(app.getString(R.string.module_settings_open)).performScrollTo().performClick()
+        val openModule = app.getString(R.string.module_settings_open)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText(openModule))
+        // It can sit under the bottom bar on a short screen: invoke the button's click action.
+        compose.onNodeWithText(openModule).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         shoot("$prefix-8-module")
     }
 
@@ -139,6 +147,16 @@ class ScreenshotGallery {
             }
         }
         shoot(name)
+    }
+
+    /** Stress: Indonesian strings (often longer), a 360 dp screen and a 1.3× font. */
+    @Test
+    @Config(qualifiers = "in-w360dp-h780dp-xxhdpi")
+    fun capturedIndonesianLargeFont() {
+        org.robolectric.RuntimeEnvironment.setFontScale(1.3f)
+        app.getSharedPreferences("zairenkai", 0).edit().putBoolean("root_granted", true).commit()
+        launch(AppContainer(app, CapturedOutputRunner()), ThemeMode.LIGHT)
+        tour("stress-id")
     }
 
     @Test

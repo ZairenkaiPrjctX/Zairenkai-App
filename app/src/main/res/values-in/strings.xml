@@ -309,7 +309,6 @@
     <string name="module_sig_unknown">Ditandatangani kunci yang tidak tepercaya: pemasangan diblokir</string>
     <string name="module_sig_invalid">Tanda tangan tidak valid: pemasangan diblokir</string>
     <string name="module_offer_manager_hint">%1$s terpasang di perangkat ini. Root belum diperiksa.</string>
-    <string name="module_offer_features">Fitur yang bergantung pada root dan dapat disiapkan: %1$s.</string>
     <string name="module_offer_setup">Siapkan integrasi sistem</string>
     <string name="licence_notices_android">Pustaka Android</string>
     <string name="licence_notices_zart">Crate zart</string>
@@ -331,9 +330,6 @@
     <string name="core_field_charging">Mengisi daya</string>
     <string name="reading_celsius">%1$.1f °C</string>
     <string name="reading_percent">%1$d %%</string>
-    <string name="reading_stale">%1$s (kedaluwarsa: %2$d dtk melewati masa berlaku)</string>
-    <string name="reading_invalid">Pembacaan tidak valid, tidak ditampilkan: %1$s</string>
-    <string name="reading_not_reported">%1$s: %2$s</string>
     <string name="obs_status_unavailable">Tidak tersedia</string>
     <string name="obs_status_unsupported">Tidak didukung di perangkat ini</string>
     <string name="obs_status_permission_denied">Izin ditolak</string>
@@ -387,7 +383,6 @@
     <string name="tuning_title">Beban sistem</string>
     <string name="tuning_cpu">Beban CPU</string>
     <string name="tuning_memory">Memori terpakai</string>
-    <string name="tuning_memory_value">%1$s dari %2$s</string>
     <string name="tuning_gpu_governor">Governor GPU</string>
     <string name="tuning_gpu_freq">Frekuensi GPU</string>
     <string name="tuning_io">Penjadwal I/O (%1$s)</string>
@@ -445,5 +440,23 @@
     <string name="ai_approval_failed">Core tidak dapat menerapkannya. Tidak ada yang tertinggal setengah berubah.</string>
     <plurals name="home_step_root_body">
         <item quantity="other">Membuka %1$d fitur: %2$s…</item>
+    </plurals>
+    <!-- UI v2 2026-10-23 -->
+    <string name="text_show_more">Selengkapnya</string>
+    <string name="text_show_less">Ringkas</string>
+    <string name="action_copy">Salin</string>
+    <string name="home_chip_android">Android %1$s · API %2$d</string>
+    <string name="home_tile_fas">Ritme frame</string>
+    <string name="home_tile_core">Layanan Core</string>
+    <string name="module_offer_intro">Fitur yang memerlukan root menunggu Modul Sistem Zairenkai.</string>
+    <string name="module_offer_unlocks">Yang ditambahkan</string>
+    <string name="tuning_memory_of">dari %1$s</string>
+    <string name="thermal_chip_saver">Penghemat baterai: %1$s</string>
+    <string name="reading_invalid_short">Pembacaan tidak valid</string>
+    <plurals name="chips_more">
+        <item quantity="other">+%1$d lainnya</item>
+    </plurals>
+    <plurals name="reading_stale_short">
+        <item quantity="other">Kedaluwarsa: %1$d detik melewati masa berlaku</item>
     </plurals>
 </resources>

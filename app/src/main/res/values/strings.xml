@@ -327,7 +327,6 @@
     <string name="module_sig_unknown">Signed by an untrusted key: installation blocked</string>
     <string name="module_sig_invalid">Invalid signature: installation blocked</string>
     <string name="module_offer_manager_hint">%1$s is installed on this device. Root has not been checked yet.</string>
-    <string name="module_offer_features">Root-dependent features available to set up: %1$s.</string>
     <string name="module_offer_setup">Set up system integration</string>
     <string name="licence_notices_android">Android libraries</string>
     <string name="licence_notices_zart">zart crates</string>
@@ -350,9 +349,6 @@
     <string name="core_field_charging">Charging</string>
     <string name="reading_celsius">%1$.1f °C</string>
     <string name="reading_percent">%1$d %%</string>
-    <string name="reading_stale">%1$s (stale: %2$d s past its validity)</string>
-    <string name="reading_invalid">Invalid reading, not shown: %1$s</string>
-    <string name="reading_not_reported">%1$s: %2$s</string>
     <string name="obs_status_unavailable">Unavailable</string>
     <string name="obs_status_unsupported">Not supported on this device</string>
     <string name="obs_status_permission_denied">Permission denied</string>
@@ -407,7 +403,6 @@
     <string name="tuning_title">System load</string>
     <string name="tuning_cpu">CPU load</string>
     <string name="tuning_memory">Memory in use</string>
-    <string name="tuning_memory_value">%1$s of %2$s</string>
     <string name="tuning_gpu_governor">GPU governor</string>
     <string name="tuning_gpu_freq">GPU frequency</string>
     <string name="tuning_io">I/O scheduler (%1$s)</string>
@@ -466,5 +461,25 @@
     <plurals name="home_step_root_body">
         <item quantity="one">Unlocks %1$d feature: %2$s</item>
         <item quantity="other">Unlocks %1$d features: %2$s…</item>
+    </plurals>
+    <!-- UI v2 2026-10-23 -->
+    <string name="text_show_more">Show more</string>
+    <string name="text_show_less">Show less</string>
+    <string name="action_copy">Copy</string>
+    <string name="home_chip_android">Android %1$s · API %2$d</string>
+    <string name="home_tile_fas">Frame pacing</string>
+    <string name="home_tile_core">Core service</string>
+    <string name="module_offer_intro">Features that need root are waiting for the Zairenkai System Module.</string>
+    <string name="module_offer_unlocks">What it adds</string>
+    <string name="tuning_memory_of">of %1$s</string>
+    <string name="thermal_chip_saver">Battery saver: %1$s</string>
+    <string name="reading_invalid_short">Invalid reading</string>
+    <plurals name="chips_more">
+        <item quantity="one">+%1$d more</item>
+        <item quantity="other">+%1$d more</item>
+    </plurals>
+    <plurals name="reading_stale_short">
+        <item quantity="one">Stale: %1$d second past its validity</item>
+        <item quantity="other">Stale: %1$d seconds past its validity</item>
     </plurals>
 </resources>

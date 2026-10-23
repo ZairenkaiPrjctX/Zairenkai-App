@@ -73,7 +73,8 @@ class AppUiTest {
         compose.onNodeWithTag("nav-system").performClick()
         compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Runtime"))
-        compose.onNodeWithText("Runtime").performClick()
+        // The row can sit under the bottom bar on this 470 dp screen: invoke its click action.
+        compose.onNodeWithText("Runtime").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         compose.onNodeWithText("ART module").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back").performClick()
