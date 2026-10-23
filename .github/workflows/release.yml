@@ -8,8 +8,18 @@ name: Release
 # gate fails while any prerequisite is missing: signing keys, a trusted module-signing key in
 # integration/module-trust.json, or a licence for every distributed component. No signing key is
 # ever written to the workspace outside $RUNNER_TEMP, printed, or uploaded.
+#
+# With draft_release, a second job (the only one with write access) creates a DRAFT GitHub release
+# named for the app version: the APK as zairenkai-<version>.apk, its .sha256, and the CHANGELOG.md
+# entry as notes; a -beta.N version is marked pre-release. The app offers a release only after the
+# maintainer publishes the draft (docs/build/releases.md).
 on:
   workflow_dispatch:
+    inputs:
+      draft_release:
+        description: Create a draft GitHub release with the signed APK (the maintainer publishes it)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -117,11 +127,21 @@ jobs:
         run: |
           python3 integration/scripts/verify_integration.py report app/build/outputs/apk/release/app-release.apk --release
           cat integration/out/integration-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Name the APK for the update channel
+        run: |
+          version=$(python3 integration/scripts/app_release.py version)
+          python3 integration/scripts/app_release.py notes "$version" > "$RUNNER_TEMP/notes.md"
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/zairenkai-$version.apk"
+          (cd dist && sha256sum "zairenkai-$version.apk" > "zairenkai-$version.apk.sha256")
+          cp "$RUNNER_TEMP/notes.md" dist/notes.md
+          { echo "### App $version"; echo '```'; cat dist/*.sha256; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release
           path: |
             app/build/outputs/apk/release/app-release.apk
+            dist/
             integration/out/integration-report.json
             integration/out/integration-report.md
           if-no-files-found: error
@@ -142,3 +162,40 @@ jobs:
             integration/out/integration-report.json
             integration/out/integration-report.md
           if-no-files-found: ignore
+
+  # Separate from the build so the write token never sits next to build tools and their
+  # dependencies. Creates a draft only; publishing it is the maintainer's step.
+  draft:
+    name: draft GitHub release
+    needs: [release]
+    if: ${{ inputs.draft_release }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: artifact
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          version=$(python3 integration/scripts/app_release.py version)
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "::error::A release $tag already exists. Raise appVersion in app/build.gradle.kts."
+            exit 1
+          fi
+          flags=(--draft --target "$SHA" --title "Zairenkai $version" --notes-file artifact/dist/notes.md)
+          case "$version" in *-beta.*) flags+=(--prerelease) ;; esac
+          (cd artifact/dist && sha256sum -c "zairenkai-$version.apk.sha256")
+          gh release create "$tag" "${flags[@]}" \
+            "artifact/dist/zairenkai-$version.apk" "artifact/dist/zairenkai-$version.apk.sha256"
+          echo "Draft release $tag created. Publish it on GitHub to offer it in the app." >> "$GITHUB_STEP_SUMMARY"

@@ -8,6 +8,28 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// The app version: MAJOR.MINOR.PATCH for a release, MAJOR.MINOR.PATCH-beta.N for a beta (a GitHub
+// pre-release). The versionCode grows with it (integration-core update/AppVersion.kt):
+// 0.2.0-beta.1 -> 20001, 0.2.0 -> 20099. CHANGELOG.md has an entry for every version.
+val appVersion = "0.2.0-beta.1"
+fun versionCodeOf(name: String): Int {
+    val m = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$""").matchEntire(name) ?: throw GradleException("bad app version $name")
+    val (major, minor, patch) = m.groupValues.drop(1).take(3).map { it.toInt() }
+    val beta = m.groupValues[4].ifEmpty { null }?.toInt()
+    require(minor < 100 && patch < 100 && (beta == null || beta in 1..98)) { "app version $name out of range" }
+    return major * 1_000_000 + minor * 10_000 + patch * 100 + (beta ?: 99)
+}
+
+// The commit and its date, shown in Settings > About. From git when the source is a checkout;
+// "unknown" otherwise (a source archive). The commit date, not the build time, keeps builds
+// reproducible.
+fun git(vararg args: String): String = providers.exec {
+    commandLine("git", *args)
+    isIgnoreExitValue = true
+}.standardOutput.asText.get().trim().ifEmpty { "unknown" }
+val gitCommit = git("rev-parse", "HEAD")
+val gitDate = git("log", "-1", "--format=%cs")
+
 // Integration metadata (inventory, lock) is copied into the APK's assets so the app can show
 // every repository's disposition and the revisions it was built from, together with the app's
 // own licence and notice.
@@ -22,6 +44,8 @@ val copyIntegrationMeta = tasks.register<Copy>("copyIntegrationMeta") {
         ),
     ) { into("integration") }
     from(files(rootProject.file("LICENSE"), rootProject.file("NOTICE"))) { into("licenses/zairenkai-app") }
+    // What changed in each version (Settings > About).
+    from(rootProject.file("CHANGELOG.md")) { into("about") }
     into(integrationMeta)
 }
 
@@ -112,8 +136,10 @@ android {
         applicationId = "com.zairenkaiprjctx.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = versionCodeOf(appVersion)
+        versionName = appVersion
+        buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
+        buildConfigField("String", "GIT_DATE", "\"$gitDate\"")
         ndk {
             // The ABIs zart and zthermal are built for (integration/repository-lock.json).
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -147,6 +173,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {

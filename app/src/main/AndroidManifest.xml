@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  No permissions are requested. Every feature uses public APIs as the app's own uid, the packaged
-  zart executable, packaged assets, or root through su after the user enables it in the app.
-  The app has no network access (no INTERNET permission): no remote backend exists to talk to.
-  The root modules it can install are packaged in the APK (assets/system-modules/).
+  Every device feature uses public APIs as the app's own uid, the packaged zart executable,
+  packaged assets, or root through su after the user enables it in the app. The root modules it
+  can install are packaged in the APK (assets/system-modules/).
+  The permissions below serve only app updates (Settings > Updates): reading the release list and
+  downloading a release from GitHub over HTTPS, a daily check that survives reboots, notifying
+  about a new version, and handing the verified APK to Android's installer, which asks the user.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!--
       Package visibility (API 30+) for the root-manager apps the module handoff can open. Ids are
@@ -30,7 +38,19 @@
         android:theme="@style/Theme.Zairenkai">
         <activity
             android:name=".MainActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:launchMode="singleTop" />
+
+        <!-- The daily update check (Settings > Updates). Only the system may bind it. -->
+        <service
+            android:name=".update.UpdateCheckJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!-- The package installer's result for an update this app started. Not exported. -->
+        <receiver
+            android:name=".update.InstallResultReceiver"
+            android:exported="false" />
 
         <!--
           Launcher entries, one per icon variant (Settings > Appearance > App icon). Exactly one is

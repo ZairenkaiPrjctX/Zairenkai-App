@@ -56,11 +56,11 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-Core",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Core.git",
       "branch": "dev",
-      "commit": "8931cbb6aa3e70dc0197c2840b61842039b03626",
+      "commit": "345fc7f8c9e192c6a5b7d4e4f923f3b2b3cf33fb",
       "merged": true,
       "packaging": "not packaged separately; the app calls zcored from the installed zairenkai module through root: zcored ctl, protocol v1",
       "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
-      "note": "Core PR #3 commit 8931cbb, in dev since the merge of Core #3 (345fc7f): adds the tuning adapter (runs ztune capabilities|telemetry|apply; tuning resources stay read-only unless ztune reports an exact-device write authorization) and the tuning method, on top of the single-module paths. Must equal the zairenkai-core commit in Zairenkai-Modules' components.lock.json (build-components.sh checks it).",
+      "note": "Core 345fc7f, the merge of Core #3 into dev (its tree differs from the PR commit 8931cbb only in AGENT/PROJECT_CONTEXT.md): adds the tuning adapter (runs ztune capabilities|telemetry|apply; tuning resources stay read-only unless ztune reports an exact-device write authorization) and the tuning method, on top of the single-module paths. Must equal the zairenkai-core commit in Zairenkai-Modules' components.lock.json (build-components.sh checks it).",
       "integration_status": "implemented"
     },
     {
@@ -68,27 +68,27 @@
       "repository": "ZairenkaiPrjctX/Zairenkai-FAS",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-FAS.git",
       "branch": "dev",
-      "commit": "99cfb18ba7f04753b3cda5534b8fa844d86db9d5",
+      "commit": "1c453db5b2ac6a49b18627408928d30ba51e063f",
       "merged": true,
       "packaging": "not packaged separately; the app calls zfasd from the installed zairenkai module through root: zfasd ctl (status schema 1, docs/INTEGRATION.md)",
       "license": "Apache-2.0 (LICENSE, NOTICE at this commit); no code is copied into the app.",
-      "note": "FAS PR #4 commit 99cfb18, in dev since the merge of FAS #4 (1c453db): data under /data/adb/zairenkai/fas. Must equal the zairenkai-fas commit in Zairenkai-Modules' components.lock.json (build-components.sh checks it).",
+      "note": "FAS 1c453db, the merge of FAS #4 into dev (its tree differs from the PR commit 99cfb18 only in AGENT/PROJECT_CONTEXT.md and docs/INTEGRATION.md): data under /data/adb/zairenkai/fas. Must equal the zairenkai-fas commit in Zairenkai-Modules' components.lock.json (build-components.sh checks it).",
       "integration_status": "implemented"
     },
     {
       "id": "zairenkai-module",
       "repository": "ZairenkaiPrjctX/Zairenkai-Modules",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Modules.git",
-      "branch": "dev",
-      "commit": "298311ce44e4c2b3457db4831b92a48e9ee03a1d",
-      "merged": true,
+      "branch": "ccr-63f8aa87-1b0paj-secure",
+      "commit": "2d1f5489a942aa0bb54f3a9b8822e4008bc2df83",
+      "merged": false,
       "packaging": "the single Magisk/KernelSU/APatch module zip (arm64-v8a), assembled by the repository's scripts/assemble.py from the Core, FAS and Tuning commits its components.lock.json pins; packaged as assets/system-modules/zairenkai.zip and installed only on the user's request through the root manager's own installer",
       "abis": [
         "arm64-v8a"
       ],
       "license": "Aggregate: Zairenkai-Modules, Core and FAS are Apache-2.0; ztune (Zairenkai-Tuning 0c226b2) is GPL-3.0-only and ships with its licence and Corresponding Source (source/zairenkai-tuning-<commit>-src.tar.gz) in the zip. Each component's licence files are under licenses/<component>/.",
       "integration_status": "implemented",
-      "note": "Modules PR #1 commit 298311c, in dev since the merge of Modules #1 (bee45bd): module 0.2.0 with zcored (Core 8931cbb), zfasd (FAS 99cfb18) and ztune (Tuning 0c226b2). Replaces the separate zairenkai_core and zairenkai_fas modules (maintainer decision 2026-10-22)."
+      "note": "Modules PR #3 commit 2d1f548 (topic branch, not merged yet; re-pin to the merge commit once it is): module 0.3.0, which adds SHA256SUMS checked at install and at every boot, root-only data directories, own-process uninstall and the WebUI through Core. Components as Modules' components.lock.json pins them: zcored (Core 345fc7f), zfasd (FAS 1c453db) and ztune (Tuning 0c226b2). Previous pin: 298311c (module 0.2.0). Replaces the separate zairenkai_core and zairenkai_fas modules (maintainer decision 2026-10-22)."
     }
   ]
 }

@@ -5,7 +5,7 @@
 | A: standard Android | Device identity, thermal status and headroom, battery-saver state, ART APEX version, `zart inspect`, `zthermal snapshot`, AFID lookup | Public APIs as the app uid; the packaged zart and zthermal run as the app uid | Implemented |
 | B: privileged bridge (Shizuku and similar) | – | No organization repository provides one | Not applicable |
 | C: root | Core (health, telemetry, modules, actions), FAS (status, control), dexopt status, `zthermal snapshot --framework` (on request), Zairenkai module install and removal through the root manager's own CLI (`docs/integration/system-module.md`) | `su -c` through `RootShell` | Implemented; not validated on a device |
-| D: remote service | – | No backend exists (License-Server is empty); the app has no INTERNET permission | Not applicable |
+| D: remote service | App updates only (`docs/build/releases.md`) | No backend exists (License-Server is empty). The INTERNET permission is used only to read GitHub's release list and download a release; no device data is sent | Implemented for updates; not validated on a device |
 
 ## Root rules (`integration-core/.../exec/RootShell.kt`)
 

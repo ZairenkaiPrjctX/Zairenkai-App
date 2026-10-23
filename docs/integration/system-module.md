@@ -11,7 +11,7 @@ the module, so FAS still restores its cpufreq floors before its data is removed.
 
 | Module id | Built from | Provides | Why it needs root |
 |---|---|---|---|
-| `zairenkai` | Zairenkai-Modules `298311c` (`module/` + `scripts/assemble.py`), with Zairenkai-Core `8931cbb`, Zairenkai-FAS `99cfb18` and Zairenkai-Tuning `0c226b2` as its `components.lock.json` pins them | `zcored`: Core health, policy-checked actions, module inventory, tuning capabilities (read-only). `zfasd`: FAS status and controls. `ztune` (GPL-3.0, with its source): run only by Core | zcored is a root daemon with a root-only socket (Core ADR-0005); zfasd writes cpufreq `scaling_min_freq` floors once enabled; ztune writes nothing without an exact-device validated profile, and none ships |
+| `zairenkai` | Zairenkai-Modules `2d1f548` (module 0.3.0; `module/` + `scripts/assemble.py`), with Zairenkai-Core `345fc7f`, Zairenkai-FAS `1c453db` and Zairenkai-Tuning `0c226b2` as its `components.lock.json` pins them | `zcored`: Core health, policy-checked actions, module inventory, tuning capabilities (read-only). `zfasd`: FAS status and controls. `ztune` (GPL-3.0, with its source): run only by Core | zcored is a root daemon with a root-only socket (Core ADR-0005); zfasd writes cpufreq `scaling_min_freq` floors once enabled; ztune writes nothing without an exact-device validated profile, and none ships |
 
 The separate `zairenkai_core` and `zairenkai_fas` modules are superseded: the catalog lists them
 as conflicts, the installer warns about them, and Core reports them as superseded.
@@ -24,14 +24,21 @@ FAS is distributed before its hardware validation, by the maintainer's decision
 
 **Zip contents** (Modules' `assemble.py`, which checks every component file against its
 `component.json` at the locked commit):
-- `module.prop`, `components.json` (generated), `customize.sh`, `service.sh`, `uninstall.sh`, `action.sh`;
+- `module.prop`, `components.json` and `SHA256SUMS` (generated), `customize.sh`, `service.sh`,
+  `uninstall.sh`, `action.sh`, `verify.sh`, `common.sh`;
 - `META-INF/com/google/android/{update-binary,updater-script}`;
-- `bin/zcored`, `bin/zfasd`;
-- `defaults/fas-config.toml`, `webroot/` (FAS WebUI);
+- `bin/zcored`, `bin/zfasd`, `bin/ztune` with `source/zairenkai-tuning/` (GPL-3.0);
+- `defaults/fas-config.toml`, `webroot/` (KernelSU/APatch WebUI: `index.html`, `app.js`,
+  `style.css`, `logo.svg`);
 - licence files: `LICENSE` and `NOTICE` of Zairenkai-Modules, and each component's `LICENSE`,
   `NOTICE` and `THIRD_PARTY.md` under `licenses/<component>/`, checked by `verify_integration.py build`.
 
 There are no other files and no `system/` overlay.
+
+**On the device (module 0.3.0):** `customize.sh` refuses to install when a file does not match
+`SHA256SUMS` or an unlisted file is present, and `service.sh` starts nothing when a binary,
+script or WebUI file changed after install (Zairenkai-Modules `docs/SECURITY.md`). This guards
+integrity on the device; authenticity comes from the signed catalog below.
 
 **Manifest.** `integration/system-modules.json` is reviewed in Git. For each module it declares:
 - id, role and features;
@@ -68,11 +75,11 @@ answers:
 | APK size | +0.74 MB (the Core zip; FAS only in internal builds) | none |
 | Update independence | a module update needs an app update | modules can update alone |
 | Offline | works offline | needs the network at install time |
-| Network permission | none (the app has no INTERNET permission) | INTERNET permission required |
+| Network permission | none needed for modules (the app's INTERNET permission serves app updates only) | INTERNET permission required |
 | Infrastructure | none beyond the signed catalog | a release host, a version index, rollout and revocation |
 | Exists today | yes | no: no release exists in Core, FAS or Zairenkai-Release (`list_releases`, 2026-10-21) |
 
-A is the simplest safe choice: no network capability, no release host to secure. B can be
+A is the simplest safe choice: modules need no network, and no release host to secure. B can be
 added when a module release pipeline exists. It would reuse the same signed catalog format.
 
 ## Trust: a signed catalog

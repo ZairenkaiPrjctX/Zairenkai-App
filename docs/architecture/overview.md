@@ -75,7 +75,7 @@ The UI renders availability only from this snapshot.
 | `NO_UPSTREAM_IMPLEMENTATION` | The owning repository has no code (with its audited commit), or no validated implementation of that feature (thermal controls) |
 
 `NETWORK_UNAVAILABLE` and `LICENSE_REQUIRED` exist in the model but nothing produces them: the
-app has no network access, and no licence server exists. `PERMISSION_REQUIRED` means an OS
+app uses the network only for its own updates (`docs/build/releases.md`), and no licence server exists. `PERMISSION_REQUIRED` means an OS
 access denial, not a runtime permission the app could request.
 
 The ecosystem prompt's state names map onto these:

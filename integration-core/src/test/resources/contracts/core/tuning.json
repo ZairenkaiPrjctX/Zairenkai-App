@@ -182,7 +182,7 @@
         "source": "/proc/meminfo MemAvailable",
         "status": "ok",
         "unit": "bytes",
-        "value": 12672393216
+        "value": 10765615104
       },
       "swap_total": {
         "source": "/proc/meminfo SwapTotal",
@@ -200,13 +200,13 @@
         "source": "/proc/meminfo MemTotal",
         "status": "ok",
         "unit": "bytes",
-        "value": 16872808448
+        "value": 16872804352
       },
       "used": {
         "source": "/proc/meminfo MemTotal - MemAvailable",
         "status": "ok",
         "unit": "bytes",
-        "value": 4200415232
+        "value": 6107189248
       }
     },
     "platform": {

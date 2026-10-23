@@ -71,6 +71,8 @@ private val SETTING_ENTRIES = listOf(
     SettingEntry(R.string.glass_title, R.string.nav_settings, Overlay.GLASS, "glass blur frost liquid kaca"),
     SettingEntry(R.string.settings_language, R.string.nav_settings, Overlay.SETTINGS, "language english indonesia bahasa"),
     SettingEntry(R.string.module_title, R.string.nav_settings, Overlay.SYSTEM_MODULE, "module root magisk kernelsu apatch modul"),
+    SettingEntry(R.string.update_title, R.string.nav_settings, Overlay.UPDATES, "update upgrade release beta version download install pembaruan perbarui rilis versi unduh pasang"),
+    SettingEntry(R.string.about_title, R.string.nav_settings, Overlay.ABOUT, "about version build licence license changelog tentang versi lisensi perubahan"),
 )
 
 @Composable
@@ -158,6 +160,28 @@ fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, paddin
                             }) { Text(stringResource(R.string.settings_language_open)) }
                         }
                     }
+                }
+            }
+        }
+        item {
+            SegmentedGroup(title = stringResource(R.string.settings_app), icon = ZairenkaiGlyphs.phone) {
+                row {
+                    GroupRow(
+                        stringResource(R.string.update_title),
+                        supporting = stringResource(R.string.settings_updates_row, com.zairenkaiprjctx.app.BuildConfig.VERSION_NAME),
+                        icon = ZairenkaiGlyphs.loop,
+                        onClick = { open(Overlay.UPDATES) },
+                        chevron = true,
+                    )
+                }
+                row {
+                    GroupRow(
+                        stringResource(R.string.about_title),
+                        supporting = stringResource(R.string.settings_about_row),
+                        icon = ZairenkaiGlyphs.spark,
+                        onClick = { open(Overlay.ABOUT) },
+                        chevron = true,
+                    )
                 }
             }
         }
