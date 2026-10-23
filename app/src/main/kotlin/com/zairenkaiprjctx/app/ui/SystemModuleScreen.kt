@@ -34,6 +34,14 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.R
 import com.zairenkaiprjctx.app.design.Emphasis
+import com.zairenkaiprjctx.app.design.ClampText
+import com.zairenkaiprjctx.app.design.Detail
+import com.zairenkaiprjctx.app.design.ShapeBadge
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.ui.unit.dp
+import com.zairenkaiprjctx.app.design.HeroPanel
+import com.zairenkaiprjctx.app.design.WorkingBar
+import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ExpandableSection
 import com.zairenkaiprjctx.app.design.InfoRow
 import com.zairenkaiprjctx.app.design.ProgressRow
@@ -98,6 +106,7 @@ private fun CheckStatus.label(): Int = when (this) {
     CheckStatus.INFO -> R.string.module_check_info
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SystemModuleScreen(vm: SystemModuleViewModel, main: MainViewModel, snapshot: RegistrySnapshot, padding: PaddingValues) {
     val root by main.rootState.collectAsStateWithLifecycle()
@@ -107,23 +116,29 @@ fun SystemModuleScreen(vm: SystemModuleViewModel, main: MainViewModel, snapshot:
         vm.evaluateAll()
         onPauseOrDispose {}
     }
-    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
-            SectionCard(stringResource(R.string.module_title), emphasis = Emphasis.HIGH) {
-                Supporting(stringResource(R.string.module_intro))
-                Supporting(stringResource(R.string.module_no_promise))
+            HeroPanel(
+                overline = stringResource(R.string.module_overline),
+                headline = stringResource(R.string.module_title),
+                supporting = null,
+                decoration = MaterialShapes.Pill,
+                trailing = { ShapeBadge(ZairenkaiGlyphs.box, MaterialShapes.Cookie9Sided, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, size = 64.dp) },
+            ) {
+                ClampText(stringResource(R.string.module_intro), style = MaterialTheme.typography.bodyMedium, maxLines = 6)
+                Detail(stringResource(R.string.module_no_promise), maxLines = 4)
             }
         }
         if (root != RootState.GRANTED) {
             item {
                 SectionCard(stringResource(R.string.root_access), trailing = { StatusBadge(AvailabilityState.ROOT_REQUIRED) }) {
                     InfoRow(stringResource(R.string.key_state), rootStateLabel(root))
-                    Supporting(stringResource(R.string.module_root_why))
+                    Detail(stringResource(R.string.module_root_why))
                     if (root != RootState.UNAVAILABLE) Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
                 }
             }
         }
-        notice?.let { item { SectionCard(stringResource(R.string.module_handoff_title), emphasis = Emphasis.LOW) { Supporting(it) } } }
+        notice?.let { item { SectionCard(stringResource(R.string.module_handoff_title), emphasis = Emphasis.LOW) { Detail(it) } } }
         if (!vm.packaged) {
             item { SectionCard(stringResource(R.string.module_title)) { Supporting(stringResource(R.string.module_not_packaged)) } }
         }
@@ -140,7 +155,7 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
     var confirmRemove by rememberSaveable(m.id) { mutableStateOf(false) }
     SectionCard(m.name, trailing = { StatusBadge(s.phase.badge()) }) {
         InfoRow(stringResource(R.string.key_state), stringResource(s.phase.label()))
-        if (s.detail.isNotBlank()) Supporting(s.detail)
+        if (s.detail.isNotBlank()) Detail(s.detail)
         InfoRow(stringResource(R.string.module_version), "${m.version} (${m.versionCode})", code = true)
         InfoRow(stringResource(R.string.module_release), "${m.source.repository} @ ${m.source.commit.take(12)}", code = true)
         InfoRow(stringResource(R.string.module_source), stringResource(R.string.module_source_value))
@@ -148,8 +163,8 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
             stringResource(R.string.module_distribution),
             stringResource(if (m.distribution == "distributable") R.string.module_distribution_ok else R.string.module_distribution_internal),
         )
-        if (m.distribution != "distributable" && m.distributionReason.isNotBlank()) Supporting(m.distributionReason)
-        InfoRow(stringResource(R.string.module_digest), m.sha256, code = true)
+        if (m.distribution != "distributable" && m.distributionReason.isNotBlank()) Detail(m.distributionReason)
+        InfoRow(stringResource(R.string.module_digest), m.sha256, code = true, shorten = true)
         InfoRow(
             stringResource(R.string.module_signature),
             when (val sig = vm.signature) {
@@ -189,7 +204,7 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
                     },
                 ),
             )
-            if (d.verdict == Verdict.EXPERIMENTAL) Supporting(stringResource(R.string.module_experimental_note))
+            if (d.verdict == Verdict.EXPERIMENTAL) Detail(stringResource(R.string.module_experimental_note))
             ExpandableSection(stringResource(R.string.module_checks, d.checks.size), initiallyExpanded = d.verdict == Verdict.INCOMPATIBLE) {
                 d.checks.forEach { c -> InfoRow(stringResource(c.status.label()), c.detail) }
             }
@@ -200,7 +215,7 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
             }
         }
         ExpandableSection(stringResource(R.string.module_risks)) {
-            m.risks.forEach { Supporting(it) }
+            m.risks.forEach { Detail(it) }
             val l = m.lifecycle
             l.destinations.forEach { (k, v) -> InfoRow(k, v, code = true) }
             listOf(
@@ -212,7 +227,11 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
         if (s.log.isNotBlank()) {
             ExpandableSection(stringResource(R.string.module_log)) { Text(s.log, style = ZairenkaiTextStyles.code) }
         }
-        if (busy && s.phase in WORKING) ProgressRow(stringResource(s.phase.label()))
+        if (busy && s.phase in WORKING) {
+            // A real step is running: the wavy bar moves (none if reduced) and the step is named.
+            WorkingBar()
+            Supporting(stringResource(s.phase.label()))
+        }
 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
             when (s.phase) {
@@ -247,7 +266,7 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
             }
         }
         if (s.phase == InstallPhase.INSTALL_PENDING_REBOOT || s.phase == InstallPhase.REMOVAL_PENDING_REBOOT) {
-            Supporting(stringResource(R.string.module_reboot_next))
+            Detail(stringResource(R.string.module_reboot_next))
         }
     }
 

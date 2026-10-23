@@ -3,7 +3,6 @@
 package com.zairenkaiprjctx.app
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -19,6 +18,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.material.icons.Icons
@@ -28,7 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ShortNavigationBar
 import androidx.compose.ui.unit.sp
@@ -41,6 +42,23 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.WideNavigationRail
 import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import com.zairenkaiprjctx.app.design.AppBackdrop
+import com.zairenkaiprjctx.app.design.glassBar
+import com.zairenkaiprjctx.app.design.glassSource
+import com.zairenkaiprjctx.app.design.hasBackdrop
+import com.zairenkaiprjctx.app.design.rememberGlassState
+import com.zairenkaiprjctx.app.ui.settings.AppIconScreen
+import com.zairenkaiprjctx.app.ui.settings.AppearanceScreen
+import com.zairenkaiprjctx.app.ui.settings.FontScreen
+import com.zairenkaiprjctx.app.ui.settings.GlassScreen
+import com.zairenkaiprjctx.app.ui.settings.ThemeEditorScreen
+import com.zairenkaiprjctx.app.ui.settings.WallpaperScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +70,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -63,6 +82,9 @@ import com.zairenkaiprjctx.app.design.ZairenkaiIcons
 import com.zairenkaiprjctx.app.design.ZairenkaiMotion
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.app.design.ZairenkaiTheme
+import com.zairenkaiprjctx.app.design.WorkingBar
+import com.zairenkaiprjctx.app.ui.ai.AiScreen
+import com.zairenkaiprjctx.app.ui.ai.AiViewModel
 import com.zairenkaiprjctx.app.design.isDark
 import com.zairenkaiprjctx.app.ui.HomeScreen
 import com.zairenkaiprjctx.app.ui.MainViewModel
@@ -80,16 +102,40 @@ import com.zairenkaiprjctx.app.ui.ThermalScreen
 import com.zairenkaiprjctx.app.ui.ThermalViewModel
 
 /** Top-level destinations, each backed by registered subsystems (AppContainer.registry). */
-enum class Tab(@StringRes val title: Int, val icon: ImageVector, val subsystems: List<String>) {
-    HOME(R.string.nav_home, ZairenkaiIcons.home, listOf("android", "afid")),
-    PERFORMANCE(R.string.nav_performance, ZairenkaiIcons.performance, listOf("core", "fas")),
-    THERMAL(R.string.nav_thermal, ZairenkaiIcons.thermal, listOf("android", "thermaltools", "core", "fas")),
-    RUNTIME(R.string.nav_runtime, ZairenkaiIcons.runtime, listOf("art")),
-    SYSTEM(R.string.nav_system, ZairenkaiIcons.system, listOf("core", "afid", "upstream")),
+enum class Tab(
+    @StringRes val title: Int,
+    @StringRes val subtitle: Int,
+    val icon: ImageVector,
+    val subsystems: List<String>,
+    /** The app-bar title when the navigation label is a short form of it. */
+    @StringRes val appBarTitle: Int = title,
+) {
+    HOME(R.string.nav_home, R.string.subtitle_home, ZairenkaiIcons.home, listOf("android", "afid")),
+    PERFORMANCE(R.string.nav_performance, R.string.subtitle_performance, ZairenkaiIcons.performance, listOf("core", "fas")),
+    THERMAL(R.string.nav_thermal, R.string.subtitle_thermal, ZairenkaiIcons.thermal, listOf("android", "thermaltools", "core", "fas")),
+    AI(R.string.nav_ai, R.string.subtitle_ai, ZairenkaiIcons.ai, listOf("upstream"), appBarTitle = R.string.ai_title),
+    SYSTEM(R.string.nav_system, R.string.subtitle_system, ZairenkaiIcons.system, listOf("core", "afid", "upstream", "art")),
 }
 
-/** Destinations shown over the tabs, from the app bar or a link. */
-enum class Overlay { NONE, SETTINGS, SYSTEM_MODULE }
+/**
+ * Destinations shown over the tabs, from the app bar or a row that opens a page. Back returns to
+ * [parent] (the tabs for top-level pages).
+ */
+enum class Overlay(@StringRes val title: Int, @StringRes val subtitle: Int?, val parentName: String = "NONE") {
+    NONE(0, null),
+    SETTINGS(R.string.nav_settings, R.string.subtitle_settings),
+    APPEARANCE(R.string.appearance_title, R.string.appearance_subtitle, "SETTINGS"),
+    THEME_EDITOR(R.string.theme_editor_title, null, "APPEARANCE"),
+    WALLPAPER(R.string.wallpaper_title, null, "APPEARANCE"),
+    APP_ICON(R.string.icon_title, null, "APPEARANCE"),
+    FONTS(R.string.font_title, null, "APPEARANCE"),
+    GLASS(R.string.glass_title, R.string.glass_subtitle, "SETTINGS"),
+    SYSTEM_MODULE(R.string.module_title, null),
+    RUNTIME(R.string.nav_runtime, R.string.subtitle_runtime),
+    ;
+
+    val parent: Overlay get() = valueOf(parentName)
+}
 
 class MainActivity : ComponentActivity() {
     /** English unless the user chose another language: see [AppLanguage]. */
@@ -108,19 +154,23 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ZairenkaiRoot(c: AppContainer, activity: ComponentActivity?) {
     val settings by c.theme.settings.collectAsStateWithLifecycle()
+    // UI scale: every dp and sp of the app grows or shrinks together (Settings › Appearance).
+    val density = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(density.density * settings.uiScale, density.fontScale)) {
     ZairenkaiTheme(settings) {
         val dark = isDark(settings)
         if (activity != null) {
             // Keep status- and navigation-bar icons legible when the app theme differs from the system.
             DisposableEffect(dark) {
                 activity.enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
-                    navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
+                    statusBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark },
+                    navigationBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark },
                 )
                 onDispose {}
             }
         }
         App(c)
+    }
     }
 }
 
@@ -134,15 +184,23 @@ private fun App(c: AppContainer) {
     val system: SystemViewModel = viewModel(factory = viewModelFactory { initializer { SystemViewModel(c) } })
     val settingsVm: SettingsViewModel = viewModel(factory = viewModelFactory { initializer { SettingsViewModel(c) } })
     val modulesVm: SystemModuleViewModel = viewModel(factory = viewModelFactory { initializer { SystemModuleViewModel(c) } })
+    val ai: AiViewModel = viewModel(factory = viewModelFactory { initializer { AiViewModel() } })
     val snapshot by main.registry.collectAsStateWithLifecycle()
+    val look by c.theme.settings.collectAsStateWithLifecycle()
+    val photo by c.wallpaper.photo.collectAsStateWithLifecycle()
+    val photoImage = remember(photo) { photo?.asImageBitmap() }
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
-    val showSettings = overlay != Overlay.NONE
-    BackHandler(enabled = showSettings) { overlay = Overlay.NONE }
+    var editing by rememberSaveable { mutableStateOf<String?>(null) }
+    val showOverlay = overlay != Overlay.NONE
+    BackHandler(enabled = showOverlay) { overlay = overlay.parent }
+    val glass = rememberGlassState()
+    val backdrop = look.hasBackdrop || look.glass.enabled
 
     // Compatibility checks run only when the user opens the System Module screen: granting root
     // alone neither checks nor installs anything.
     val openModule = { overlay = Overlay.SYSTEM_MODULE }
+    val openRuntime = { overlay = Overlay.RUNTIME }
 
     val registered = c.registry.subsystems.map { it.id }.toSet()
     val tabs = Tab.entries.filter { t -> t.subsystems.any { it in registered } }
@@ -152,22 +210,19 @@ private fun App(c: AppContainer) {
     }
 
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val title = stringResource(
-        when (overlay) {
-            Overlay.SETTINGS -> R.string.nav_settings
-            Overlay.SYSTEM_MODULE -> R.string.module_title
-            Overlay.NONE -> tab.title
-        },
-    )
+    val title = stringResource(if (showOverlay) overlay.title else tab.appBarTitle)
+    val subtitle = if (showOverlay) overlay.subtitle?.let { stringResource(it) } else stringResource(tab.subtitle)
 
     BoxWithConstraints(Modifier.semantics { testTagsAsResourceId = true }) {
+        if (backdrop) AppBackdrop(look, photoImage, Modifier.glassSource(glass))
         val wide = maxWidth >= 600.dp
         Row {
             if (wide) {
                 WideNavigationRail {
                     tabs.forEach { t ->
                         WideNavigationRailItem(
-                            selected = !showSettings && tab == t,
+                            modifier = Modifier.testTag("nav-${t.name.lowercase()}"),
+                            selected = !showOverlay && tab == t,
                             onClick = { select(t) },
                             icon = { Icon(t.icon, contentDescription = null) },
                             label = { NavLabel(stringResource(t.title)) },
@@ -178,35 +233,54 @@ private fun App(c: AppContainer) {
             }
             Scaffold(
                 modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
+                containerColor = if (backdrop) Color.Transparent else MaterialTheme.colorScheme.background,
                 topBar = {
-                    MediumTopAppBar(
-                        title = { Text(title, style = MaterialTheme.typography.headlineMedium) },
-                        navigationIcon = {
-                            if (showSettings) {
-                                IconButton(onClick = { overlay = Overlay.NONE }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    Column {
+                        MediumFlexibleTopAppBar(
+                            title = { BarTitle(title) },
+                            subtitle = subtitle?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+                            navigationIcon = {
+                                if (showOverlay) {
+                                    IconButton(onClick = { overlay = overlay.parent }) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                                    }
                                 }
-                            }
-                        },
-                        actions = {
-                            if (!showSettings) {
-                                IconButton(onClick = main::refresh, enabled = !snapshot.refreshing) {
-                                    Icon(ZairenkaiIcons.refresh, contentDescription = stringResource(R.string.action_refresh))
+                            },
+                            actions = {
+                                if (!showOverlay) {
+                                    IconButton(onClick = main::refresh, enabled = !snapshot.refreshing) {
+                                        Icon(ZairenkaiIcons.refresh, contentDescription = stringResource(R.string.action_refresh))
+                                    }
+                                    IconButton(onClick = { overlay = Overlay.SETTINGS }) {
+                                        Icon(ZairenkaiIcons.settings, contentDescription = stringResource(R.string.action_open_settings))
+                                    }
                                 }
-                                IconButton(onClick = { overlay = Overlay.SETTINGS }) {
-                                    Icon(ZairenkaiIcons.settings, contentDescription = stringResource(R.string.action_open_settings))
-                                }
-                            }
-                        },
-                        scrollBehavior = scroll,
-                    )
+                            },
+                            scrollBehavior = scroll,
+                            colors = if (backdrop) {
+                                TopAppBarDefaults.topAppBarColors(
+                                    containerColor = Color.Transparent,
+                                    scrolledContainerColor = if (look.glass.enabled && look.glass.topBar) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+                                )
+                            } else {
+                                TopAppBarDefaults.topAppBarColors()
+                            },
+                            modifier = if (look.glass.topBar) Modifier.glassBar(glass, look.glass) else Modifier,
+                        )
+                        // Shown only while the registry is really probing the components.
+                        if (snapshot.refreshing) WorkingBar(Modifier.padding(horizontal = ZairenkaiSpacing.gutter))
+                    }
                 },
                 bottomBar = {
                     if (!wide) {
-                        ShortNavigationBar {
+                        ShortNavigationBar(
+                            containerColor = if (look.glass.enabled) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier.glassBar(glass, look.glass),
+                        ) {
                             tabs.forEach { t ->
                                 ShortNavigationBarItem(
-                                    selected = !showSettings && tab == t,
+                                    modifier = Modifier.testTag("nav-${t.name.lowercase()}"),
+                                    selected = !showOverlay && tab == t,
                                     onClick = { select(t) },
                                     icon = { Icon(t.icon, contentDescription = null) },
                                     label = { NavLabel(stringResource(t.title)) },
@@ -226,25 +300,52 @@ private fun App(c: AppContainer) {
                 val goToRoot = { select(Tab.SYSTEM) }
                 val spatial = ZairenkaiMotion.spatial<IntOffset>()
                 val effects = ZairenkaiMotion.effects<Float>()
+                val openEditor = { id: String? -> editing = id; overlay = Overlay.THEME_EDITOR }
                 AnimatedContent(
-                    targetState = if (showSettings) overlay else tab,
+                    modifier = Modifier.glassSource(glass),
+                    targetState = if (showOverlay) overlay else tab,
                     transitionSpec = { (fadeIn(effects) + slideInVertically(spatial) { it / 16 }) togetherWith fadeOut(effects) },
                     label = "destination",
                 ) { destination ->
                     when (destination) {
-                        Overlay.SETTINGS -> SettingsScreen(settingsVm, modulesVm, padding, openModule)
+                        Overlay.SETTINGS -> SettingsScreen(settingsVm, modulesVm, padding, openModule) { overlay = it }
+                        Overlay.APPEARANCE -> AppearanceScreen(
+                            settingsVm, padding, openEditor,
+                            openWallpaper = { overlay = Overlay.WALLPAPER },
+                            openIcon = { overlay = Overlay.APP_ICON },
+                            openFonts = { overlay = Overlay.FONTS },
+                        )
+                        Overlay.THEME_EDITOR -> ThemeEditorScreen(settingsVm, editing, padding) { overlay = Overlay.APPEARANCE }
+                        Overlay.WALLPAPER -> WallpaperScreen(settingsVm, padding)
+                        Overlay.APP_ICON -> AppIconScreen(settingsVm, padding)
+                        Overlay.FONTS -> FontScreen(settingsVm, padding)
+                        Overlay.GLASS -> GlassScreen(settingsVm, padding)
                         Overlay.SYSTEM_MODULE -> SystemModuleScreen(modulesVm, main, snapshot, padding)
-                        Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule)
+                        Overlay.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
+                        Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule, select)
                         Tab.PERFORMANCE -> PerformanceScreen(perf, snapshot, padding, goToRoot)
                         Tab.THERMAL -> ThermalScreen(thermal, perf, snapshot, padding)
-                        Tab.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
-                        Tab.SYSTEM -> SystemScreen(system, main, snapshot, padding, openModule)
+                        Tab.AI -> AiScreen(ai, snapshot, padding, select)
+                        Tab.SYSTEM -> SystemScreen(system, main, snapshot, padding, openModule, openRuntime) { overlay = Overlay.SETTINGS }
                         else -> Unit
                     }
                 }
             }
         }
     }
+}
+
+/** The app-bar title on one line, shrinking toward 18 sp before a long name ends in an ellipsis. */
+@Composable
+private fun BarTitle(text: String) {
+    val style = LocalTextStyle.current
+    Text(
+        text,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = style.fontSize, stepSize = 1.sp),
+    )
 }
 
 /**

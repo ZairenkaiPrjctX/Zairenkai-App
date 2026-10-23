@@ -183,6 +183,8 @@ android {
                 // Robolectric downloads its android-all jars itself; Maven Central rate-limits this
                 // build environment, so allow overriding the repository from the environment.
                 System.getenv("ROBOLECTRIC_REPO_URL")?.let { url -> it.systemProperty("robolectric.dependency.repo.url", url) }
+                // Screenshot gallery (app/src/test/.../ScreenshotGallery.kt): skipped unless set.
+                System.getenv("ZAIRENKAI_SCREENSHOT_DIR")?.let { dir -> it.systemProperty("zairenkai.screenshotDir", dir) }
             }
         }
     }
@@ -218,6 +220,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
+    implementation(libs.compose.ui.text.google.fonts)
+    implementation(libs.haze)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.core)
     implementation(libs.compose.animation)
