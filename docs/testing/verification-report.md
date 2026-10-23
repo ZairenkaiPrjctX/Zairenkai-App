@@ -12,7 +12,7 @@ a device.
 | App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 51 passed, 14 skipped (screenshot gallery); new `UpdateUiTest` (8) |
 | App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 65 passed; 61 PNGs |
 | Lint | `./gradlew lint` | 0 errors; 24 warnings, all dependency versions |
-| Components | `ANDROID_NDK_HOME=/opt/android/android-ndk-r27d integration/scripts/build-components.sh` | exit 0; module 0.3.0 from Modules `2d1f548` (Core `345fc7f`, FAS `1c453db`, Tuning `0c226b2`) |
+| Components | `ANDROID_NDK_HOME=/opt/android/android-ndk-r27d integration/scripts/build-components.sh` | exit 0; module 0.3.1 from Modules `9175e1e` (Core `345fc7f`, FAS `1c453db`, Tuning `0c226b2`) |
 | Contracts | `integration/scripts/capture-contracts.sh` | exit 0; catalog: 32 entries incl. `SHA256SUMS`, 13 files matched to `module/` sources |
 | Build | `./gradlew assembleDebug assembleRelease` | both APKs; release `0.2.0-beta.1` (20001) |
 | Integration | `verify_integration.py lock`, `build`, `apk`, `report` | ok |

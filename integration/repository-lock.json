@@ -79,8 +79,8 @@
       "id": "zairenkai-module",
       "repository": "ZairenkaiPrjctX/Zairenkai-Modules",
       "url": "https://github.com/ZairenkaiPrjctX/Zairenkai-Modules.git",
-      "branch": "ccr-63f8aa87-1b0paj-secure",
-      "commit": "2d1f5489a942aa0bb54f3a9b8822e4008bc2df83",
+      "branch": "ccr-63f8aa87-1b0paj-kernelsu",
+      "commit": "9175e1e26a8c55fed23a8febd93ce5f34ab35747",
       "merged": false,
       "packaging": "the single Magisk/KernelSU/APatch module zip (arm64-v8a), assembled by the repository's scripts/assemble.py from the Core, FAS and Tuning commits its components.lock.json pins; packaged as assets/system-modules/zairenkai.zip and installed only on the user's request through the root manager's own installer",
       "abis": [
@@ -88,7 +88,7 @@
       ],
       "license": "Aggregate: Zairenkai-Modules, Core and FAS are Apache-2.0; ztune (Zairenkai-Tuning 0c226b2) is GPL-3.0-only and ships with its licence and Corresponding Source (source/zairenkai-tuning-<commit>-src.tar.gz) in the zip. Each component's licence files are under licenses/<component>/.",
       "integration_status": "implemented",
-      "note": "Modules PR #3 commit 2d1f548 (topic branch, not merged yet; re-pin to the merge commit once it is): module 0.3.0, which adds SHA256SUMS checked at install and at every boot, root-only data directories, own-process uninstall and the WebUI through Core. Components as Modules' components.lock.json pins them: zcored (Core 345fc7f), zfasd (FAS 1c453db) and ztune (Tuning 0c226b2). Previous pin: 298311c (module 0.2.0). Replaces the separate zairenkai_core and zairenkai_fas modules (maintainer decision 2026-10-22)."
+      "note": "Modules PR #5 commit 9175e1e (topic branch, not merged yet; re-pin to the merge commit once it is): module 0.3.1, which fixes the install on KernelSU-Next (the installer tested the exec bit before setting it; seen on a device, 2026-10-23), on top of 0.3.0, which adds SHA256SUMS checked at install and at every boot, root-only data directories, own-process uninstall and the WebUI through Core. Components as Modules' components.lock.json pins them: zcored (Core 345fc7f), zfasd (FAS 1c453db) and ztune (Tuning 0c226b2). Previous pins: 2d1f548 (module 0.3.0, PR #3), 298311c (module 0.2.0). Replaces the separate zairenkai_core and zairenkai_fas modules (maintainer decision 2026-10-22)."
     }
   ]
 }
