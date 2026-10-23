@@ -244,6 +244,19 @@ class CoreClient(private val root: RootShell) {
         is CoreCall.Failed -> r
     }
 
+    /**
+     * Zairenkai-Tuning telemetry through Core (`tuning` method). Core runs ztune itself and answers
+     * `not_found` when it is missing or fails; [tuningNotInstalled] tells the two apart.
+     */
+    fun tuning(): CoreCall<TuningTelemetry> = when (val r = call("tuning")) {
+        is CoreCall.Ok -> TuningContract.telemetry(r.value)
+        is CoreCall.Error -> r
+        CoreCall.NotInstalled -> CoreCall.NotInstalled
+        is CoreCall.Unreachable -> r
+        is CoreCall.NoRoot -> r
+        is CoreCall.Failed -> r
+    }
+
     internal fun parseObservation(e: JsonElement): CoreObservation? {
         val o = e as? JsonObject ?: return null
         val v = o["value"] as? JsonObject ?: return null

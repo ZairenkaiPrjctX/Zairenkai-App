@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "organization": "ZairenkaiPrjctX",
-  "surveyed": "2026-10-22",
-  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit; re-audited 2026-10-21; visibility and the new Zairenkai-Tuning repository re-surveyed 2026-10-22 (list_repos, git ls-remote)",
+  "surveyed": "2026-10-23",
+  "method": "claude-code-remote list_repos (all accessible repositories), git ls-remote --heads, git ls-tree and source reads at the audited commit; re-audited 2026-10-21; visibility and the new Zairenkai-Tuning repository re-surveyed 2026-10-22 (list_repos, git ls-remote); Zairenkai-Sdk, Zairenkai-Intelligence-Engine and Zairenkai-Docs re-audited 2026-10-23 (git ls-remote, git ls-tree at dev)",
   "discovered": 17,
   "inaccessible": [],
   "outside_organization_not_inspected": [
@@ -255,19 +255,21 @@
         "dev"
       ],
       "audited_branch": "dev",
-      "audited_commit": "d482afebb6d3f88c3fee86677da8cec59634e50c",
-      "code_present": false,
-      "languages": [],
-      "categories": [
-        "documentation_only"
+      "audited_commit": "ed44c9099073e66554065b3483b3380b9a74aace",
+      "code_present": true,
+      "languages": [
+        "Python"
       ],
-      "disposition": "not_applicable: no implementation exists yet",
+      "categories": [
+        "contracts"
+      ],
+      "disposition": "not_applicable: contracts only. JSON Schemas for the Core, FAS, zart, zthermal, AFID, tuning, module-catalog and Local-AI documents, captured fixtures and a validator (tools/zsdk.py); no runtime capability. The app keeps its own parsers and captures its fixtures from the real binaries",
       "integration_status": "not_applicable",
       "app_capabilities": [],
       "integration_mechanism": null,
       "runtime_requirements": null,
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "Re-audited 2026-10-21: dev @ d482afebb6d3 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
+      "license": "Apache-2.0 (LICENSE, NOTICE); maintainer confirmation pending",
+      "evidence": "Re-audited 2026-10-23: dev @ ed44c9099073 (merge of Sdk PR #1) contains contracts/, fixtures/captured, fixtures/synthetic, tools/zsdk.py and tests/ (git ls-tree). Earlier: dev @ d482afebb6d3 held only agent foundation files (2026-10-21)."
     },
     {
       "name": "Zairenkai-Modules",
@@ -310,19 +312,22 @@
         "dev"
       ],
       "audited_branch": "dev",
-      "audited_commit": "0191e36365b88c966b7cf6f062154a506db9fffe",
-      "code_present": false,
-      "languages": [],
-      "categories": [
-        "documentation_only"
+      "audited_commit": "cc3d48cf4e343791ecd37e8835c6ecfe42f1cc4c",
+      "code_present": true,
+      "languages": [
+        "Python",
+        "Shell"
       ],
-      "disposition": "not_applicable: no implementation exists yet",
+      "categories": [
+        "local_ai_spike"
+      ],
+      "disposition": "not_applicable: host-only Local AI Phase A spike (llama.cpp on a Linux host, closed typed tool registry, system actions stop at a preview awaiting approval); nothing runs on Android, so there is nothing for the app to call. Privileged actions stay with Core",
       "integration_status": "not_applicable",
       "app_capabilities": [],
       "integration_mechanism": null,
       "runtime_requirements": null,
-      "license": "none chosen (no LICENSE file)",
-      "evidence": "Re-audited 2026-10-21: dev @ 0191e36365b8 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
+      "license": "Apache-2.0 (LICENSE, NOTICE); maintainer confirmation pending",
+      "evidence": "Re-audited 2026-10-23: dev @ cc3d48cf4e34 (merge of IE PR #1) contains zie/, registry/tools.json, models/ (manifest only, no weights), eval/, tests/ and docs/adr/0001-local-runtime-spike.md (git ls-tree); docs/SPIKE_REPORT.md: no Android build. Earlier: dev @ 0191e36365b8 held only agent foundation files (2026-10-21)."
     },
     {
       "name": "Zairenkai-License-Server",
@@ -406,19 +411,19 @@
         "dev"
       ],
       "audited_branch": "dev",
-      "audited_commit": "068bf87d02d06fc86c3af0ab44a56f42ff9a99c3",
+      "audited_commit": "9bd8833ae13017158b718a3cc2b028b5348a38b4",
       "code_present": false,
       "languages": [],
       "categories": [
         "documentation_only"
       ],
-      "disposition": "not_applicable: no implementation exists yet",
+      "disposition": "not_applicable: ecosystem documentation only (Markdown: audit, architecture, roadmap, threat model)",
       "integration_status": "not_applicable",
       "app_capabilities": [],
       "integration_mechanism": null,
       "runtime_requirements": null,
       "license": "none chosen (no LICENSE file)",
-      "evidence": "Re-audited 2026-10-21: dev @ 068bf87d02d0 contains only AGENT/, .claude/, AGENTS.md, CLAUDE.md and .gitignore (git ls-tree -r)."
+      "evidence": "Re-audited 2026-10-23: dev @ 9bd8833ae130 (merge of Docs PR #1) contains audit/, architecture/, roadmap/, security/ and README.md, Markdown only (git ls-tree). Earlier: dev @ 068bf87d02d0 held only agent foundation files (2026-10-21)."
     },
     {
       "name": "ZairenkaiPrjctX.github.io",
@@ -492,9 +497,11 @@
         "gpl_component",
         "system_service_or_privileged_daemon"
       ],
-      "disposition": "packaged, not called by the app: GPL-3.0-only executable ztune (telemetry, SoC identity, exact-device tuning profiles), shipped with its Corresponding Source inside the zairenkai module (Modules 298311c, Tuning 0c226b2) and run only by Core as a separate process. The app reaches it only through Core",
+      "disposition": "packaged, not called by the app: GPL-3.0-only executable ztune (telemetry, SoC identity, exact-device tuning profiles), shipped with its Corresponding Source inside the zairenkai module (Modules 298311c, Tuning 0c226b2) and run only by Core as a separate process. The app reads its telemetry only through Core's tuning method",
       "integration_status": "implemented",
-      "app_capabilities": [],
+      "app_capabilities": [
+        "tuning.telemetry (ztune telemetry as Core's tuning method returns it, read only)"
+      ],
       "integration_mechanism": "indirect: the app installs the zairenkai module that carries bin/ztune; Core runs ztune capabilities|telemetry|apply with a fixed argv and reads the zairenkai.tuning schema 1 JSON",
       "runtime_requirements": "root module zairenkai (Modules bd1eb06 or later); writes only with a Tier D device_validated profile, none shipped",
       "license": "GPL-3.0-only (LICENSE, NOTICE, SPDX headers); adapts RvSystem-Monitor, Lynx and KonaBess (docs/PROVENANCE.md)",

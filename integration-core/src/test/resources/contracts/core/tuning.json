@@ -1,0 +1,308 @@
+{
+  "v": 1,
+  "id": "fixture-tuning",
+  "ok": true,
+  "result": {
+    "component": {
+      "name": "zairenkai-tuning",
+      "version": "0.1.0"
+    },
+    "cpu": {
+      "cores": [
+        {
+          "cur_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "governor": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy0/scaling_governor: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "text",
+            "value": null
+          },
+          "id": 0,
+          "load": {
+            "source": "/proc/stat (two samples)",
+            "status": "ok",
+            "unit": "percent",
+            "value": 0.0
+          },
+          "max_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "min_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          }
+        },
+        {
+          "cur_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy1/cpuinfo_cur_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "governor": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy1/scaling_governor: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "text",
+            "value": null
+          },
+          "id": 1,
+          "load": {
+            "source": "/proc/stat (two samples)",
+            "status": "ok",
+            "unit": "percent",
+            "value": 0.0
+          },
+          "max_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy1/scaling_max_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "min_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy1/scaling_min_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          }
+        },
+        {
+          "cur_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy2/cpuinfo_cur_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "governor": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy2/scaling_governor: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "text",
+            "value": null
+          },
+          "id": 2,
+          "load": {
+            "source": "/proc/stat (two samples)",
+            "status": "ok",
+            "unit": "percent",
+            "value": 0.0
+          },
+          "max_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "min_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy2/scaling_min_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          }
+        },
+        {
+          "cur_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy3/cpuinfo_cur_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "governor": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy3/scaling_governor: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "text",
+            "value": null
+          },
+          "id": 3,
+          "load": {
+            "source": "/proc/stat (two samples)",
+            "status": "ok",
+            "unit": "percent",
+            "value": 0.0
+          },
+          "max_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy3/scaling_max_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          },
+          "min_freq": {
+            "detail": "/sys/devices/system/cpu/cpufreq/policy3/scaling_min_freq: No such file or directory (os error 2)",
+            "status": "unsupported",
+            "unit": "kHz",
+            "value": null
+          }
+        }
+      ],
+      "load": {
+        "source": "/proc/stat (two samples)",
+        "status": "ok",
+        "unit": "percent",
+        "value": 0.0
+      },
+      "present": {
+        "source": "/sys/devices/system/cpu/present",
+        "status": "ok",
+        "unit": "count",
+        "value": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "gpu": {
+      "cur_freq": {
+        "detail": "no GPU devfreq node",
+        "status": "unsupported",
+        "unit": "Hz",
+        "value": null
+      },
+      "devfreq": null,
+      "governor": {
+        "detail": "no GPU devfreq node",
+        "status": "unsupported",
+        "unit": "text",
+        "value": null
+      }
+    },
+    "interval_ms": 200,
+    "kind": "telemetry",
+    "memory": {
+      "available": {
+        "source": "/proc/meminfo MemAvailable",
+        "status": "ok",
+        "unit": "bytes",
+        "value": 12672393216
+      },
+      "swap_total": {
+        "source": "/proc/meminfo SwapTotal",
+        "status": "ok",
+        "unit": "bytes",
+        "value": 0
+      },
+      "swap_used": {
+        "source": "/proc/meminfo SwapTotal - SwapFree",
+        "status": "ok",
+        "unit": "bytes",
+        "value": 0
+      },
+      "total": {
+        "source": "/proc/meminfo MemTotal",
+        "status": "ok",
+        "unit": "bytes",
+        "value": 16872808448
+      },
+      "used": {
+        "source": "/proc/meminfo MemTotal - MemAvailable",
+        "status": "ok",
+        "unit": "bytes",
+        "value": 4200415232
+      }
+    },
+    "platform": {
+      "mediatek_score": 0,
+      "qualcomm_score": 0,
+      "signals": [],
+      "vendor": "unknown"
+    },
+    "schema": "zairenkai.tuning",
+    "schema_version": 1,
+    "soc": {
+      "conflicts": [],
+      "family": "unknown",
+      "labels": [],
+      "matches": [],
+      "observed": {
+        "board_platform": null,
+        "dt_compatible": [],
+        "dt_model": null,
+        "soc0_family": null,
+        "soc0_machine": null,
+        "soc0_soc_id": null,
+        "soc_manufacturer": null,
+        "soc_model": null
+      },
+      "platform_id": null
+    },
+    "storage": [
+      {
+        "device": "vda",
+        "scheduler": {
+          "source": "/sys/block/vda/queue/scheduler",
+          "status": "ok",
+          "unit": "text",
+          "value": "mq-deadline"
+        }
+      },
+      {
+        "device": "vdb",
+        "scheduler": {
+          "source": "/sys/block/vdb/queue/scheduler",
+          "status": "ok",
+          "unit": "text",
+          "value": "mq-deadline"
+        }
+      },
+      {
+        "device": "vdc",
+        "scheduler": {
+          "source": "/sys/block/vdc/queue/scheduler",
+          "status": "ok",
+          "unit": "text",
+          "value": "mq-deadline"
+        }
+      },
+      {
+        "device": "vdd",
+        "scheduler": {
+          "source": "/sys/block/vdd/queue/scheduler",
+          "status": "ok",
+          "unit": "text",
+          "value": "mq-deadline"
+        }
+      },
+      {
+        "device": "vde",
+        "scheduler": {
+          "source": "/sys/block/vde/queue/scheduler",
+          "status": "ok",
+          "unit": "text",
+          "value": "mq-deadline"
+        }
+      },
+      {
+        "device": "vdf",
+        "scheduler": {
+          "source": "/sys/block/vdf/queue/scheduler",
+          "status": "ok",
+          "unit": "text",
+          "value": "mq-deadline"
+        }
+      }
+    ],
+    "thermal": {
+      "cpu": {
+        "detail": "no readable /sys/class/thermal zone",
+        "status": "unsupported",
+        "unit": "celsius",
+        "value": null
+      },
+      "gpu": {
+        "detail": "no readable /sys/class/thermal zone",
+        "status": "unsupported",
+        "unit": "celsius",
+        "value": null
+      }
+    }
+  }
+}

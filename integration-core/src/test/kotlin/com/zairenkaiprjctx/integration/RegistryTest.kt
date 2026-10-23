@@ -79,6 +79,11 @@ class RegistryTest {
         for (id in listOf("thermaltools.control", "intelligence.analysis", "license.entitlement", "sdk.api", "graphics.control")) {
             assertEquals(id, AvailabilityState.NO_UPSTREAM_IMPLEMENTATION, s.availability(id).state)
         }
+        // Sdk and Intelligence-Engine now have code, but nothing the app can call: the reason says so.
+        assertTrue(s.availability("sdk.api").reason, s.availability("sdk.api").reason.contains("nothing for the app to call"))
+        assertTrue(s.availability("sdk.api").reason.contains("contracts only"))
+        assertTrue(s.availability("intelligence.analysis").reason.contains("host-only Local AI"))
+        assertTrue(s.availability("license.entitlement").reason.contains("has no implementation"))
         // Zairenkai-Modules is implemented (the zairenkai module); it is no longer a planned gap.
         assertNull(s.byId("modules.packages"))
         assertTrue("no su call without consent", runner.calls.isEmpty())

@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "not_found",
+    "message": "Zairenkai-Tuning telemetry: not installed: /data/adb/modules/zairenkai/bin/ztune: No such file or directory (os error 2)"
+  },
+  "id": "cli-6389-1316929",
+  "ok": false,
+  "v": 1
+}

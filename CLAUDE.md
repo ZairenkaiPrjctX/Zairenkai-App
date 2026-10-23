@@ -10,7 +10,7 @@ put detail in `AGENT/`.
 
 This repository is the **Zairenkai App** (Android, Kotlin + Java, Jetpack Compose with
 Material 3 Expressive, Google Sans Flex). Architecture: `docs/architecture/overview.md`.
-- `:integration-core`: pure JVM. Registry, typed clients (Core, FAS, zart, zthermal, AFID), root shell,
+- `:integration-core`: pure JVM. Registry, typed clients (Core, FAS, zart, zthermal, AFID, and ztune telemetry through Core), root shell,
   and `ProcessCommandRunner` (Java).
 - `:app`: Compose UI and design system (`design/`), Android adapters in Java (`platform/`).
 - `integration/`: organization inventory, revision lock, component build and contract-capture
@@ -55,10 +55,10 @@ Non-negotiables in this repo:
 | Purpose | Command | Status |
 |---|---|---|
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
-| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins) and as uid 1001 in CI run 39645071811 (2026-10-22). The installed-module fixture step is new and not yet run in CI |
-| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 88 passed, 1 skipped, 2026-10-22 |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 28 passed, 1 skipped, 2026-10-22, on aarch64 with a local LEGACY-graphics init script. The skipped `InfoRowNativeLayoutTest` needs NATIVE graphics (not the Robolectric 4.14 default, no Linux aarch64 runtime); only CI (x86-64) runs it |
-| Lint | `./gradlew lint` | Verified. Evidence: 0 errors, 2026-10-21 |
+| Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins; 2026-10-23 with the new tuning captures, exit 0) and as uid 1001 in CI (run 39645071811; full integration 39827139485, 2026-10-22). The tuning captures have not run in CI yet |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 99 passed, 0 skipped, 2026-10-23 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 29 passed, 0 skipped, 2026-10-23, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 `InfoRowNativeLayoutTest` is skipped: it needs NATIVE graphics (not the Robolectric 4.14 default, no Linux aarch64 runtime) |
+| Lint | `./gradlew lint` | Verified. Evidence: 0 errors (24 dependency-version warnings), 2026-10-23 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
 | Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/access/build/apk/report ok; `--release` fails on 3 blockers (signing), 2026-10-21 |

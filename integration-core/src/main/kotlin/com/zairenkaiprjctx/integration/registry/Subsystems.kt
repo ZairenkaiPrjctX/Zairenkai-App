@@ -5,6 +5,7 @@ package com.zairenkaiprjctx.integration.registry
 import com.zairenkaiprjctx.integration.afid.AfidCatalog
 import com.zairenkaiprjctx.integration.core.CoreCall
 import com.zairenkaiprjctx.integration.core.CoreClient
+import com.zairenkaiprjctx.integration.core.tuningNotInstalled
 import com.zairenkaiprjctx.integration.ecosystem.OrganizationInventory
 import com.zairenkaiprjctx.integration.exec.RootShell
 import com.zairenkaiprjctx.integration.exec.RootState
@@ -240,10 +241,29 @@ class CoreSubsystem(private val core: CoreClient, private val root: RootShell, r
             is CoreCall.NoRoot -> Availability(ROOT_REQUIRED, h.detail)
             is CoreCall.Failed -> Availability(INITIALIZATION_FAILED, h.detail)
         }
+        val tuning = if (!a.usable) a else when (val t = core.tuning()) {
+            is CoreCall.Ok -> Availability.available(
+                "ztune ${t.value.component.version}: SoC family ${t.value.soc.family}, ${t.value.cpu.cores.size} CPU cores, ${t.value.storage.size} block devices",
+            )
+            is CoreCall.Error -> if (t.tuningNotInstalled) {
+                Availability(COMPONENT_NOT_INSTALLED, "The installed ${com.zairenkaiprjctx.integration.core.CorePaths.MODULE_ID} module carries no ztune (module 0.2.0 or later ships it).")
+            } else {
+                Availability(INITIALIZATION_FAILED, "Core error ${t.code}: ${t.message}")
+            }
+            CoreCall.NotInstalled -> Availability(COMPONENT_NOT_INSTALLED, "Module ${com.zairenkaiprjctx.integration.core.CorePaths.MODULE_ID} is not installed.")
+            is CoreCall.Unreachable -> Availability(INITIALIZATION_FAILED, "zcored is installed but not answering: ${t.detail}")
+            is CoreCall.NoRoot -> Availability(ROOT_REQUIRED, t.detail)
+            is CoreCall.Failed -> Availability(INITIALIZATION_FAILED, t.detail)
+        }
         return listOf(
             CapabilityRecord("core.health", "Core health", "Health, policy version and capability reasons from zcored", provider, Privilege.ROOT, a, listOf("health", "capabilities", "context", "audit")),
             CapabilityRecord("core.actions", "Policy-checked actions", "FAS profile, FAS on/off and battery saver through Core's policy engine, with a dry-run preview", provider, Privilege.ROOT, a, listOf("submit")),
             CapabilityRecord("core.modules", "Module inventory", "Installed Zairenkai modules as Core reports them (read only)", provider, Privilege.ROOT, a, listOf("modules")),
+            CapabilityRecord(
+                "tuning.telemetry", "Tuning telemetry",
+                "CPU, GPU, memory, storage scheduler and SoC readings from Zairenkai-Tuning's ztune, run by Core (read only)",
+                Provider("ZairenkaiPrjctX/Zairenkai-Tuning", null, "ztune, run by Core (tuning method)"), Privilege.ROOT, tuning, listOf("tuning"),
+            ),
         )
     }
 }
@@ -280,8 +300,9 @@ class FasSubsystem(private val fas: FasClient, private val root: RootShell, revi
 }
 
 /**
- * Repositories that have no implementation yet. Their capabilities are listed so the UI can say
- * why the feature is absent, with the audited commit as evidence.
+ * Repositories with nothing the app can call yet: no implementation, or code that is not an
+ * app-side integration (contracts only, a host-only spike). Their capabilities are listed so the UI
+ * can say why the feature is absent, with the audited commit as evidence.
  */
 class UpstreamGapSubsystem(private val inventory: () -> OrganizationInventory?) : ZairenkaiSubsystem {
     override val id = "upstream"
@@ -302,10 +323,17 @@ class UpstreamGapSubsystem(private val inventory: () -> OrganizationInventory?) 
             CapabilityRecord(
                 capId, name, "Owned by $repo",
                 Provider("ZairenkaiPrjctX/$repo", r?.auditedCommit, repo), Privilege.NONE,
-                if (r != null && !r.codePresent) {
-                    Availability(NO_UPSTREAM_IMPLEMENTATION, "$repo has no implementation at ${r.auditedBranch} ${r.auditedCommit.take(12)}.")
-                } else {
-                    Availability(INITIALIZATION_FAILED, "Inventory entry for $repo is missing or now lists code; re-audit before integrating.")
+                when {
+                    r == null -> Availability(INITIALIZATION_FAILED, "Inventory entry for $repo is missing; re-audit before integrating.")
+                    !r.codePresent ->
+                        Availability(NO_UPSTREAM_IMPLEMENTATION, "$repo has no implementation at ${r.auditedBranch} ${r.auditedCommit.take(12)}.")
+                    // Code exists, but nothing the app can call (contracts only, a host-only spike).
+                    r.integrationStatus == "not_applicable" -> Availability(
+                        NO_UPSTREAM_IMPLEMENTATION,
+                        "$repo has nothing for the app to call at ${r.auditedBranch} ${r.auditedCommit.take(12)}: ${r.disposition.removePrefix("not_applicable: ")}.",
+                    )
+                    else ->
+                        Availability(INITIALIZATION_FAILED, "Inventory entry for $repo now lists an integration; re-audit before integrating.")
                 },
             )
         }

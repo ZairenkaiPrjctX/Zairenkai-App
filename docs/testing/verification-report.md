@@ -1,5 +1,30 @@
 # Verification report
 
+## Typed tuning telemetry; every pin in `dev` (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host; CI on the pushed commit is the remaining check.**
+Nothing ran on a device.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Pins in `dev` | `git merge-base --is-ancestor <pin> origin/dev` (Core `8931cbb`, FAS `99cfb18`, Modules `298311c`) | all three ancestors; lock `merged: true`, `branch: dev` |
+| Components | `ANDROID_NDK_HOME=/opt/android/android-ndk-r27d integration/scripts/build-components.sh`; `verify_integration.py build` | exit 0; `build: ok` |
+| Tuning fixtures | `integration/scripts/capture-contracts.sh` | exit 0. `core/tuning.json`: Core's own `TuningAdapter` (fixed argv, envelope checks) running ztune built at Tuning `0c226b2`, owned by the capturing user, wrapped in Core's `Response`. `core/tuning-not-installed.json`: the live daemon's `not_found` answer without ztune. Re-captured fixtures whose only changes were ids, clocks and pids were not committed |
+| Host identifiers | review of `core/tuning.json` | none: SoC family `unknown`, virtual block devices `vd*`, memory sizes |
+| JVM tests | `./gradlew :integration-core:test` | 99 passed, 0 failed, 0 skipped (11 new in `TuningContractTest`) |
+| Robolectric | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 29 passed, 0 skipped |
+| Lint | `./gradlew lint` | 0 errors; 24 warnings, all `GradleDependency` / `AndroidGradlePluginVersion` |
+| Lock, verifier, shell | `verify_integration.py lock`; `python3 -m unittest discover -s integration/scripts/tests`; `shellcheck integration/scripts/*.sh` | ok; 17 passed; clean |
+
+Behaviour: `CoreClient.tuning()` refuses another schema, schema version, kind or component, drops
+any value sent with a failed status, and never coerces a string into a number. Core answers
+`not_found` for every ztune failure; only its message prefix (`Zairenkai-Tuning telemetry: not
+installed`) separates a module without ztune (`COMPONENT_NOT_INSTALLED`) from a failing ztune
+(`INITIALIZATION_FAILED`). A distinct Core error code would remove that dependency on wording.
+
+Not verified: the tuning captures in CI; ztune on any phone (on this host every frequency,
+governor and temperature reading is `unsupported`).
+
 ## Module with ztune; first green full-integration run (2026-10-22)
 
 **Verdict: the integrated app built in CI for the first time; the re-pin is verified on the host
@@ -390,8 +415,9 @@ APK contents (`aapt2 dump badging`, `unzip -l`):
 - **Compose UI tests ran under Robolectric**, not as instrumented tests. The Java Android
   components were tested the same way.
 - **Material 3 1.5.0-alpha18 is a pre-release.**
-- **Core and ThermalTools revisions are unmerged topic-branch commits** (`"merged": false` in
-  the lock).
+- **Zairenkai-Tuning has no default branch**: ztune is pinned only through Modules'
+  `components.lock.json` (`0c226b2`, topic branch). Every commit in this app's lock is in its
+  repository's `dev` (2026-10-23).
 
 ## First report (2026-10-19)
 
