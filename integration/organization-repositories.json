@@ -314,25 +314,29 @@
       "visibility": "public",
       "default_branch": "dev",
       "branches": [
-        "dev"
+        "dev",
+        "ccr-63f8aa87-1b0paj-android"
       ],
-      "audited_branch": "dev",
-      "audited_commit": "cc3d48cf4e343791ecd37e8835c6ecfe42f1cc4c",
+      "audited_branch": "ccr-63f8aa87-1b0paj-android",
+      "audited_commit": "af31fd730a42263dfc74c1a7e4573f2d51573709",
       "code_present": true,
       "languages": [
         "Python",
+        "C++",
         "Shell"
       ],
       "categories": [
-        "local_ai_spike"
+        "local_ai"
       ],
-      "disposition": "not_applicable: host-only Local AI Phase A spike (llama.cpp on a Linux host, closed typed tool registry, system actions stop at a preview awaiting approval); nothing runs on Android, so there is nothing for the app to call. Privileged actions stay with Core",
-      "integration_status": "not_applicable",
-      "app_capabilities": [],
-      "integration_mechanism": null,
-      "runtime_requirements": null,
+      "disposition": "integrated: zie-run (llama.cpp core, grammar-constrained to the closed tool registry) packaged as a native executable; the app runs read-only tools and sends system tools to Core as dry runs the user approves",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "intelligence.analysis (ask, import_model, delete_model)"
+      ],
+      "integration_mechanism": "lib/<abi>/libzierun.so run as the app's uid with a fixed argv; assets/intelligence/{tools.json,output.gbnf,model.json}; the model file is imported by the user and checked against the manifest's SHA-256",
+      "runtime_requirements": "arm64-v8a or x86_64, API 29+, the manifest's min_memory_bytes (1 GiB), the imported model file",
       "license": "Apache-2.0 (LICENSE, NOTICE); maintainer confirmation pending",
-      "evidence": "Re-audited 2026-10-23: dev @ cc3d48cf4e34 (merge of IE PR #1) contains zie/, registry/tools.json, models/ (manifest only, no weights), eval/, tests/ and docs/adr/0001-local-runtime-spike.md (git ls-tree); docs/SPIKE_REPORT.md: no Android build. Earlier: dev @ 0191e36365b8 held only agent foundation files (2026-10-21)."
+      "evidence": "Re-audited 2026-10-23 at af31fd7 (IE PR #3, topic branch): runtime/zie_run.cpp and runtime/CMakeLists.txt (llama.cpp b11500 core libraries only), zie/grammar.py and registry/output.gbnf, scripts/build-android.sh (arm64-v8a and x86_64, refuses networking imports, NEEDED only libc/libm/libdl/liblog), docs/adr/0002-on-device-runner.md; 21 tests (20 passed, 1 skipped). Re-audited 2026-10-23: dev @ cc3d48cf4e34 (merge of IE PR #1) contains zie/, registry/tools.json, models/ (manifest only, no weights), eval/, tests/ and docs/adr/0001-local-runtime-spike.md (git ls-tree); docs/SPIKE_REPORT.md: no Android build. Earlier: dev @ 0191e36365b8 held only agent foundation files (2026-10-21)."
     },
     {
       "name": "Zairenkai-License-Server",

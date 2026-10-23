@@ -1,0 +1,13 @@
+{
+  "language": "id",
+  "goal": "check temperature",
+  "confidence_percent": 0,
+  "calls": [
+    {
+      "tool": "thermal.snapshot",
+      "arguments": {
+       }
+    }
+  ],
+  "clarification": "Please provide the temperature readings for your device."
+}

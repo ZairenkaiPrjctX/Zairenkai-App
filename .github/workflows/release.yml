@@ -88,8 +88,9 @@ jobs:
           echo "module-signing key ${key_id:0:16}… is trusted; the release keystore opens."
       - name: Every locked repository can be fetched anonymously
         run: python3 integration/scripts/verify_integration.py access
-      - name: Rust, Android targets and NDK (checksum verified)
+      - name: Rust, Android targets, NDK (checksum verified) and Ninja (zie-run)
         run: |
+          sudo apt-get install -y -q ninja-build
           rustup toolchain install stable --profile minimal -t aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
           rustup default stable
           curl -fsSL -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip"

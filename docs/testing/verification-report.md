@@ -1,5 +1,25 @@
 # Verification report
 
+## Local AI, module 0.3.1, module update notices, signed dry run (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host (JVM, Robolectric, real runner and model on the
+host).** Nothing ran on a device.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Components | `LLAMA_CPP_SRC=<b11500 checkout> ANDROID_NDK_HOME=/opt/android/android-ndk-r27d integration/scripts/build-components.sh` | exit 0; zie-run for arm64-v8a and x86_64 ("no network imports; needs: libc.so libdl.so libm.so"); module 0.3.1 from Modules `9175e1e` |
+| Module install on KernelSU-Next (simulated) | the real 0.3.1 zip extracted at mode 0644, `customize.sh` sourced with stub `ui_print`/`set_perm` up to step 3 | steps 1–2 pass ("31 files match SHA256SUMS"); 0.3.0 stopped there on the device |
+| Contracts | `integration/scripts/capture-contracts.sh` | exit 0; Core reports module 0.3.1 |
+| JVM tests | `./gradlew :integration-core:test` | 122 run, 121 passed, 1 skipped (the real-runner test without `ZIE_RUN`/`ZIE_MODEL`) |
+| Real runner through the agent | `ZIE_RUN=<host zie-run> ZIE_MODEL=<gguf> ./gradlew :integration-core:test --tests '*AiTest.theRealRunner*'` | passed, 8.0 s |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 72 passed, 0 skipped; 63 PNGs (new: `preview-ai-chat-*` over the real agent, `ai-model-*`) |
+| Lint | `./gradlew lint` | 0 errors; 24 dependency-version warnings |
+| Build | `./gradlew assembleDebug assembleRelease` | both APKs; `lib/{arm64-v8a,x86_64}/libzierun.so` and `assets/intelligence/` present |
+| APK binaries | `llvm-nm -D --undefined-only`, `llvm-readelf -d` on the APK's `libzierun.so` | no networking import; NEEDED libm, libdl, libc |
+| Integration | `verify_integration.py lock`, `build`, `apk`, `report` | ok |
+| Signed dry run | throwaway key, `apksigner verify`, `verify_integration.py report --release` | v3 verified, 16 KB zipalign ok; one blocker: module catalog unsigned (maintainer key) |
+| Scripts | `python3 -m unittest discover -s integration/scripts/tests`; `shellcheck`; `actionlint` | 24 run, 23 passed, 1 skipped; clean; clean |
+
 ## Updates, About, System Module redesign, module 0.3.0 (2026-10-23)
 
 **Verdict: verified on an x86-64 Linux host (JVM and Robolectric).** No release exists yet (the

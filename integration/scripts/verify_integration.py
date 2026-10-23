@@ -39,10 +39,15 @@ SRC_DIRS = {
     "zairenkai-module": "zairenkai-module",
     "zcored-ctl-contract": "core",
     "zfasd-ctl-contract": "fas",
+    "zie-run": "zie",
 }
 # Packaged in the APK (contracts are only called at run time). zairenkai-module is the single
 # root module; it packages zcored, zfasd and the GPL-3.0 ztune with its source (2026-10-22).
-PACKAGED = ("zart", "zthermal", "afid-device-candidates", "zairenkai-module")
+# zie-run is the Local AI runner (Zairenkai-Intelligence-Engine), built for two ABIs only.
+PACKAGED = ("zart", "zthermal", "afid-device-candidates", "zairenkai-module", "zie-run")
+ZIE_ABIS = ("arm64-v8a", "x86_64")
+ZIE_ASSETS = ("assets/intelligence/tools.json", "assets/intelligence/output.gbnf", "assets/intelligence/model.json",
+              "assets/licenses/zie-run/LICENSE", "assets/licenses/zie-run/NOTICE", "assets/licenses/llama.cpp/LICENSE")
 INTERNAL_ONLY = ()
 
 
@@ -148,7 +153,7 @@ def check_build() -> list:
             errors.append(f"build: {name} listed in components.json but missing")
         elif sha256(f.read_bytes()) != digest:
             errors.append(f"build: {name} does not match its recorded SHA-256")
-    for key, cid in (("zart", "zart"), ("zthermal", "zthermal"), ("afid", "afid-device-candidates")):
+    for key, cid in (("zart", "zart"), ("zthermal", "zthermal"), ("afid", "afid-device-candidates"), ("intelligence", "zie-run")):
         if comp.get(key, {}).get("commit") != lock.get(cid, {}).get("commit"):
             errors.append(f"build: components.json {key} commit differs from the lock")
     files = set(comp.get("files", {}))
@@ -156,10 +161,17 @@ def check_build() -> list:
         for lib in ("libzart.so", "libzthermal.so"):
             if f"jniLibs/{abi}/{lib}" not in files:
                 errors.append(f"build: jniLibs/{abi}/{lib} not built")
+    for abi in ZIE_ABIS:
+        if f"jniLibs/{abi}/libzierun.so" not in files:
+            errors.append(f"build: jniLibs/{abi}/libzierun.so not built")
+    if any(n.endswith("/libzierun.so") and n.split("/")[1] not in ZIE_ABIS for n in files):
+        errors.append("build: zie-run built for an ABI its build does not support")
+    if any(n.endswith(".gguf") for n in files):
+        errors.append("build: a model file was packaged; the user imports it")
     for req in ("assets/afid/device-candidates.json", "assets/system-modules.json",
                 "assets/system-modules/zairenkai.zip",
                 "assets/licenses/zthermal/LICENSE", "assets/licenses/zthermal/NOTICE",
-                "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE"):
+                "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE") + ZIE_ASSETS:
         if req not in files:
             errors.append(f"build: {req} not built")
     internal = profile() == "internal"
@@ -293,6 +305,11 @@ def check_apk(apk: pathlib.Path, release: bool) -> list:
         for lib in ("libzart.so", "libzthermal.so"):
             if f"lib/{abi}/{lib}" not in facts["names"]:
                 errors.append(f"apk: lib/{abi}/{lib} missing (ABI coverage)")
+    for abi in ZIE_ABIS:
+        if f"lib/{abi}/libzierun.so" not in facts["names"]:
+            errors.append(f"apk: lib/{abi}/libzierun.so missing (Local AI)")
+    if any(n.endswith(".gguf") for n in facts["names"]):
+        errors.append("apk: a model file is packaged; the user imports it")
     for req in ("assets/licenses/android/NOTICES.txt", "assets/licenses/zairenkai-app/LICENSE",
                 "assets/licenses/zairenkai-app/NOTICE", "assets/integration/module-trust.json",
                 "assets/integration/repository-lock.json", "assets/system-modules.json"):

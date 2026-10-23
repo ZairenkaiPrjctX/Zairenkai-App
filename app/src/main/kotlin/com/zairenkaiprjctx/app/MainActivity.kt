@@ -204,7 +204,7 @@ private fun App(c: AppContainer) {
     val system: SystemViewModel = viewModel(factory = viewModelFactory { initializer { SystemViewModel(c) } })
     val settingsVm: SettingsViewModel = viewModel(factory = viewModelFactory { initializer { SettingsViewModel(c) } })
     val modulesVm: SystemModuleViewModel = viewModel(factory = viewModelFactory { initializer { SystemModuleViewModel(c) } })
-    val ai: AiViewModel = viewModel(factory = viewModelFactory { initializer { AiViewModel() } })
+    val ai: AiViewModel = viewModel(factory = viewModelFactory { initializer { AiViewModel(host = c.localAi) } })
     val snapshot by main.registry.collectAsStateWithLifecycle()
     val look by c.theme.settings.collectAsStateWithLifecycle()
     val photo by c.wallpaper.photo.collectAsStateWithLifecycle()

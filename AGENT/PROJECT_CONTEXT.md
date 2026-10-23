@@ -73,10 +73,16 @@
   components required, integration report), fetching the public sources without a token.
   Verified. Evidence: CI run 39827139485, 2026-10-22.
 - The UI was redesigned on 2026-10-23 (Material 3 Expressive wavy indicators, segmented groups,
-  five destinations with an AI tab; `docs/design/design-system.md`). The AI screen is prepared
-  but honest: no on-device model is packaged, so `intelligence.analysis` stays
-  NO_UPSTREAM_IMPLEMENTATION, the composer is disabled and no answer is shown. Verified. Evidence:
+  five destinations with an AI tab; `docs/design/design-system.md`). Verified. Evidence:
   `RedesignTest`, screenshot gallery, 2026-10-23. **Unverified** on a device.
+- Local AI (2026-10-23, `docs/integration/local-ai.md`): Intelligence-Engine's `zie-run`
+  (`af31fd7`, llama.cpp b11500) is packaged as `libzierun.so` for arm64-v8a and x86_64 with the
+  tool registry, grammar and model manifest. The model file is not packaged and never downloaded
+  by the app: the user imports it and it is kept only if size and SHA-256 match. Read-only tools
+  run; `fas.set_profile` becomes a Core dry run the user approves. Verified on the host. Evidence:
+  `AiTest` (prompt identical to the engine's; parser on the real model's captured answers; the
+  real runner and model through the Kotlin agent, 8 s), `AiUiTest`, both APK binaries without
+  networking imports (`llvm-nm`), 2026-10-23. **Unverified** on a device (speed, memory, SELinux).
 - Settings › Appearance (palettes, custom themes, AMOLED, wallpaper, launcher icon variants,
   background animation, app font, UI scale, experimental glass bar) was added on 2026-10-23,
   modelled on mpvRx's behaviour (AGPL-3.0, no code copied). New dependencies: Haze 1.6.10 and
@@ -122,10 +128,12 @@
   only) and shows Core's `tuning.*` capabilities generically. Verified on the host. Evidence:
   `TuningContractTest` on fixtures from Core's adapter running the real ztune and from the live
   daemon, 2026-10-23. **Unverified** on a device.
-- The other 8 Zairenkai repositories have no runtime capability for the app. Zairenkai-Sdk
-  (contracts only, `ed44c90`) and Zairenkai-Intelligence-Engine (host-only Local AI spike,
-  `cc3d48c`) now have code; the registry reports them `NO_UPSTREAM_IMPLEMENTATION` with that
-  reason. anime-extensions is a separate product and is excluded from the ecosystem audit
+- Zairenkai-Intelligence-Engine is integrated at `af31fd7` (IE PR #3, topic branch,
+  `"merged": false`; re-pin to the merge commit). Verified. Evidence: `verify_integration.py lock`
+  and `build`, 2026-10-23.
+- The other 7 Zairenkai repositories have no runtime capability for the app. Zairenkai-Sdk
+  (contracts only, `ed44c90`) has code; the registry reports it `NO_UPSTREAM_IMPLEMENTATION` with
+  that reason. anime-extensions is a separate product and is excluded from the ecosystem audit
   (maintainer, 2026-10-22). Verified. Evidence: `integration/repository-audit.md` (re-audit
   2026-10-21), `integration/organization-repositories.json` (re-audit 2026-10-23), `RegistryTest`.
 

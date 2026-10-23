@@ -33,12 +33,12 @@ import com.zairenkaiprjctx.app.ZairenkaiRoot
 import com.zairenkaiprjctx.app.design.ThemeMode
 import com.zairenkaiprjctx.app.design.ThemeSettings
 import com.zairenkaiprjctx.app.design.ZairenkaiTheme
-import com.zairenkaiprjctx.app.ui.ai.AiComposer
+import com.zairenkaiprjctx.app.ui.ai.AI_CAPABILITY
+import com.zairenkaiprjctx.app.ui.ai.AiScreen
+import com.zairenkaiprjctx.app.ui.ai.AiViewModel
 import com.zairenkaiprjctx.app.ui.ai.AiTurn
-import com.zairenkaiprjctx.app.ui.ai.AiTurnView
-import com.zairenkaiprjctx.app.ui.ai.ApprovalState
-import com.zairenkaiprjctx.app.ui.ai.ToolStatus
 import com.zairenkaiprjctx.integration.exec.CommandOutcome
+import com.zairenkaiprjctx.integration.model.AvailabilityState
 import com.zairenkaiprjctx.integration.exec.CommandResult
 import com.zairenkaiprjctx.integration.exec.CommandRunner
 import java.io.File
@@ -124,29 +124,41 @@ class ScreenshotGallery {
     }
 
     /**
-     * The AI conversation components with SAMPLE turns, labelled `preview-*`: no on-device model
-     * exists yet, so the app itself never shows a transcript. The tool names are the ones in
-     * Zairenkai-Intelligence-Engine's closed registry: a read-only tool shows as a tool card, a
-     * device change (`fas.set_profile`) only as an approval card. The Core verdict is illustrative.
+     * The AI screen over the real agent and the packaged registry, labelled `preview-*`: the model's
+     * answers are zie-run's captured outputs for these questions, the readings and Core's verdict
+     * come from a stand-in device (no device ran this). `ai-model-*` is the model card before import.
      */
     private fun aiPreview(mode: ThemeMode, name: String) {
-        val turns = listOf(
-            AiTurn.User("u1", app.getString(R.string.ai_prompt_hot)),
-            AiTurn.Tool("t1", "thermal.snapshot", emptyMap(), ToolStatus.COMPLETED),
-            AiTurn.Assistant("a1", "Sample answer: the battery is at 41 °C and the thermal status is Light. Frame pacing is on Balanced."),
-            AiTurn.User("u2", "Switch to power saver"),
-            AiTurn.Approval("p1", "Set FAS profile to Power saver", "Sample preview: Core checked the change in a dry run.", "allow", listOf("user_choice_wins", "thermal_guard"), ApprovalState.PENDING),
+        val host = com.zairenkaiprjctx.app.CapturedAiHost(app.assets, { prompt ->
+            if (prompt.contains("panas")) com.zairenkaiprjctx.app.CapturedAnswers.TEMPERATURE else com.zairenkaiprjctx.app.CapturedAnswers.FAS
+        })
+        val vm = AiViewModel(host = host, io = kotlinx.coroutines.Dispatchers.Unconfined)
+        aiScreen(vm, mode, AvailabilityState.NOT_VERIFIED)
+        vm.send("Kenapa HP saya panas?")
+        vm.send("Switch FAS to the performance profile")
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText(app.getString(R.string.ai_approval_title)))
+        shoot(name)
+    }
+
+    private fun aiScreen(vm: AiViewModel, mode: ThemeMode, state: AvailabilityState) {
+        val record = com.zairenkaiprjctx.integration.registry.CapabilityRecord(
+            AI_CAPABILITY, "Zairenkai Local AI", "", com.zairenkaiprjctx.integration.model.Provider("ZairenkaiPrjctX/Zairenkai-Intelligence-Engine", null, "zie-run"),
+            com.zairenkaiprjctx.integration.model.Privilege.STANDARD,
+            com.zairenkaiprjctx.integration.model.Availability(state, "zie-run 1 (llama.cpp b11500)"),
         )
         compose.setContent {
             ZairenkaiTheme(ThemeSettings(mode, dynamicColor = false)) {
                 Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-                    Column(Modifier.padding(16.dp).padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        turns.forEach { AiTurnView(it) { _, _ -> } }
-                        AiComposer(enabled = true)
-                    }
+                    AiScreen(vm, com.zairenkaiprjctx.integration.registry.RegistrySnapshot(listOf(record), false, 0), androidx.compose.foundation.layout.PaddingValues(16.dp)) {}
                 }
             }
         }
+    }
+
+    private fun aiModel(mode: ThemeMode, name: String) {
+        aiScreen(AiViewModel(host = com.zairenkaiprjctx.app.CapturedAiHost(app.assets, { "" })), mode, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText(app.getString(R.string.ai_model_import)))
         shoot(name)
     }
 
@@ -314,6 +326,12 @@ class ScreenshotGallery {
 
     @Test
     fun aiPreviewDark() = aiPreview(ThemeMode.DARK, "preview-ai-chat-dark")
+
+    @Test
+    fun aiModelLight() = aiModel(ThemeMode.LIGHT, "ai-model-light")
+
+    @Test
+    fun aiModelDark() = aiModel(ThemeMode.DARK, "ai-model-dark")
 
     @Test
     fun hostLight() {

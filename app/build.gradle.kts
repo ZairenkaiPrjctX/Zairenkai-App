@@ -115,6 +115,10 @@ val verifyIntegrationComponents = tasks.register("verifyIntegrationComponents") 
             "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE",
             // The single root module (Zairenkai-Modules): zcored and zfasd.
             "assets/system-modules.json", "assets/system-modules/zairenkai.zip",
+            // Local AI (Zairenkai-Intelligence-Engine): zie-run for two ABIs, its registry, grammar and model manifest.
+            "jniLibs/arm64-v8a/libzierun.so", "jniLibs/x86_64/libzierun.so",
+            "assets/intelligence/tools.json", "assets/intelligence/output.gbnf", "assets/intelligence/model.json",
+            "assets/licenses/zie-run/LICENSE", "assets/licenses/llama.cpp/LICENSE",
         )
     val allow = allowMissingComponents
     doLast {

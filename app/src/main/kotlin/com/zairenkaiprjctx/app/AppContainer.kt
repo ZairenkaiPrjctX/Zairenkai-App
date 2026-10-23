@@ -54,6 +54,16 @@ import com.zairenkaiprjctx.integration.systemmodule.RuntimeProbe
 import com.zairenkaiprjctx.integration.systemmodule.adapterFor
 import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsClient
 import com.zairenkaiprjctx.integration.zart.ZartClient
+import com.zairenkaiprjctx.integration.ai.AiToolRegistry
+import com.zairenkaiprjctx.integration.ai.DeviceTools
+import com.zairenkaiprjctx.integration.ai.IntelligenceSubsystem
+import com.zairenkaiprjctx.integration.ai.LocalAgent
+import com.zairenkaiprjctx.integration.ai.LocalAiAssets
+import com.zairenkaiprjctx.integration.ai.ModelImport
+import com.zairenkaiprjctx.integration.ai.ModelManifest
+import com.zairenkaiprjctx.integration.ai.ModelStore
+import com.zairenkaiprjctx.integration.ai.ZieRuntime
+import com.zairenkaiprjctx.app.ui.ai.LocalAiHost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -62,7 +72,10 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 
 /** Revisions of the packaged components (assets/components.json, written by build-components.sh). */
-data class PackagedComponents(val zartCommit: String?, val zartVersion: String?, val zthermalCommit: String?, val zthermalVersion: String?, val afidCommit: String?)
+data class PackagedComponents(
+    val zartCommit: String?, val zartVersion: String?, val zthermalCommit: String?, val zthermalVersion: String?, val afidCommit: String?,
+    val intelligenceCommit: String? = null,
+)
 
 /** Appearance preferences, persisted in SharedPreferences and observed by the root composable. */
 class ThemePreferences(private val prefs: android.content.SharedPreferences) {
@@ -204,6 +217,9 @@ class AppContainer(private val app: Application, val runner: CommandRunner = Pro
     /** zthermal, packaged the same way. */
     val zthermalPath: String? = nativeExecutable("libzthermal.so")
 
+    /** zie-run, the Local AI runner (arm64-v8a and x86_64 only), packaged the same way. */
+    val zieRunPath: String? = nativeExecutable("libzierun.so")
+
     private fun nativeExecutable(name: String): String? =
         File(app.applicationInfo.nativeLibraryDir, name).takeIf { it.isFile && it.canExecute() }?.absolutePath
 
@@ -225,6 +241,7 @@ class AppContainer(private val app: Application, val runner: CommandRunner = Pro
                 field("zart", "commit"), field("zart", "version"),
                 field("zthermal", "commit"), field("zthermal", "version"),
                 field("afid", "commit"),
+                field("intelligence", "commit"),
             )
         }.getOrNull()
     }
@@ -235,6 +252,57 @@ class AppContainer(private val app: Application, val runner: CommandRunner = Pro
     val zthermal = ThermalToolsClient({ zthermalPath }, runner, root)
     val core = CoreClient(root)
     val fas = FasClient(root)
+
+    /** The Local AI registry and model store, from the assets build-components.sh packaged. */
+    val localAiAssets: Result<LocalAiAssets> by lazy {
+        runCatching {
+            LocalAiAssets(
+                AiToolRegistry.parse(asset("intelligence/tools.json")),
+                ModelStore(File(app.filesDir, "models"), ModelManifest.parse(asset("intelligence/model.json"))),
+            )
+        }
+    }
+
+    /** The grammar zie-run samples under, copied from the APK so the runner can open it by path. */
+    private val aiGrammar: File by lazy {
+        File(app.filesDir, "ai/output.gbnf").also { f ->
+            f.parentFile?.mkdirs()
+            f.writeText(asset("intelligence/output.gbnf"))
+        }
+    }
+
+    val zieRuntime = ZieRuntime({ zieRunPath }, runner, File(app.cacheDir, "ai"), threads = Runtime.getRuntime().availableProcessors().coerceIn(1, 4))
+
+    private fun totalMemoryBytes(): Long? = runCatching {
+        android.app.ActivityManager.MemoryInfo().also { app.getSystemService(android.app.ActivityManager::class.java).getMemoryInfo(it) }.totalMem.takeIf { it > 0 }
+    }.getOrNull()
+
+    val intelligence = IntelligenceSubsystem(zieRuntime, { localAiAssets }, ::totalMemoryBytes, components?.intelligenceCommit)
+
+    val localAi: LocalAiHost = object : LocalAiHost {
+        override val manifest: ModelManifest? get() = localAiAssets.getOrNull()?.store?.manifest
+
+        override fun agent(): LocalAgent? {
+            val ai = localAiAssets.getOrNull() ?: return null
+            if (zieRunPath == null || !ai.store.installed()) return null
+            return LocalAgent(ai.registry, { prompt -> zieRuntime.generate(ai.store.file, aiGrammar, prompt) }, DeviceTools(core, fas, zthermal))
+        }
+
+        override fun importModel(uri: android.net.Uri, progress: (Long) -> Unit): ModelImport {
+            val store = localAiAssets.getOrNull()?.store ?: return ModelImport.Failed("Local AI assets are not packaged")
+            return runCatching {
+                app.contentResolver.openInputStream(uri)?.use { store.import(it, progress) } ?: ModelImport.Failed("the file could not be opened")
+            }.getOrElse { ModelImport.Failed(it.message ?: "the file could not be read") }
+        }
+
+        override fun deleteModel() {
+            localAiAssets.getOrNull()?.store?.delete()
+        }
+
+        override suspend fun refreshAvailability() {
+            registry.refresh(intelligence.id)
+        }
+    }
 
     val art = ArtSubsystem(zart, root, components?.zartCommit)
     val thermalTools = ThermalToolsSubsystem(zthermal, root, components?.zthermalCommit)
@@ -249,6 +317,7 @@ class AppContainer(private val app: Application, val runner: CommandRunner = Pro
             SystemModuleSubsystem({ moduleRelease }, { moduleInstallers.mapValues { it.value.state.value } }),
             CoreSubsystem(core, root, lockedCommit("Zairenkai-Core")),
             fasSubsystem,
+            intelligence,
             UpstreamGapSubsystem { inventory },
         ),
         Dispatchers.IO,

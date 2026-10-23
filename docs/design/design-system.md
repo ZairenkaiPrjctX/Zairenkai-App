@@ -57,16 +57,19 @@ here blamed the segmented button row itself; that was the same test limitation.
 
 ## Zairenkai AI screen
 
-Prepared for Zairenkai-Intelligence-Engine; no on-device model is packaged yet, so the registry
-record `intelligence.analysis` reports `NO_UPSTREAM_IMPLEMENTATION` and the screen says so.
+Runs Zairenkai-Intelligence-Engine's `zie-run` on the device (`docs/integration/local-ai.md`).
+The registry record `intelligence.analysis` says whether it can: no runner for the ABI, too
+little memory, no imported model, or ready (`NOT_VERIFIED`).
 
-- The composer is disabled unless that record is usable. The suggested prompts open the screen
-  that already answers them (Thermal, Performance, Home, System).
-- The transcript is empty in production: nothing invents an answer.
-- Components for the runtime, shaped after the SDK's Local-AI contracts: `ChatBubble`,
-  `ToolCallCard` (a read-only tool from the closed registry), `ApprovalCard` (a device change:
-  Core's dry-run decision first; Approve is enabled only when Core allows it; applying stays
-  with Core). `AiViewModel.decide` only answers a pending preview.
+- The composer and the suggested prompts ask the model only when that record is usable;
+  otherwise the prompts open the screen that answers them (Thermal, Performance, Home, System).
+- The model card shows the manifest (file, size, SHA-256, licence, source), imports the file
+  through the system picker with a progress meter, and says why a wrong file was refused.
+- Every turn comes from the model's checked answer, a tool's output or Core: `ChatBubble`
+  (the model's goal and note), `ToolCallCard` (a read-only tool with its labelled facts),
+  `ApprovalCard` (Core's dry-run decision first; Approve is enabled only when Core allows it;
+  Core applies and verifies), `RefusalCard` (output that failed the checks: no action). The orb
+  moves only while the model is answering.
 
 ## Settings › Appearance
 

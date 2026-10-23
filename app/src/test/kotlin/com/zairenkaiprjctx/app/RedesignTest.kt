@@ -128,15 +128,16 @@ class RedesignTest {
     }
 
     @Test
-    fun aiScreenIsHonestAboutTheMissingModelAndItsPromptsOpenTheAnsweringScreen() {
+    fun aiScreenIsHonestAboutTheMissingRunnerAndItsPromptsOpenTheAnsweringScreen() {
         val c = container
         compose.setContent { ZairenkaiRoot(c, activity = null) }
         compose.waitUntil(10_000) { c.registry.snapshot.value.records.isNotEmpty() }
         compose.onNodeWithTag("nav-ai").performClick()
         compose.waitForIdle()
-        assertEquals(AvailabilityState.NO_UPSTREAM_IMPLEMENTATION, c.registry.snapshot.value.availability(AI_CAPABILITY).state)
-        compose.onNodeWithText("Not implemented upstream").assertExists() // above the fold on this 470 dp screen
-        compose.onNodeWithText("Available once an on-device model is installed.").assertIsDisplayed()
+        // Robolectric extracts no native libraries, so zie-run is absent here: the probe says so.
+        assertEquals(AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE, c.registry.snapshot.value.availability(AI_CAPABILITY).state)
+        compose.onNodeWithText("Native component unavailable").assertExists() // above the fold on this 470 dp screen
+        compose.onNodeWithText("Available once the model file is imported.").assertIsDisplayed()
         compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Why is my phone hot?"))
         compose.onNodeWithText("Why is my phone hot?").performClick()

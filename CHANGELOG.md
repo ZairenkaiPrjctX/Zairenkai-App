@@ -18,13 +18,26 @@ pre-release); see `docs/build/releases.md`.
   background animation, app font, UI scale and an experimental glass bar.
 - A redesigned System Module screen: the installation journey from root to active, the module's
   programs and their digests, and how the package is verified.
+- Zairenkai AI runs on the phone: zie-run (Zairenkai-Intelligence-Engine, llama.cpp) answers
+  questions by asking read-only tools (Core health and capabilities, FAS status, thermal
+  snapshot). A FAS profile change goes to Core as a dry run, and only your approval applies it.
+  Import the model file once (Qwen2.5-0.5B-Instruct, 429 MB). The app never downloads it and
+  keeps it only if its SHA-256 matches. Nothing leaves the phone.
+- Module updates: the app also checks Zairenkai-Modules' releases and tells you when a newer
+  module than the installed one is published.
 
 ### Changed
 - The whole interface follows Material 3 Expressive, with wavy progress indicators, segmented
   groups and a fifth destination for the (not yet available) on-device AI.
 - Long text wraps, shrinks or collapses behind "Show more" instead of overflowing.
 
+### Fixed
+- The packaged module (0.3.1) installs on KernelSU-Next: 0.3.0 stopped with "The package has no
+  bin/zcored".
+
 ### Security
+- Release builds: no cleartext traffic, system CAs only, APK signature schemes v2/v3 only, not
+  debuggable.
 - The app now requests the INTERNET permission, used only to read the release list and download
   a release from GitHub when you check for updates (or the daily check you can turn off). It
   sends no data about the device.

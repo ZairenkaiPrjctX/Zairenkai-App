@@ -2,6 +2,8 @@
 // Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.app.ui.ai
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -74,13 +76,20 @@ import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ZairenkaiShapes
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.app.design.ZairenkaiTextStyles
+import androidx.compose.ui.platform.LocalContext
+import com.zairenkaiprjctx.app.design.Meter
+import com.zairenkaiprjctx.app.design.ProgressRow
+import com.zairenkaiprjctx.integration.ai.Fact
+import com.zairenkaiprjctx.integration.ai.FactKey
+import com.zairenkaiprjctx.integration.ai.ModelManifest
 import com.zairenkaiprjctx.integration.model.AvailabilityState
+import com.zairenkaiprjctx.integration.registry.CapabilityRecord
 import com.zairenkaiprjctx.integration.registry.RegistrySnapshot
 
 /** The registry record that says whether an on-device model runtime exists (Zairenkai-Intelligence-Engine). */
 const val AI_CAPABILITY = "intelligence.analysis"
 
-/** Questions the user can tap; until a model runs on the device each opens the screen with the answer. */
+/** Questions the user can tap: asked to the model when it is ready, otherwise they open the screen with the answer. */
 enum class AiPrompt(@StringRes val text: Int, val opens: Tab, val icon: ImageVector) {
     HOT(R.string.ai_prompt_hot, Tab.THERMAL, ZairenkaiGlyphs.thermometer),
     PROFILE(R.string.ai_prompt_profile, Tab.PERFORMANCE, ZairenkaiGlyphs.sliders),
@@ -92,9 +101,12 @@ enum class AiPrompt(@StringRes val text: Int, val opens: Tab, val icon: ImageVec
 @Composable
 fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues, open: (Tab) -> Unit) {
     val turns by vm.transcript.collectAsStateWithLifecycle()
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    val importState by vm.importState.collectAsStateWithLifecycle()
     val record = snapshot.byId(AI_CAPABILITY)
-    // The composer is enabled only when the registry reports a usable on-device runtime.
+    // The composer is enabled only when the registry reports a usable on-device runtime and model.
     val ready = record?.availability?.usable == true
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.importModel(uri) }
     val dir = LocalLayoutDirection.current
     val start = padding.calculateStartPadding(dir)
     val end = padding.calculateEndPadding(dir)
@@ -105,27 +117,36 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
             contentPadding = PaddingValues(start = start, end = end, top = padding.calculateTopPadding(), bottom = ZairenkaiSpacing.l),
             verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
         ) {
-            item { Box(Modifier.entrance(entrance, 0)) { AiIntro(record?.availability?.state) } }
+            item { Box(Modifier.entrance(entrance, 0)) { AiIntro(record?.availability?.state, thinking = busy) } }
             item {
                 Column(Modifier.entrance(entrance, 1), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
                     GroupHeader(stringResource(R.string.ai_try), icon = ZairenkaiGlyphs.spark)
-                    TileGrid(AiPrompt.entries) { p, m -> PromptCard(p, m) { open(p.opens) } }
+                    TileGrid(AiPrompt.entries) { p, m ->
+                        val question = stringResource(p.text)
+                        PromptCard(p, m) { if (ready && !busy) vm.send(question) else open(p.opens) }
+                    }
                     Detail(stringResource(if (ready) R.string.ai_try_note_ready else R.string.ai_try_note), Modifier.padding(horizontal = ZairenkaiSpacing.xs))
                 }
             }
             item { Box(Modifier.entrance(entrance, 2)) { HowItWorks() } }
-            item { Box(Modifier.entrance(entrance, 3)) { ModelStatus(record?.availability?.reason) } }
+            item {
+                Box(Modifier.entrance(entrance, 3)) {
+                    ModelCard(record, vm.manifest, importState, onImport = { pick.launch(arrayOf("*/*")) }, onDelete = vm::deleteModel)
+                }
+            }
             items(turns, key = { it.id }) { t -> AiTurnView(t, onDecide = vm::decide) }
+            if (busy) item { ProgressRow(stringResource(R.string.ai_thinking)) }
         }
         AiComposer(
-            enabled = ready,
+            enabled = ready && !busy,
+            onSend = vm::send,
             modifier = Modifier.padding(start = start, end = end, bottom = (padding.calculateBottomPadding() - ZairenkaiSpacing.l).coerceAtLeast(ZairenkaiSpacing.s)),
         )
     }
 }
 
 @Composable
-private fun AiIntro(state: AvailabilityState?) {
+private fun AiIntro(state: AvailabilityState?, thinking: Boolean = false) {
     val cs = MaterialTheme.colorScheme
     Column(
         Modifier.fillMaxWidth().padding(top = ZairenkaiSpacing.s),
@@ -133,9 +154,9 @@ private fun AiIntro(state: AvailabilityState?) {
         verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            // A soft halo behind the mark; the mark stays still until a model is actually working.
+            // A soft halo behind the mark; the mark moves only while the model is actually working.
             Box(Modifier.size(196.dp).background(Brush.radialGradient(listOf(cs.primary.copy(alpha = 0.24f), cs.primary.copy(alpha = 0.06f), Color.Transparent))))
-            AiOrb(size = 112.dp, active = false)
+            AiOrb(size = 112.dp, active = thinking)
         }
         Text(
             stringResource(R.string.ai_tagline),
@@ -170,18 +191,57 @@ private fun HowItWorks() {
     }
 }
 
+/** The model: what it is, whether it is imported, and the import or delete action. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ModelStatus(reason: String?) {
+private fun ModelCard(record: CapabilityRecord?, manifest: ModelManifest?, import: ModelImportUi, onImport: () -> Unit, onDelete: () -> Unit) {
+    val context = LocalContext.current
+    fun size(bytes: Long) = android.text.format.Formatter.formatShortFileSize(context, bytes)
+    val state = record?.availability?.state
+    val installed = record?.availability?.usable == true
+    // Importing makes sense only where the runtime runs: not without zie-run or with too little memory.
+    val canImport = manifest != null && state != AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE && state != AvailabilityState.UNSUPPORTED_DEVICE &&
+        state != AvailabilityState.INITIALIZATION_FAILED
     SegmentedGroup(title = stringResource(R.string.ai_model), icon = ZairenkaiGlyphs.chip) {
         row {
             GroupRow(
-                stringResource(R.string.ai_model_name),
+                manifest?.displayName ?: stringResource(R.string.ai_model_name),
                 supporting = stringResource(R.string.ai_model_body),
                 icon = ZairenkaiGlyphs.chip,
-                status = AvailabilityState.COMPONENT_NOT_INSTALLED,
+                status = state ?: AvailabilityState.COMPONENT_NOT_INSTALLED,
             )
         }
+        if (manifest != null) {
+            row {
+                GroupContent {
+                    InfoRow(stringResource(R.string.ai_model_size), size(manifest.sizeBytes))
+                    InfoRow(stringResource(R.string.ai_model_license), manifest.weightsLicense)
+                    InfoRow(stringResource(R.string.ai_model_digest), manifest.sha256, code = true)
+                    if (!installed && canImport) {
+                        Detail(stringResource(R.string.ai_model_how, manifest.fileName, manifest.sourceUrl.removePrefix("https://"), manifest.revision.take(12)), maxLines = 6)
+                    }
+                    when (import) {
+                        is ModelImportUi.Copying -> {
+                            Meter(if (import.total > 0) import.done.toFloat() / import.total else 0f)
+                            Supporting(stringResource(R.string.ai_model_copying, size(import.done), size(import.total)))
+                        }
+                        ModelImportUi.Verified -> Supporting(stringResource(R.string.ai_model_verified))
+                        is ModelImportUi.WrongSize -> Supporting(stringResource(R.string.ai_model_wrong_size, size(import.actual), size(manifest.sizeBytes)))
+                        ModelImportUi.WrongDigest -> Supporting(stringResource(R.string.ai_model_wrong_digest))
+                        is ModelImportUi.Failed -> Supporting(stringResource(R.string.ai_model_failed, import.detail))
+                        ModelImportUi.Idle -> Unit
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                        if (canImport && !installed) {
+                            Button(onClick = onImport, enabled = import !is ModelImportUi.Copying) { Text(stringResource(R.string.ai_model_import)) }
+                        }
+                        if (installed) OutlinedButton(onClick = onDelete) { Text(stringResource(R.string.ai_model_delete)) }
+                    }
+                }
+            }
+        }
         // The registry's own reason, for whoever wants the engineering detail.
+        val reason = record?.availability?.reason
         if (!reason.isNullOrBlank()) {
             row { GroupContent { ExpandableSection(stringResource(R.string.ai_why)) { Detail(reason, maxLines = 6) } } }
         }
@@ -220,9 +280,13 @@ fun AiComposer(enabled: Boolean, modifier: Modifier = Modifier, onSend: (String)
 fun AiTurnView(turn: AiTurn, onDecide: (String, Boolean) -> Unit) {
     when (turn) {
         is AiTurn.User -> ChatBubble(turn.text, fromUser = true)
-        is AiTurn.Assistant -> ChatBubble(turn.text, fromUser = false)
+        is AiTurn.Assistant -> Column(verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+            ChatBubble(turn.text, fromUser = false)
+            if (turn.clarification.isNotBlank()) ChatBubble("${stringResource(R.string.ai_clarification)}: ${turn.clarification}", fromUser = false)
+        }
         is AiTurn.Tool -> ToolCallCard(turn)
         is AiTurn.Approval -> ApprovalCard(turn, onDecide)
+        is AiTurn.Refusal -> RefusalCard(turn)
     }
 }
 
@@ -261,6 +325,40 @@ fun ToolCallCard(turn: AiTurn.Tool) {
             }
             Text(turn.name, style = ZairenkaiTextStyles.code, maxLines = 2, overflow = TextOverflow.Ellipsis)
             turn.arguments.forEach { (k, v) -> InfoRow(k, v, code = true) }
+            turn.facts.forEach { f -> InfoRow(stringResource(f.label()), f.value) }
+            turn.detail?.let { Detail(it, maxLines = 4) }
+        }
+    }
+}
+
+@StringRes
+private fun Fact.label(): Int = when (key) {
+    FactKey.STATE -> R.string.ai_fact_state
+    FactKey.VERSION -> R.string.ai_fact_version
+    FactKey.REASONS -> R.string.ai_fact_reasons
+    FactKey.CAPABILITIES -> R.string.ai_fact_capabilities
+    FactKey.AVAILABLE -> R.string.ai_fact_available
+    FactKey.HOTTEST -> R.string.ai_fact_hottest
+    FactKey.FRAMEWORK_STATUS -> R.string.ai_fact_framework_status
+    FactKey.BATTERY -> R.string.ai_fact_battery
+    FactKey.ZONES -> R.string.ai_fact_zones
+    FactKey.RUNNING -> R.string.ai_fact_running
+    FactKey.ENABLED -> R.string.ai_fact_enabled
+    FactKey.PROFILE -> R.string.ai_fact_profile
+    FactKey.FPS -> R.string.ai_fact_fps
+}
+
+/** An answer that did not pass the checks, or a model that could not run: shown, never acted on. */
+@Composable
+fun RefusalCard(turn: AiTurn.Refusal) {
+    val cs = MaterialTheme.colorScheme
+    Surface(color = cs.surfaceContainerLow, shape = ZairenkaiShapes.metric, border = BorderStroke(1.dp, cs.outlineVariant), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(ZairenkaiSpacing.l), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                Icon(ZairenkaiGlyphs.shield, contentDescription = null, modifier = Modifier.size(20.dp), tint = cs.onSurfaceVariant)
+                Text(stringResource(R.string.ai_refusal), style = MaterialTheme.typography.labelLarge)
+            }
+            Detail(turn.reason, maxLines = 4)
         }
     }
 }
@@ -296,6 +394,7 @@ fun ApprovalCard(turn: AiTurn.Approval, onDecide: (String, Boolean) -> Unit) {
                 ApprovalState.APPLIED -> Supporting(stringResource(R.string.ai_approval_applied))
                 ApprovalState.FAILED -> Supporting(stringResource(R.string.ai_approval_failed))
             }
+            turn.result?.let { Detail(it, maxLines = 3) }
         }
     }
 }

@@ -63,3 +63,28 @@ run against a real release or on a device.
 (the daily job survives reboots), `POST_NOTIFICATIONS` (asked when needed) and
 `REQUEST_INSTALL_PACKAGES` (granted by the user per app). `UpdateUiTest` fails if any other
 `android.permission` appears.
+
+## Release build hardening and a signed dry run
+
+The release build type is not debuggable (`isDebuggable` and `isJniDebuggable` false). It signs
+with schemes v2 and v3 only (no v1 JAR signing) and leaves out the dependency metadata block. It
+uses `res/xml/network_security_config.xml`: cleartext is off and only the system CAs are trusted.
+`verify_integration.py report <apk> --release` checks these properties on the built APK:
+
+- the manifest flags;
+- the permissions (only the five above, plus AndroidX's own receiver permission);
+- a v2 or v3 signature.
+
+Dry run, 2026-10-23, on the x86-64 Linux host, with a throwaway key (RSA 3072, valid 1 day)
+generated in the session's scratch directory and never committed:
+
+1. `zipalign -P 16 4` and `apksigner sign --v1-signing-enabled false`.
+2. `apksigner verify --min-sdk-version 29`: verified with v3. apksigner adds no v2 block when v3
+   covers the minimum SDK.
+3. `zipalign -c -P 16 4`: ok.
+4. `ANDROID_HOME=… verify_integration.py report <apk> --release`: one blocker,
+   `module catalog not signed (no ZAIRENKAI_MODULE_SIGNING_KEY_FILE)`. Signing the catalog needs
+   the maintainer's module-signing key, which only the `release` environment holds.
+
+**Unverified:** the Release workflow itself has never run, and no APK signed with the
+maintainer's key exists.
