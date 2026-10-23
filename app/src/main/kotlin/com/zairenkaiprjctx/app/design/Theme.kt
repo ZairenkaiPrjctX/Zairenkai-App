@@ -40,8 +40,8 @@ object ZairenkaiSpacing {
 
 /**
  * Shapes. The Material scale is rounder than the baseline, and there are role shapes so that
- * emphasis follows importance: the system hero is the most distinctive, metrics are compact,
- * and dialogs of destructive actions are squarer than ordinary sheets.
+ * emphasis follows importance: heroes are the roundest, lists are segmented groups, and dialogs of
+ * destructive actions are squarer than ordinary sheets.
  */
 object ZairenkaiShapes {
     val material = Shapes(
@@ -51,11 +51,20 @@ object ZairenkaiShapes {
         large = RoundedCornerShape(28.dp),
         extraLarge = RoundedCornerShape(36.dp),
     )
-    val hero = RoundedCornerShape(topStart = 36.dp, topEnd = 12.dp, bottomEnd = 36.dp, bottomStart = 12.dp)
-    val metric = RoundedCornerShape(20.dp)
+    val hero = RoundedCornerShape(32.dp)
+    val metric = RoundedCornerShape(24.dp)
     val section = RoundedCornerShape(28.dp)
     val pill = RoundedCornerShape(50)
     val destructive = RoundedCornerShape(16.dp)
+
+    /** Segmented groups: large outer corners, small inner ones, 2 dp between rows. */
+    val segmentOuter = 24.dp
+    val segmentInner = 6.dp
+    val segmentGap = 2.dp
+
+    /** Chat bubbles: round, with the corner nearest the speaker tightened. */
+    val bubbleUser = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp, bottomEnd = 6.dp, bottomStart = 22.dp)
+    val bubbleAssistant = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp, bottomEnd = 22.dp, bottomStart = 6.dp)
 }
 
 /** True when the user turned animations off (Settings › Accessibility › Remove animations). */

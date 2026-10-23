@@ -1,5 +1,44 @@
 # Verification report
 
+## UI/UX redesign: Material 3 Expressive, Zairenkai AI screen (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host under Robolectric.** Nothing ran on a device or an
+emulator: touch feel, frame rate of the wavy indicators and the AI orb, and TalkBack order are
+**Unverified** on hardware.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 36 passed, 6 skipped (the screenshot gallery, which runs only with `ZAIRENKAI_SCREENSHOT_DIR`) |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 42 passed, 0 skipped; 34 PNGs |
+| JVM tests | `./gradlew :integration-core:test` | 99 passed, 0 failed, 0 skipped (unchanged) |
+| Lint | `./gradlew lint` | 0 errors; 24 warnings, all `GradleDependency` / `AndroidGradlePluginVersion` |
+| Build | `./gradlew assembleDebug assembleRelease -Pzairenkai.allowMissingComponents=true` | both APKs built, without the native components (the flag) |
+
+New tests: `RedesignTest` (Home's next steps and capability groups, the AI transcript and
+approval rules, the AI screen in the real app: unavailable badge, disabled composer, a prompt
+opening Thermal) and `ConnectedChoiceTouchTest` (real touches on every segment of a connected
+button group, NATIVE graphics). `AppUiTest` and `LanguageTest` follow the new navigation
+(Runtime is a page of System; destinations are found by their `nav-*` test tags).
+
+**Robolectric hit-testing.** A real touch on the first or last segment of a connected button
+group never arrived under LEGACY graphics, even a 60 ms press, while the middle segment and the
+semantics action worked. The end segments have path outlines, which LEGACY graphics cannot
+hit-test; under NATIVE graphics all three take the touch. This also explains the segmented-button
+finding recorded below under "Defects found and fixed during verification".
+
+**Screenshots** (`app/src/test/kotlin/.../screenshots/ScreenshotGallery.kt`, 411 × 891 dp,
+xxhdpi, light and dark):
+- `host-*`: the real `AppContainer` on this JVM, so states are what the registry probed here (no
+  root, no packaged native components);
+- `captured-*`: root granted and every su command answered with output captured from the real
+  zcored, zfasd and ztune binaries (`integration-core/src/test/resources/contracts`); anything
+  not captured fails as on a device without the component;
+- `preview-ai-chat-*`: the AI components with sample turns, labelled as samples. The app itself
+  never shows a transcript until an on-device runtime exists.
+
+One gallery run timed out waiting for the registry while lint ran in parallel; three later runs
+without lint passed.
+
 ## Typed tuning telemetry; every pin in `dev` (2026-10-23)
 
 **Verdict: verified on an x86-64 Linux host and in CI** (run 39888821755 at `fbe9e44`: all three

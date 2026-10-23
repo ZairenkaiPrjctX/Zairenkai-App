@@ -21,14 +21,52 @@ pre-release dependency, pinned in `gradle/libs.versions.toml` with the reason. R
 |---|---|---|
 | Theme with the expressive motion scheme | `MaterialExpressiveTheme` | `ZairenkaiTheme` |
 | Motion tokens | `MaterialTheme.motionScheme` (spatial and effects specs) | `ZairenkaiMotion`, all transitions |
+| Measured values | `CircularWavyProgressIndicator` (determinate) | `RingGauge`: ready capabilities on Home, FPS against the FAS target, thermal headroom. Shown only for a measured value; an unknown value is an empty track and a dash, never a guess |
+| Bars | `LinearWavyProgressIndicator` (determinate) | `Meter`: CPU and memory (Core tuning telemetry), battery level, zones read by zthermal |
+| Work in progress | `LinearWavyProgressIndicator` (indeterminate) | `WorkingBar`: under the app bar while the registry refreshes, on the module screen while the installer works. Nothing is drawn with animations off |
 | Loading | `LoadingIndicator` | `ProgressRow` (only while a real operation is pending) |
-| Selection | `ToggleButton` (shape morph) | FAS profiles, theme mode |
+| Single choice | `ToggleButton` with `ButtonGroupDefaults.connected*ButtonShapes()` | `ConnectedChoice`: theme mode, language. The chosen option morphs to a pill and carries a check mark |
+| Lists | segmented groups: rows on one tonal surface, 2 dp apart, large outer and small inner corners | `SegmentedGroup`, `GroupRow` (every screen) |
 | Status shapes | `MaterialShapes` + `toShape()` (cookie for ready, gem for unverified, burst for failure, pentagon for attention, circle for not applicable) | `StatusGlyph` |
-| Navigation | `ShortNavigationBar` (compact), `WideNavigationRail` (≥ 600 dp), `MediumTopAppBar` with exit-until-collapsed scrolling | `MainActivity` |
+| AI mark | `MaterialShapes` `Morph` (Cookie9Sided ↔ SoftBurst) | `AiOrb`; still while no model is available |
+| Navigation | `ShortNavigationBar` (compact), `WideNavigationRail` (≥ 600 dp), `MediumFlexibleTopAppBar` with a subtitle and exit-until-collapsed scrolling | `MainActivity` |
 
-**Not used:** the segmented button row. In the alpha18 build, a real touch on an unselected
-segment did not reach its `onClick` under Robolectric, while the semantics action did. It was
-replaced by toggle buttons, which pass the same touch test.
+**Segmented buttons and connected button groups under Robolectric.** A real touch on the first
+or last segment does not reach its handler under LEGACY graphics, Robolectric 4.14's default:
+those segments have path outlines, and LEGACY graphics cannot hit-test a path. Under NATIVE
+graphics every segment takes the touch (`ConnectedChoiceTouchTest`). The LEGACY-mode tests
+(`AppUiTest`, `LanguageTest`) therefore invoke the click action on these groups. The earlier note
+here blamed the segmented button row itself; that was the same test limitation.
+
+## Information architecture
+
+- **Five destinations:** Home, Performance, Thermal, AI, System. Runtime (ART), Settings and the
+  System Module are pages opened from System or the app bar, with a back arrow.
+- **Home:** a hero with the device and a ring of ready capabilities, two tiles (thermal state,
+  root access), "Suggested" next steps (`nextSteps`: install the module when root is granted and
+  it is missing, enable root when features wait for it, cool down at severe throttling), then the
+  capabilities grouped as needing attention, ready, and not possible on this device.
+- **Performance:** FAS hero (profile, FPS ring, missed frames, decision details), profiles as a
+  radio list, service switches (FAS through Core, battery saver through Core), Core, and Core's
+  tuning telemetry. Every change still goes through Core's preview and policy.
+- **Thermal:** Android's thermal status and headroom, Core's readings, the FAS cap, and the
+  zthermal snapshot. Read only: no control exists.
+- **System:** root access, components, device search, ecosystem, diagnostics, licences, settings.
+- **Detail on demand:** sources, decision details, device details and long diagnostics sit in
+  `ExpandableSection`s, collapsed by default.
+
+## Zairenkai AI screen
+
+Prepared for Zairenkai-Intelligence-Engine; no on-device model is packaged yet, so the registry
+record `intelligence.analysis` reports `NO_UPSTREAM_IMPLEMENTATION` and the screen says so.
+
+- The composer is disabled unless that record is usable. The suggested prompts open the screen
+  that already answers them (Thermal, Performance, Home, System).
+- The transcript is empty in production: nothing invents an answer.
+- Components for the runtime, shaped after the SDK's Local-AI contracts: `ChatBubble`,
+  `ToolCallCard` (a read-only tool from the closed registry), `ApprovalCard` (a device change:
+  Core's dry-run decision first; Approve is enabled only when Core allows it; applying stays
+  with Core). `AiViewModel.decide` only answers a pending preview.
 
 ## Typography: Google Sans Flex
 
@@ -73,13 +111,15 @@ replaced by toggle buttons, which pass the same touch test.
 ## Shape, spacing, emphasis
 
 - **Shape scale:** 8, 12, 20, 28 and 36 dp, plus role shapes:
-  - asymmetric `hero` for the main status;
+  - `hero` (32 dp) for the main surface of a screen (`HeroPanel`);
+  - segment corners: 24 dp outer, 6 dp inner, 2 dp gap;
   - `metric` and `section`;
   - `destructive` (squarer) for dialogs that change the device.
 - **Spacing:** `ZairenkaiSpacing` (4–32 dp, gutter 16 dp).
 - **Emphasis:** `SectionCard(emphasis = LOW/NORMAL/HIGH)` picks the surface tone by importance.
-  `HeroStatusCard`, `MetricTile`, `CapabilityItem`, `UnavailableCard`, `ExpandableSection` and
-  `ConfirmDialog` give each kind of information its own treatment.
+  `HeroPanel`, `MetricTile`, `ActionTile`, `GroupRow`, `CapabilityItem`, `UnavailableCard`,
+  `ExpandableSection` and `ConfirmDialog` give each kind of information its own treatment.
+- **Icons:** `ZairenkaiGlyphs`, original 24 dp line icons drawn for this app (`Glyphs.kt`).
 
 ## Motion and accessibility
 
@@ -95,10 +135,12 @@ replaced by toggle buttons, which pass the same touch test.
   - headings on section titles;
   - `stateDescription` on status badges;
   - content descriptions on icon buttons;
-  - radio-button role on the theme choice;
+  - radio-button role on the theme, language and FAS profile choices, with a check mark on the
+    chosen one;
+  - expand/collapse state on expandable sections;
   - merged rows for key/value pairs.
-- **Languages:** English (`values/`) and Bahasa Indonesia (`values-in/`); 182 strings and 3
-  plurals each. Daemon and integration diagnostics are shown as reported, in English.
+- **Languages:** English (`values/`) and Bahasa Indonesia (`values-in/`); 419 translated strings and
+  5 plurals each, plus 3 names that are not translated. Daemon and integration diagnostics are shown as reported, in English.
 - **Default language: English**, whatever the system language. Indonesian applies only when
   chosen in Settings › Language (`AppLanguage`, applied in `MainActivity.attachBaseContext`):
   - API 33+: the choice is the per-app language (`LocaleManager`), so the system's app-language

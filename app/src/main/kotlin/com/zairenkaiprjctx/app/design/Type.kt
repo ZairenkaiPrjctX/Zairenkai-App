@@ -71,6 +71,9 @@ object ZairenkaiTextStyles {
     /** Large primary values (FPS, thermal state): tabular figures so digits do not jump. */
     val metric = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(700), fontSize = 34.sp, lineHeight = 40.sp, fontFeatureSettings = "tnum")
 
+    /** The value inside a ring gauge. */
+    val ringValue = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(600), fontSize = 26.sp, lineHeight = 30.sp, fontFeatureSettings = "tnum")
+
     /** Inline numbers in rows (versions, sizes, percentages). */
     val numeric = TextStyle(fontFamily = ZairenkaiFonts.text, fontWeight = FontWeight(500), fontSize = 14.sp, lineHeight = 20.sp, fontFeatureSettings = "tnum")
 

@@ -19,6 +19,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.material.icons.Icons
@@ -28,7 +30,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ShortNavigationBar
 import androidx.compose.ui.unit.sp
@@ -52,6 +54,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -63,6 +66,9 @@ import com.zairenkaiprjctx.app.design.ZairenkaiIcons
 import com.zairenkaiprjctx.app.design.ZairenkaiMotion
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.app.design.ZairenkaiTheme
+import com.zairenkaiprjctx.app.design.WorkingBar
+import com.zairenkaiprjctx.app.ui.ai.AiScreen
+import com.zairenkaiprjctx.app.ui.ai.AiViewModel
 import com.zairenkaiprjctx.app.design.isDark
 import com.zairenkaiprjctx.app.ui.HomeScreen
 import com.zairenkaiprjctx.app.ui.MainViewModel
@@ -80,16 +86,28 @@ import com.zairenkaiprjctx.app.ui.ThermalScreen
 import com.zairenkaiprjctx.app.ui.ThermalViewModel
 
 /** Top-level destinations, each backed by registered subsystems (AppContainer.registry). */
-enum class Tab(@StringRes val title: Int, val icon: ImageVector, val subsystems: List<String>) {
-    HOME(R.string.nav_home, ZairenkaiIcons.home, listOf("android", "afid")),
-    PERFORMANCE(R.string.nav_performance, ZairenkaiIcons.performance, listOf("core", "fas")),
-    THERMAL(R.string.nav_thermal, ZairenkaiIcons.thermal, listOf("android", "thermaltools", "core", "fas")),
-    RUNTIME(R.string.nav_runtime, ZairenkaiIcons.runtime, listOf("art")),
-    SYSTEM(R.string.nav_system, ZairenkaiIcons.system, listOf("core", "afid", "upstream")),
+enum class Tab(
+    @StringRes val title: Int,
+    @StringRes val subtitle: Int,
+    val icon: ImageVector,
+    val subsystems: List<String>,
+    /** The app-bar title when the navigation label is a short form of it. */
+    @StringRes val appBarTitle: Int = title,
+) {
+    HOME(R.string.nav_home, R.string.subtitle_home, ZairenkaiIcons.home, listOf("android", "afid")),
+    PERFORMANCE(R.string.nav_performance, R.string.subtitle_performance, ZairenkaiIcons.performance, listOf("core", "fas")),
+    THERMAL(R.string.nav_thermal, R.string.subtitle_thermal, ZairenkaiIcons.thermal, listOf("android", "thermaltools", "core", "fas")),
+    AI(R.string.nav_ai, R.string.subtitle_ai, ZairenkaiIcons.ai, listOf("upstream"), appBarTitle = R.string.ai_title),
+    SYSTEM(R.string.nav_system, R.string.subtitle_system, ZairenkaiIcons.system, listOf("core", "afid", "upstream", "art")),
 }
 
-/** Destinations shown over the tabs, from the app bar or a link. */
-enum class Overlay { NONE, SETTINGS, SYSTEM_MODULE }
+/** Destinations shown over the tabs, from the app bar or a row that opens a page. */
+enum class Overlay(@StringRes val title: Int, @StringRes val subtitle: Int?) {
+    NONE(0, null),
+    SETTINGS(R.string.nav_settings, null),
+    SYSTEM_MODULE(R.string.module_title, null),
+    RUNTIME(R.string.nav_runtime, R.string.subtitle_runtime),
+}
 
 class MainActivity : ComponentActivity() {
     /** English unless the user chose another language: see [AppLanguage]. */
@@ -134,15 +152,17 @@ private fun App(c: AppContainer) {
     val system: SystemViewModel = viewModel(factory = viewModelFactory { initializer { SystemViewModel(c) } })
     val settingsVm: SettingsViewModel = viewModel(factory = viewModelFactory { initializer { SettingsViewModel(c) } })
     val modulesVm: SystemModuleViewModel = viewModel(factory = viewModelFactory { initializer { SystemModuleViewModel(c) } })
+    val ai: AiViewModel = viewModel(factory = viewModelFactory { initializer { AiViewModel() } })
     val snapshot by main.registry.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
-    val showSettings = overlay != Overlay.NONE
-    BackHandler(enabled = showSettings) { overlay = Overlay.NONE }
+    val showOverlay = overlay != Overlay.NONE
+    BackHandler(enabled = showOverlay) { overlay = Overlay.NONE }
 
     // Compatibility checks run only when the user opens the System Module screen: granting root
     // alone neither checks nor installs anything.
     val openModule = { overlay = Overlay.SYSTEM_MODULE }
+    val openRuntime = { overlay = Overlay.RUNTIME }
 
     val registered = c.registry.subsystems.map { it.id }.toSet()
     val tabs = Tab.entries.filter { t -> t.subsystems.any { it in registered } }
@@ -152,13 +172,8 @@ private fun App(c: AppContainer) {
     }
 
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val title = stringResource(
-        when (overlay) {
-            Overlay.SETTINGS -> R.string.nav_settings
-            Overlay.SYSTEM_MODULE -> R.string.module_title
-            Overlay.NONE -> tab.title
-        },
-    )
+    val title = stringResource(if (showOverlay) overlay.title else tab.appBarTitle)
+    val subtitle = if (showOverlay) overlay.subtitle?.let { stringResource(it) } else stringResource(tab.subtitle)
 
     BoxWithConstraints(Modifier.semantics { testTagsAsResourceId = true }) {
         val wide = maxWidth >= 600.dp
@@ -167,7 +182,8 @@ private fun App(c: AppContainer) {
                 WideNavigationRail {
                     tabs.forEach { t ->
                         WideNavigationRailItem(
-                            selected = !showSettings && tab == t,
+                            modifier = Modifier.testTag("nav-${t.name.lowercase()}"),
+                            selected = !showOverlay && tab == t,
                             onClick = { select(t) },
                             icon = { Icon(t.icon, contentDescription = null) },
                             label = { NavLabel(stringResource(t.title)) },
@@ -179,34 +195,40 @@ private fun App(c: AppContainer) {
             Scaffold(
                 modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
                 topBar = {
-                    MediumTopAppBar(
-                        title = { Text(title, style = MaterialTheme.typography.headlineMedium) },
-                        navigationIcon = {
-                            if (showSettings) {
-                                IconButton(onClick = { overlay = Overlay.NONE }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    Column {
+                        MediumFlexibleTopAppBar(
+                            title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            subtitle = subtitle?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+                            navigationIcon = {
+                                if (showOverlay) {
+                                    IconButton(onClick = { overlay = Overlay.NONE }) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                                    }
                                 }
-                            }
-                        },
-                        actions = {
-                            if (!showSettings) {
-                                IconButton(onClick = main::refresh, enabled = !snapshot.refreshing) {
-                                    Icon(ZairenkaiIcons.refresh, contentDescription = stringResource(R.string.action_refresh))
+                            },
+                            actions = {
+                                if (!showOverlay) {
+                                    IconButton(onClick = main::refresh, enabled = !snapshot.refreshing) {
+                                        Icon(ZairenkaiIcons.refresh, contentDescription = stringResource(R.string.action_refresh))
+                                    }
+                                    IconButton(onClick = { overlay = Overlay.SETTINGS }) {
+                                        Icon(ZairenkaiIcons.settings, contentDescription = stringResource(R.string.action_open_settings))
+                                    }
                                 }
-                                IconButton(onClick = { overlay = Overlay.SETTINGS }) {
-                                    Icon(ZairenkaiIcons.settings, contentDescription = stringResource(R.string.action_open_settings))
-                                }
-                            }
-                        },
-                        scrollBehavior = scroll,
-                    )
+                            },
+                            scrollBehavior = scroll,
+                        )
+                        // Shown only while the registry is really probing the components.
+                        if (snapshot.refreshing) WorkingBar(Modifier.padding(horizontal = ZairenkaiSpacing.gutter))
+                    }
                 },
                 bottomBar = {
                     if (!wide) {
                         ShortNavigationBar {
                             tabs.forEach { t ->
                                 ShortNavigationBarItem(
-                                    selected = !showSettings && tab == t,
+                                    modifier = Modifier.testTag("nav-${t.name.lowercase()}"),
+                                    selected = !showOverlay && tab == t,
                                     onClick = { select(t) },
                                     icon = { Icon(t.icon, contentDescription = null) },
                                     label = { NavLabel(stringResource(t.title)) },
@@ -227,18 +249,19 @@ private fun App(c: AppContainer) {
                 val spatial = ZairenkaiMotion.spatial<IntOffset>()
                 val effects = ZairenkaiMotion.effects<Float>()
                 AnimatedContent(
-                    targetState = if (showSettings) overlay else tab,
+                    targetState = if (showOverlay) overlay else tab,
                     transitionSpec = { (fadeIn(effects) + slideInVertically(spatial) { it / 16 }) togetherWith fadeOut(effects) },
                     label = "destination",
                 ) { destination ->
                     when (destination) {
                         Overlay.SETTINGS -> SettingsScreen(settingsVm, modulesVm, padding, openModule)
                         Overlay.SYSTEM_MODULE -> SystemModuleScreen(modulesVm, main, snapshot, padding)
-                        Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule)
+                        Overlay.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
+                        Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule, select)
                         Tab.PERFORMANCE -> PerformanceScreen(perf, snapshot, padding, goToRoot)
                         Tab.THERMAL -> ThermalScreen(thermal, perf, snapshot, padding)
-                        Tab.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
-                        Tab.SYSTEM -> SystemScreen(system, main, snapshot, padding, openModule)
+                        Tab.AI -> AiScreen(ai, snapshot, padding, select)
+                        Tab.SYSTEM -> SystemScreen(system, main, snapshot, padding, openModule, openRuntime) { overlay = Overlay.SETTINGS }
                         else -> Unit
                     }
                 }

@@ -32,11 +32,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.R
-import com.zairenkaiprjctx.app.design.Emphasis
+import com.zairenkaiprjctx.app.design.GroupContent
+import com.zairenkaiprjctx.app.design.GroupRow
+import com.zairenkaiprjctx.app.design.SegmentedGroup
+import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
+import com.zairenkaiprjctx.app.design.ZairenkaiIcons
+import com.zairenkaiprjctx.app.design.ZairenkaiShapes
+import androidx.compose.material3.Icon
 import com.zairenkaiprjctx.app.design.ExpandableSection
 import com.zairenkaiprjctx.app.design.InfoRow
 import com.zairenkaiprjctx.app.design.ProgressRow
-import com.zairenkaiprjctx.app.design.SectionCard
 import com.zairenkaiprjctx.app.design.StatusBadge
 import com.zairenkaiprjctx.app.design.Supporting
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
@@ -63,7 +68,15 @@ fun rootStateLabel(s: RootState): String = stringResource(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySnapshot, padding: PaddingValues, openModule: () -> Unit) {
+fun SystemScreen(
+    vm: SystemViewModel,
+    main: MainViewModel,
+    snapshot: RegistrySnapshot,
+    padding: PaddingValues,
+    openModule: () -> Unit,
+    openRuntime: () -> Unit,
+    openSettings: () -> Unit,
+) {
     val c = vm.container
     val root by main.rootState.collectAsStateWithLifecycle()
     val modules by vm.modules.collectAsStateWithLifecycle()
@@ -74,117 +87,119 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
     val context = LocalContext.current
     LaunchedEffect(snapshot.refreshedAtMs) { vm.loadModules() }
 
-    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
-            SectionCard(
-                stringResource(R.string.root_access),
-                emphasis = Emphasis.HIGH,
-                trailing = { StatusBadge(if (root == RootState.GRANTED) AvailabilityState.AVAILABLE else AvailabilityState.ROOT_REQUIRED) },
-            ) {
-                InfoRow(stringResource(R.string.key_state), rootStateLabel(root))
-                Supporting(stringResource(R.string.root_note))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                    if (root == RootState.GRANTED) {
-                        OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
-                    } else {
-                        Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
+            SegmentedGroup(title = stringResource(R.string.system_access)) {
+                row {
+                    GroupRow(
+                        stringResource(R.string.root_access),
+                        supporting = rootStateLabel(root),
+                        icon = ZairenkaiGlyphs.shield,
+                        emphasized = root == RootState.GRANTED,
+                        status = if (root == RootState.GRANTED) AvailabilityState.AVAILABLE else AvailabilityState.ROOT_REQUIRED,
+                    )
+                }
+                row {
+                    GroupContent {
+                        Supporting(stringResource(R.string.root_note))
+                        if (root == RootState.GRANTED) {
+                            OutlinedButton(onClick = main::revokeRoot) { Text(stringResource(R.string.root_disable)) }
+                        } else {
+                            Button(onClick = main::requestRoot) { Text(stringResource(R.string.root_enable)) }
+                        }
                     }
-                    OutlinedButton(onClick = openModule) { Text(stringResource(R.string.module_title)) }
                 }
             }
         }
         item {
-            SectionCard(stringResource(R.string.modules_title)) {
-                when (val m = modules) {
-                    is CoreCall.Ok -> m.value.forEach { mod ->
-                        InfoRow(mod.id, "${mod.health}${mod.version?.let { " · $it" } ?: ""}", code = true)
-                        if (mod.detail.isNotBlank()) Supporting(mod.detail)
-                    }
-                    null -> ProgressRow(stringResource(R.string.loading))
-                    else -> Supporting(m.describeFailure())
+            SegmentedGroup(title = stringResource(R.string.system_components)) {
+                row {
+                    GroupRow(
+                        stringResource(R.string.module_title),
+                        supporting = snapshot.byId("systemmodule.${CorePaths.MODULE_ID}")?.availability?.reason?.takeIf { it.isNotBlank() }
+                            ?: stringResource(R.string.system_module_row),
+                        icon = ZairenkaiGlyphs.box,
+                        onClick = openModule,
+                        chevron = true,
+                    )
                 }
-                snapshot.byId("systemmodule.${CorePaths.MODULE_ID}")?.let { Supporting(it.availability.reason) }
+                row {
+                    GroupRow(
+                        stringResource(R.string.nav_runtime),
+                        supporting = stringResource(R.string.system_runtime_row),
+                        icon = ZairenkaiGlyphs.chip,
+                        onClick = openRuntime,
+                        chevron = true,
+                        status = snapshot.byId("art.inspect")?.availability?.state,
+                    )
+                }
+                row {
+                    GroupContent {
+                        val m = modules
+                        ExpandableSection(stringResource(R.string.modules_title), summary = (m as? CoreCall.Ok)?.value?.size?.toString()) {
+                            when (m) {
+                                is CoreCall.Ok -> m.value.forEach { mod ->
+                                    InfoRow(mod.id, "${mod.health}${mod.version?.let { " · $it" } ?: ""}", code = true)
+                                    if (mod.detail.isNotBlank()) Supporting(mod.detail)
+                                }
+                                null -> ProgressRow(stringResource(R.string.loading))
+                                else -> Supporting(m.describeFailure())
+                            }
+                        }
+                    }
+                }
             }
         }
         item {
-            SectionCard(stringResource(R.string.search_title)) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = {
-                        query = it
-                        vm.search(it)
-                    },
-                    label = { Text(stringResource(R.string.search_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (query.length >= 2 && results.isEmpty()) Supporting(stringResource(R.string.search_none))
-                results.forEach { DeviceCard(it) }
-                afid?.getOrNull()?.let { Supporting(it.license.attribution) }
+            SegmentedGroup(title = stringResource(R.string.search_title)) {
+                row {
+                    GroupContent {
+                        OutlinedTextField(
+                            value = query,
+                            onValueChange = {
+                                query = it
+                                vm.search(it)
+                            },
+                            label = { Text(stringResource(R.string.search_hint)) },
+                            leadingIcon = { Icon(ZairenkaiGlyphs.database, contentDescription = null) },
+                            singleLine = true,
+                            shape = ZairenkaiShapes.metric,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        if (query.length >= 2 && results.isEmpty()) Supporting(stringResource(R.string.search_none))
+                        results.forEach { DeviceCard(it) }
+                        afid?.getOrNull()?.let { Supporting(it.license.attribution) }
+                    }
+                }
             }
         }
         item {
             val inv = c.inventory
-            SectionCard(pluralStringResource(R.plurals.ecosystem_title, inv?.repositories?.size ?: 0, inv?.repositories?.size ?: 0), emphasis = Emphasis.LOW) {
-                if (inv == null) {
-                    Supporting(stringResource(R.string.ecosystem_missing))
-                } else {
-                    Supporting(stringResource(R.string.ecosystem_note, inv.surveyed))
-                    inv.repositories.forEach { r ->
-                        ExpandableSection("${r.name} · ${r.integrationStatus}") {
-                            InfoRow(r.auditedBranch, r.auditedCommit.take(12), code = true)
-                            Supporting(r.disposition)
-                            r.appCapabilities.forEach { Supporting("• $it") }
+            SegmentedGroup(title = pluralStringResource(R.plurals.ecosystem_title, inv?.repositories?.size ?: 0, inv?.repositories?.size ?: 0)) {
+                row {
+                    GroupContent {
+                        if (inv == null) {
+                            Supporting(stringResource(R.string.ecosystem_missing))
+                        } else {
+                            Supporting(stringResource(R.string.ecosystem_note, inv.surveyed))
+                            inv.repositories.forEach { r ->
+                                ExpandableSection(r.name, summary = r.integrationStatus) {
+                                    InfoRow(r.auditedBranch, r.auditedCommit.take(12), code = true)
+                                    Supporting(r.disposition)
+                                    r.appCapabilities.forEach { Supporting("• $it") }
+                                }
+                            }
+                            inv.outside.forEach { Supporting(stringResource(R.string.ecosystem_outside, it.fullName)) }
                         }
                     }
-                    inv.outside.forEach { Supporting(stringResource(R.string.ecosystem_outside, it.fullName)) }
                 }
             }
         }
         item { Diagnostics(vm, snapshot, root, context) }
+        item { Licences(c) { licence = it } }
         item {
-            SectionCard(stringResource(R.string.licences_title), emphasis = Emphasis.LOW) {
-                Supporting(stringResource(R.string.licence_font))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                    TextButton(onClick = { licence = "licenses/google-sans-flex/OFL.txt" }) { Text(stringResource(R.string.licence_font_view)) }
-                    TextButton(onClick = { licence = "licenses/google-sans-flex/TRADEMARKS.md" }) { Text(stringResource(R.string.licence_font_trademarks)) }
-                }
-                afid?.getOrNull()?.let { Supporting(stringResource(R.string.licence_data, it.license.spdx, it.license.attribution)) }
-                Supporting(stringResource(R.string.licence_zart))
-                Supporting(stringResource(R.string.licence_zthermal))
-                if (c.components?.zthermalCommit != null) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                        TextButton(onClick = { licence = "licenses/zthermal/LICENSE" }) { Text(stringResource(R.string.licence_zthermal_view)) }
-                        TextButton(onClick = { licence = "licenses/zthermal/NOTICE" }) { Text(stringResource(R.string.licence_zthermal_notice)) }
-                    }
-                }
-                Supporting(stringResource(R.string.licence_libs))
-                // Generated notices: Android libraries, and the Rust crates in each packaged binary.
-                val notices = listOf(
-                    "licenses/android/NOTICES.txt" to R.string.licence_notices_android,
-                    "licenses/zart/LICENSE" to R.string.licence_zart_view,
-                    "licenses/zart/NOTICE" to R.string.licence_zart_notice,
-                    "licenses/zart/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zart,
-                    "licenses/zart/AOSP-ATTRIBUTION.txt" to R.string.licence_notices_zart_aosp,
-                    "licenses/zthermal/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zthermal,
-                    "licenses/zairenkai-core/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_core,
-                    "licenses/zairenkai-fas/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_fas,
-                ).filter { c.assetExists(it.first) }
-                if (notices.isNotEmpty()) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                        notices.forEach { (path, label) -> TextButton(onClick = { licence = path }) { Text(stringResource(label)) } }
-                    }
-                }
-                Supporting(stringResource(R.string.licence_project))
-                val own = listOf(
-                    "licenses/zairenkai-app/LICENSE" to R.string.licence_app_view,
-                    "licenses/zairenkai-app/NOTICE" to R.string.licence_app_notice,
-                ).filter { c.assetExists(it.first) }
-                if (own.isNotEmpty()) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                        own.forEach { (path, label) -> TextButton(onClick = { licence = path }) { Text(stringResource(label)) } }
-                    }
-                }
+            SegmentedGroup(title = stringResource(R.string.system_app)) {
+                row { GroupRow(stringResource(R.string.nav_settings), supporting = stringResource(R.string.system_settings_row), icon = ZairenkaiIcons.settings, onClick = openSettings, chevron = true) }
             }
         }
     }
@@ -200,45 +215,90 @@ fun SystemScreen(vm: SystemViewModel, main: MainViewModel, snapshot: RegistrySna
     }
 }
 
+/** Every licence and notice packaged in this APK, each one tap away. */
+@Composable
+private fun Licences(c: com.zairenkaiprjctx.app.AppContainer, show: (String) -> Unit) {
+    val afid = c.afid.getOrNull()
+    // Generated notices: Android libraries, and the Rust crates in each packaged binary.
+    val documents = listOf(
+        "licenses/google-sans-flex/OFL.txt" to R.string.licence_font_view,
+        "licenses/google-sans-flex/TRADEMARKS.md" to R.string.licence_font_trademarks,
+        "licenses/zthermal/LICENSE" to R.string.licence_zthermal_view,
+        "licenses/zthermal/NOTICE" to R.string.licence_zthermal_notice,
+        "licenses/android/NOTICES.txt" to R.string.licence_notices_android,
+        "licenses/zart/LICENSE" to R.string.licence_zart_view,
+        "licenses/zart/NOTICE" to R.string.licence_zart_notice,
+        "licenses/zart/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zart,
+        "licenses/zart/AOSP-ATTRIBUTION.txt" to R.string.licence_notices_zart_aosp,
+        "licenses/zthermal/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_zthermal,
+        "licenses/zairenkai-core/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_core,
+        "licenses/zairenkai-fas/THIRD_PARTY_NOTICES.txt" to R.string.licence_notices_fas,
+        "licenses/zairenkai-app/LICENSE" to R.string.licence_app_view,
+        "licenses/zairenkai-app/NOTICE" to R.string.licence_app_notice,
+    ).filter { c.assetExists(it.first) }
+    SegmentedGroup(title = stringResource(R.string.licences_title)) {
+        row {
+            GroupContent {
+                Supporting(stringResource(R.string.licence_project))
+                Supporting(stringResource(R.string.licence_font))
+                afid?.let { Supporting(stringResource(R.string.licence_data, it.license.spdx, it.license.attribution)) }
+                Supporting(stringResource(R.string.licence_zart))
+                Supporting(stringResource(R.string.licence_zthermal))
+                Supporting(stringResource(R.string.licence_libs))
+            }
+        }
+        documents.forEach { (path, label) ->
+            row { GroupRow(stringResource(label), icon = ZairenkaiGlyphs.document, onClick = { show(path) }, chevron = true) }
+        }
+    }
+}
+
 @Composable
 private fun Diagnostics(vm: SystemViewModel, snapshot: RegistrySnapshot, root: RootState, context: android.content.Context) {
     val c = vm.container
-    SectionCard(stringResource(R.string.diagnostics_title), emphasis = Emphasis.LOW) {
-        val comp = c.components
-        InfoRow(stringResource(R.string.key_app), "${c.versionName} (${c.packageName})", code = true)
-        InfoRow(stringResource(R.string.key_zart), comp?.let { "${it.zartVersion} @ ${it.zartCommit?.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
-        InfoRow(stringResource(R.string.key_zart_exe), stringResource(if (c.zartPath != null) R.string.present else R.string.missing_abi))
-        InfoRow(stringResource(R.string.key_zthermal), comp?.zthermalCommit?.let { "${comp.zthermalVersion} @ ${it.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
-        InfoRow(stringResource(R.string.key_zthermal_exe), stringResource(if (c.zthermalPath != null) R.string.present else R.string.missing_abi))
-        InfoRow(stringResource(R.string.key_afid_data), comp?.afidCommit?.take(12) ?: stringResource(R.string.not_packaged), code = true)
-        val chooserTitle = stringResource(R.string.diagnostics_share)
-        Button(onClick = {
-            val report = buildJsonObject {
-                put("app_version", c.versionName)
-                put("api_level", c.platform.sdkInt)
-                put("abis", JsonArray(c.platform.supportedAbis.map { JsonPrimitive(it) }))
-                put("zart_commit", comp?.zartCommit)
-                put("zthermal_commit", comp?.zthermalCommit)
-                put("afid_commit", comp?.afidCommit)
-                put("root_state", root.name)
-                put(
-                    "capabilities",
-                    JsonArray(
-                        snapshot.records.map {
-                            buildJsonObject {
-                                put("id", it.id)
-                                put("state", it.availability.state.name)
-                                put("reason", it.availability.reason)
-                                put("provider", it.provider.repository)
-                                put("revision", it.provider.revision)
-                            }
-                        },
-                    ),
-                )
+    SegmentedGroup(title = stringResource(R.string.diagnostics_title)) {
+        row {
+            GroupContent {
+                val comp = c.components
+                InfoRow(stringResource(R.string.key_app), "${c.versionName} (${c.packageName})", code = true)
+                InfoRow(stringResource(R.string.key_zart), comp?.let { "${it.zartVersion} @ ${it.zartCommit?.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
+                InfoRow(stringResource(R.string.key_zart_exe), stringResource(if (c.zartPath != null) R.string.present else R.string.missing_abi))
+                InfoRow(stringResource(R.string.key_zthermal), comp?.zthermalCommit?.let { "${comp.zthermalVersion} @ ${it.take(12)}" } ?: stringResource(R.string.not_packaged), code = true)
+                InfoRow(stringResource(R.string.key_zthermal_exe), stringResource(if (c.zthermalPath != null) R.string.present else R.string.missing_abi))
+                InfoRow(stringResource(R.string.key_afid_data), comp?.afidCommit?.take(12) ?: stringResource(R.string.not_packaged), code = true)
+                Supporting(stringResource(R.string.diagnostics_note))
             }
-            val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, report.toString())
-            context.startActivity(Intent.createChooser(send, chooserTitle))
-        }) { Text(chooserTitle) }
-        Supporting(stringResource(R.string.diagnostics_note))
+        }
+        row {
+            val chooserTitle = stringResource(R.string.diagnostics_share)
+            GroupRow(chooserTitle, supporting = stringResource(R.string.diagnostics_share_body), icon = ZairenkaiGlyphs.pulse, onClick = {
+                val comp = c.components
+                val report = buildJsonObject {
+                    put("app_version", c.versionName)
+                    put("api_level", c.platform.sdkInt)
+                    put("abis", JsonArray(c.platform.supportedAbis.map { JsonPrimitive(it) }))
+                    put("zart_commit", comp?.zartCommit)
+                    put("zthermal_commit", comp?.zthermalCommit)
+                    put("afid_commit", comp?.afidCommit)
+                    put("root_state", root.name)
+                    put(
+                        "capabilities",
+                        JsonArray(
+                            snapshot.records.map {
+                                buildJsonObject {
+                                    put("id", it.id)
+                                    put("state", it.availability.state.name)
+                                    put("reason", it.availability.reason)
+                                    put("provider", it.provider.repository)
+                                    put("revision", it.provider.revision)
+                                }
+                            },
+                        ),
+                    )
+                }
+                val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, report.toString())
+                context.startActivity(Intent.createChooser(send, chooserTitle))
+            }, chevron = true)
+        }
     }
 }

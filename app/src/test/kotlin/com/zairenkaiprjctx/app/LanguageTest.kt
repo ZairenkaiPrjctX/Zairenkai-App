@@ -9,7 +9,10 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import org.junit.Assert.assertEquals
@@ -36,10 +39,14 @@ class LanguageTest {
         compose.waitForIdle()
     }
 
-    /** The language choice is at the end of the settings list: scroll to it, then touch it. */
+    /**
+     * The language choice is a connected button group further down the settings list: scroll to it,
+     * then invoke its click action (LEGACY graphics cannot hit-test the segments' path outlines;
+     * ConnectedChoiceTouchTest covers real touches).
+     */
     private fun choose(language: String) {
         compose.onNode(hasScrollAction()).performScrollToNode(hasText(language))
-        compose.onNodeWithText(language).performClick()
+        compose.onNodeWithText(language).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
     }
 
@@ -73,7 +80,7 @@ class LanguageTest {
         assertEquals(1, count("Beranda"))
         compose.onNodeWithContentDescription("Kembali").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Sistem").performClick()
+        compose.onNodeWithTag("nav-system").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Akses root").assertIsDisplayed()
 

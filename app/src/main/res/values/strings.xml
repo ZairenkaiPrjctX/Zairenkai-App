@@ -53,7 +53,7 @@
     <string name="key_released">Released</string>
 
     <!-- Thermal status names (PowerManager.THERMAL_STATUS_*) -->
-    <string name="thermal_none">None</string>
+    <string name="thermal_none">Normal</string>
     <string name="thermal_light">Light</string>
     <string name="thermal_moderate">Moderate</string>
     <string name="thermal_severe">Severe</string>
@@ -66,7 +66,6 @@
     <string name="perf_core">Zairenkai-Core</string>
     <string name="perf_fas">Zairenkai-FAS</string>
     <string name="key_state">State</string>
-    <string name="key_version">Version</string>
     <string name="key_policy">Policy</string>
     <string name="key_leases">Active leases</string>
     <string name="core_version">%1$s (core API %2$s, protocol %3$d)</string>
@@ -108,7 +107,6 @@
 
     <!-- Thermal -->
     <string name="thermal_android">Android thermal service</string>
-    <string name="thermal_status">Status</string>
     <string name="thermal_headroom">Headroom (10 s forecast)</string>
     <string name="thermal_headroom_note">1.0 means the platform expects severe throttling. This is the platform\'s own forecast.</string>
     <string name="battery_saver">Battery saver</string>
@@ -240,7 +238,7 @@
     <string name="licence_zthermal_notice">View zthermal notice</string>
     <string name="action_cancel">Cancel</string>
     <string name="module_title">Zairenkai System Module</string>
-    <string name="module_intro">Some integrations run as root modules: Zairenkai-Core (the control plane) and, optionally, Zairenkai-FAS. With your confirmation, this app installs them through your root manager\'s own installer. It never installs anything on its own.</string>
+    <string name="module_intro">One root module, zairenkai, carries Zairenkai-Core (the control plane), Zairenkai-FAS (installed switched off) and ztune. With your confirmation, this app installs it through your root manager\'s own installer. It never installs anything on its own.</string>
     <string name="module_no_promise">A module enables only the integrations listed for it on this device. It does not promise better performance, lower temperatures or longer battery life.</string>
     <string name="module_root_why">Installing or checking a module needs root: the module goes into /data/adb through your root manager. Enable root integration first. Your root manager asks you to confirm.</string>
     <string name="module_handoff_title">Root manager</string>
@@ -362,4 +360,111 @@
     <string name="profile_confirmed">Confirmed: zfasd now reports %1$s.</string>
     <string name="profile_not_reflected">Not confirmed: zfasd reports %1$s (requested %2$s).</string>
     <string name="profile_unreadable">Not confirmed: zfasd\'s status could not be read afterwards.</string>
+
+    <!-- Redesign 2026-10-23: navigation subtitles, Home suggestions, profiles, tuning, AI. -->
+    <string name="nav_ai">AI</string>
+    <string name="subtitle_home">Your device at a glance</string>
+    <string name="subtitle_performance">Frame pacing, profiles and Core</string>
+    <string name="subtitle_thermal">Temperature, headroom and limits</string>
+    <string name="subtitle_ai">On-device assistant</string>
+    <string name="subtitle_system">Access, components and data</string>
+    <string name="subtitle_runtime">Android Runtime (ART)</string>
+    <string name="state_expanded">Expanded</string>
+    <string name="state_collapsed">Collapsed</string>
+    <plurals name="home_ring_caption">
+        <item quantity="one">of %1$d ready</item>
+        <item quantity="other">of %1$d ready</item>
+    </plurals>
+    <string name="home_device_details">Device details</string>
+    <string name="home_suggested">Suggested</string>
+    <string name="home_step_root">Enable root integration</string>
+    <string name="home_step_root_action">Enable</string>
+    <string name="home_step_hot">Your device is hot</string>
+    <string name="home_step_hot_body">Android reports %1$s. See what is limiting performance.</string>
+    <string name="home_group_attention">Needs attention</string>
+    <string name="home_group_ready">Ready</string>
+    <string name="home_group_not_here">Not available here</string>
+    <string name="home_afid_source">Source and licence</string>
+    <string name="profile_power_saver">Power saver</string>
+    <string name="profile_balanced">Balanced</string>
+    <string name="profile_performance">Performance</string>
+    <string name="profile_fast_response">Fast response</string>
+    <string name="profile_adaptive">Adaptive</string>
+    <string name="profile_power_saver_body">Boosts least, and only after frames keep dropping.</string>
+    <string name="profile_balanced_body">The default. Boosts moderately when frames drop.</string>
+    <string name="profile_performance_body">Boosts highest and soonest to hold the frame rate.</string>
+    <string name="profile_fast_response_body">Reacts to the first slow frames, then backs off quickly.</string>
+    <string name="profile_adaptive_body">Undoes boosts that do not help. Not yet validated on hardware.</string>
+    <string name="fas_ring_label">Frame rate %1$s, target %2$s</string>
+    <string name="fas_ring_label_no_target">Frame rate %1$s</string>
+    <string name="fas_details">Decision details</string>
+    <string name="fas_switch">Frame-aware scheduling</string>
+    <string name="fas_switch_on">On, as zfasd reports</string>
+    <string name="fas_switch_off">Off, as zfasd reports</string>
+    <string name="battery_saver_via_core">Changed through Core, after its preview</string>
+    <string name="fas_reset_body">Releases every boost zfasd holds</string>
+    <string name="fas_reset_action">Reset</string>
+    <string name="tuning_title">System load</string>
+    <string name="tuning_cpu">CPU load</string>
+    <string name="tuning_memory">Memory in use</string>
+    <string name="tuning_memory_value">%1$s of %2$s</string>
+    <string name="tuning_gpu_governor">GPU governor</string>
+    <string name="tuning_gpu_freq">GPU frequency</string>
+    <string name="tuning_io">I/O scheduler (%1$s)</string>
+    <string name="tuning_soc">SoC family</string>
+    <string name="tuning_source">Read by Zairenkai-Tuning ztune %1$s through Core, read only</string>
+    <string name="tuning_not_installed">The installed module carries no ztune.</string>
+    <string name="thermal_headroom_short">headroom</string>
+    <string name="thermal_headroom_label">Thermal headroom %1$s; 1.0 means severe throttling</string>
+    <string name="thermaltools_hottest_in">Hottest: %1$s</string>
+    <string name="system_access">Access</string>
+    <string name="system_components">Components</string>
+    <string name="system_module_row">Install, check or remove the root module</string>
+    <string name="system_runtime_row">ART module, ISA checks and dexopt</string>
+    <string name="system_app">App</string>
+    <string name="system_settings_row">Theme, colour and language</string>
+    <string name="diagnostics_share_body">Versions and capability states, as text you choose where to send</string>
+    <string name="module_overline">Root module</string>
+    <string name="ai_title">Zairenkai AI</string>
+    <string name="home_tile_thermal">Thermal state</string>
+    <string name="fas_fps_short">FPS</string>
+    <string name="ai_why">Why it is not available yet</string>
+    <string name="ai_tagline">Ask about your device in plain words. It answers from what Zairenkai measures.</string>
+    <string name="ai_try">Try asking</string>
+    <string name="ai_try_note">Until the on-device model is available, each question opens the screen that answers it.</string>
+    <string name="ai_try_note_ready">Each question also opens the screen with the measurements behind the answer.</string>
+    <string name="ai_prompt_hot">Why is my phone hot?</string>
+    <string name="ai_prompt_profile">Which FAS profile is active?</string>
+    <string name="ai_prompt_control">What can Zairenkai control here?</string>
+    <string name="ai_prompt_root">Is root integration on?</string>
+    <string name="ai_how">How it works</string>
+    <string name="ai_how_device">On this device only</string>
+    <string name="ai_how_device_body">The model runs offline. Your questions and device data never leave the phone, and no cloud AI is used.</string>
+    <string name="ai_how_tools">Typed requests only</string>
+    <string name="ai_how_tools_body">It can only ask for tools from a fixed list. It never runs commands or scripts.</string>
+    <string name="ai_how_approve">You approve every change</string>
+    <string name="ai_how_approve_body">Core checks each change against its policy, and nothing changes until you approve it.</string>
+    <string name="ai_model">On-device model</string>
+    <string name="ai_model_name">Language model</string>
+    <string name="ai_model_body">Not included in this build yet. When it is, you choose when to download it, and it then runs offline.</string>
+    <string name="ai_send">Send</string>
+    <string name="ai_placeholder">Ask Zairenkai…</string>
+    <string name="ai_composer_unavailable">Available once an on-device model is installed.</string>
+    <string name="ai_tool_running">Running</string>
+    <string name="ai_tool_completed">Done</string>
+    <string name="ai_tool_failed">Failed</string>
+    <string name="ai_tool_rejected">Refused</string>
+    <string name="ai_tool_request">Read-only tool</string>
+    <string name="ai_approval_title">Needs your approval</string>
+    <string name="ai_approval_core">Core\'s decision</string>
+    <string name="ai_approve">Approve</string>
+    <string name="ai_reject">Reject</string>
+    <string name="ai_approval_approved">Approved. Core applies it and reports the result.</string>
+    <string name="ai_approval_rejected">Rejected. Nothing was changed.</string>
+    <string name="ai_approval_applied">Applied and verified by Core.</string>
+    <string name="ai_approval_failed">Core could not apply it. Nothing was left half-changed.</string>
+    <plurals name="home_step_root_body">
+        <item quantity="one">Unlocks %1$d feature: %2$s</item>
+        <item quantity="other">Unlocks %1$d features: %2$s…</item>
+    </plurals>
 </resources>

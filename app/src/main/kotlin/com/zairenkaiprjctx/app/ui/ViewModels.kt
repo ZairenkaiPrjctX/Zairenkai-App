@@ -13,6 +13,7 @@ import com.zairenkaiprjctx.integration.core.CoreCall
 import com.zairenkaiprjctx.integration.core.CoreHealth
 import com.zairenkaiprjctx.integration.core.CoreModule
 import com.zairenkaiprjctx.integration.core.CoreTelemetry
+import com.zairenkaiprjctx.integration.core.TuningTelemetry
 import com.zairenkaiprjctx.integration.core.CoreOperation
 import com.zairenkaiprjctx.integration.core.FasProfileName
 import com.zairenkaiprjctx.integration.exec.RootState
@@ -135,11 +136,20 @@ class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
     val fasStatus: StateFlow<FasCall<FasStatus>?> = fasState.asStateFlow()
     private val action = MutableStateFlow<ActionState>(ActionState.Idle)
     val actionState: StateFlow<ActionState> = action.asStateFlow()
+    private val tuningState = MutableStateFlow<CoreCall<TuningTelemetry>?>(null)
+
+    /** ztune telemetry through Core's `tuning` method; asked only while Core answers. */
+    val tuning: StateFlow<CoreCall<TuningTelemetry>?> = tuningState.asStateFlow()
+
+    /** Battery saver as Android reports it now (PowerManager.isPowerSaveMode). */
+    val powerSave: Boolean get() = c.platform.powerSaveMode()
 
     fun load() {
         viewModelScope.launch(Dispatchers.IO) {
-            health.value = c.core.health()
+            val h = c.core.health()
+            health.value = h
             fasState.value = c.fas.status()
+            tuningState.value = if (h is CoreCall.Ok) c.core.tuning() else null
         }
     }
 

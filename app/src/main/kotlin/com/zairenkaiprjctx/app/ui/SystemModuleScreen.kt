@@ -34,6 +34,10 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.R
 import com.zairenkaiprjctx.app.design.Emphasis
+import com.zairenkaiprjctx.app.design.GlyphBadge
+import com.zairenkaiprjctx.app.design.HeroPanel
+import com.zairenkaiprjctx.app.design.WorkingBar
+import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ExpandableSection
 import com.zairenkaiprjctx.app.design.InfoRow
 import com.zairenkaiprjctx.app.design.ProgressRow
@@ -107,12 +111,14 @@ fun SystemModuleScreen(vm: SystemModuleViewModel, main: MainViewModel, snapshot:
         vm.evaluateAll()
         onPauseOrDispose {}
     }
-    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
-            SectionCard(stringResource(R.string.module_title), emphasis = Emphasis.HIGH) {
-                Supporting(stringResource(R.string.module_intro))
-                Supporting(stringResource(R.string.module_no_promise))
-            }
+            HeroPanel(
+                overline = stringResource(R.string.module_overline),
+                headline = stringResource(R.string.module_title),
+                supporting = stringResource(R.string.module_intro),
+                trailing = { GlyphBadge(ZairenkaiGlyphs.box, emphasized = true) },
+            ) { Supporting(stringResource(R.string.module_no_promise)) }
         }
         if (root != RootState.GRANTED) {
             item {
@@ -212,7 +218,11 @@ private fun ModuleCard(vm: SystemModuleViewModel, m: BundledModule, snapshot: Re
         if (s.log.isNotBlank()) {
             ExpandableSection(stringResource(R.string.module_log)) { Text(s.log, style = ZairenkaiTextStyles.code) }
         }
-        if (busy && s.phase in WORKING) ProgressRow(stringResource(s.phase.label()))
+        if (busy && s.phase in WORKING) {
+            // A real step is running: the wavy bar moves (none if reduced) and the step is named.
+            WorkingBar()
+            Supporting(stringResource(s.phase.label()))
+        }
 
         FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
             when (s.phase) {

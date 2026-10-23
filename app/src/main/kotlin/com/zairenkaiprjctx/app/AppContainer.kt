@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import com.zairenkaiprjctx.integration.afid.AfidCatalog
 import com.zairenkaiprjctx.integration.core.CoreClient
 import com.zairenkaiprjctx.integration.ecosystem.OrganizationInventory
+import com.zairenkaiprjctx.integration.exec.CommandRunner
 import com.zairenkaiprjctx.integration.exec.ProcessCommandRunner
 import com.zairenkaiprjctx.integration.exec.RootConsentStore
 import com.zairenkaiprjctx.integration.exec.RootShell
@@ -79,8 +80,12 @@ class ThemePreferences(private val prefs: android.content.SharedPreferences) {
     }
 }
 
-/** Manual dependency container: one instance per process, created by [ZairenkaiApplication]. */
-class AppContainer(private val app: Application) {
+/**
+ * Manual dependency container: one instance per process, created by [ZairenkaiApplication].
+ * [runner] runs every external command (su, zart, zthermal); tests pass one that replays output
+ * captured from the real binaries.
+ */
+class AppContainer(private val app: Application, val runner: CommandRunner = ProcessCommandRunner()) {
     private val prefs = app.getSharedPreferences("zairenkai", Context.MODE_PRIVATE)
 
     private val consent = object : RootConsentStore {
@@ -94,7 +99,6 @@ class AppContainer(private val app: Application) {
     val packageName: String = app.packageName
     val versionName: String = app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "?"
     val theme = ThemePreferences(prefs)
-    val runner = ProcessCommandRunner()
     val root = RootShell(runner, consent)
     val platform = AndroidPlatformInfo(app)
     val thermalMonitor = ThermalStatusMonitor(app)

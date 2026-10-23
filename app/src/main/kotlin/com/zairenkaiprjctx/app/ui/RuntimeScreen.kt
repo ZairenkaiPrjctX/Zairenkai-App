@@ -54,7 +54,7 @@ fun RuntimeScreen(vm: RuntimeViewModel, snapshot: RegistrySnapshot, padding: Pad
     val busy by vm.querying.collectAsStateWithLifecycle()
     var pkg by rememberSaveable { mutableStateOf("") }
 
-    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
             HeroStatusCard(
                 overline = stringResource(R.string.art_module),

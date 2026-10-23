@@ -57,7 +57,8 @@ Non-negotiables in this repo:
 | Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
 | Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins; 2026-10-23 with the new tuning captures, exit 0) and as uid 1001 in CI (run 39645071811; full integration 39827139485, 2026-10-22; with the tuning captures, run 39888821755, 2026-10-23) |
 | Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 99 passed, 0 skipped, 2026-10-23 |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 29 passed, 0 skipped, 2026-10-23, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 `InfoRowNativeLayoutTest` is skipped: it needs NATIVE graphics (not the Robolectric 4.14 default, no Linux aarch64 runtime) |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 36 passed, 6 skipped (screenshot gallery), 2026-10-23, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 the NATIVE-graphics tests (`InfoRowNativeLayoutTest`, `ConnectedChoiceTouchTest`, the gallery) are skipped: no Linux aarch64 runtime in Robolectric 4.14 |
+| Screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotGallery*'` | Verified. Evidence: 34 PNGs (host, captured binary output, AI preview; light and dark), 2026-10-23 |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors (24 dependency-version warnings), 2026-10-23 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
