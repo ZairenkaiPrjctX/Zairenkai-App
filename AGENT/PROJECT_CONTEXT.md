@@ -21,7 +21,7 @@
 |---|---|---|
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
 | JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 99 tests, 2026-10-23 |
-| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 36 Robolectric tests (+6 screenshot renders), 2026-10-23. **Unverified** on a device |
+| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 43 Robolectric tests (+10 screenshot renders), 2026-10-23. **Unverified** on a device |
 | Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
 | CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration failed there at "Require the CI GitHub App"; since 2026-10-22 it fetches the public locked repositories without a token (`docs/build/ci.md`). **Unverified** on GitHub: no run of that version yet |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
@@ -77,6 +77,13 @@
   but honest: no on-device model is packaged, so `intelligence.analysis` stays
   NO_UPSTREAM_IMPLEMENTATION, the composer is disabled and no answer is shown. Verified. Evidence:
   `RedesignTest`, screenshot gallery, 2026-10-23. **Unverified** on a device.
+- Settings › Appearance (palettes, custom themes, AMOLED, wallpaper, launcher icon variants,
+  background animation, app font, UI scale, experimental glass bar) was added on 2026-10-23,
+  modelled on mpvRx's behaviour (AGPL-3.0, no code copied). New dependencies: Haze 1.6.10 and
+  `ui-text-google-fonts` (both Apache-2.0); the app still has no INTERNET permission, Google Fonts
+  come through Play services' font provider. Verified. Evidence: `AppearanceTest`, `aapt2 dump
+  permissions`, generated NOTICES, 2026-10-23. **Unverified** on a device (blur, icon switching
+  on real launchers, font download).
 
 ## Authoritative sources
 

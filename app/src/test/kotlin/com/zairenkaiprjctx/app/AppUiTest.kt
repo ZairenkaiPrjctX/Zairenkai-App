@@ -82,7 +82,7 @@ class AppUiTest {
         compose.onNodeWithText("Root access").assertIsDisplayed()
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Appearance").assertIsDisplayed()
+        compose.onNodeWithText("Search settings…").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Root access").assertIsDisplayed()
@@ -129,9 +129,12 @@ class AppUiTest {
         launch()
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.waitForIdle()
-        // The theme choice is a connected button group: its end segments have path outlines that
-        // LEGACY graphics cannot hit-test, so this invokes the click action; ConnectedChoiceTouchTest
-        // covers real touches with NATIVE graphics.
+        // The theme choice is on Settings › Appearance.
+        compose.onNodeWithText("Theme, palette, wallpaper, app icon, font and size").performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        // It is a connected button group: its end segments have path outlines that LEGACY graphics
+        // cannot hit-test, so this invokes the click action; ConnectedChoiceTouchTest covers real
+        // touches with NATIVE graphics.
         compose.onNodeWithText("Dark").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(com.zairenkaiprjctx.app.design.ThemeMode.DARK, container.theme.settings.value.mode)

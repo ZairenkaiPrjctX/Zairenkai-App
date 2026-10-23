@@ -31,6 +31,22 @@
         "wght 1-1000"
       ],
       "notes": "Not taken from googlefonts/googlesans-flex documentation/demo-fonts: those are 0.006 preview builds for documentation images. The bundled file's name ID 0 reads 'Copyright 2015 Google LLC. All Rights Reserved.' while OFL.txt and METADATA.pb name 'The Google Sans Flex Project Authors'; Google Fonts distributes it under OFL-1.1. 'Google Sans Flex' is a Google trademark (TRADEMARKS.md): it is named only to identify the font, never in the product name."
+    },
+    {
+      "id": "gms-font-provider-certs",
+      "path": "app/src/main/res/values/font_certs.xml",
+      "sha256": "3aabb76463ac05ad0d0cb4fa55fe38eef38333c8ea945644a8733c826060ec5d",
+      "source": {
+        "repository": "android/user-interface-samples",
+        "url": "https://github.com/android/user-interface-samples",
+        "commit": "2c0b04e9092410a14381b86c168034a52243b85b",
+        "path": "DownloadableFonts/app/src/main/res/values/font_certs.xml"
+      },
+      "license": "Apache-2.0 (file header: Copyright 2017 The Android Open Source Project)",
+      "notices": [
+        "app/src/main/res/values/font_certs.xml (header kept unchanged)"
+      ],
+      "notes": "The public signing certificates of Google Play services' font provider, which GoogleFont.Provider needs to verify the provider. Copied unchanged. The app requests Google Fonts only when the user picks one in Settings > Appearance > App font; Play services downloads them, the app has no INTERNET permission."
     }
   ]
 }

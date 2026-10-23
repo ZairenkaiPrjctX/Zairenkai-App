@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon variants (Settings > Appearance > App icon). -->
+<resources>
+    <color name="icon_ocean_background">#FF006782</color>
+    <color name="icon_mint_background">#FFC4F5E2</color>
+    <color name="icon_lime_background">#FFD9F99D</color>
+    <color name="icon_amber_background">#FFF59E0B</color>
+    <color name="icon_crimson_background">#FFB3261E</color>
+    <color name="icon_violet_background">#FF4C1D95</color>
+    <color name="icon_cobalt_background">#FF1D4ED8</color>
+    <color name="icon_paper_background">#FFFFFFFF</color>
+    <color name="icon_black_background">#FF000000</color>
+</resources>

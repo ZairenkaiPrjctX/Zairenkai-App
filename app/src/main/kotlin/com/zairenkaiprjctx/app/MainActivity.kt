@@ -3,7 +3,6 @@
 package com.zairenkaiprjctx.app
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -43,6 +42,23 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.WideNavigationRail
 import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import com.zairenkaiprjctx.app.design.AppBackdrop
+import com.zairenkaiprjctx.app.design.glassBar
+import com.zairenkaiprjctx.app.design.glassSource
+import com.zairenkaiprjctx.app.design.hasBackdrop
+import com.zairenkaiprjctx.app.design.rememberGlassState
+import com.zairenkaiprjctx.app.ui.settings.AppIconScreen
+import com.zairenkaiprjctx.app.ui.settings.AppearanceScreen
+import com.zairenkaiprjctx.app.ui.settings.FontScreen
+import com.zairenkaiprjctx.app.ui.settings.GlassScreen
+import com.zairenkaiprjctx.app.ui.settings.ThemeEditorScreen
+import com.zairenkaiprjctx.app.ui.settings.WallpaperScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -101,12 +117,24 @@ enum class Tab(
     SYSTEM(R.string.nav_system, R.string.subtitle_system, ZairenkaiIcons.system, listOf("core", "afid", "upstream", "art")),
 }
 
-/** Destinations shown over the tabs, from the app bar or a row that opens a page. */
-enum class Overlay(@StringRes val title: Int, @StringRes val subtitle: Int?) {
+/**
+ * Destinations shown over the tabs, from the app bar or a row that opens a page. Back returns to
+ * [parent] (the tabs for top-level pages).
+ */
+enum class Overlay(@StringRes val title: Int, @StringRes val subtitle: Int?, val parentName: String = "NONE") {
     NONE(0, null),
-    SETTINGS(R.string.nav_settings, null),
+    SETTINGS(R.string.nav_settings, R.string.subtitle_settings),
+    APPEARANCE(R.string.appearance_title, R.string.appearance_subtitle, "SETTINGS"),
+    THEME_EDITOR(R.string.theme_editor_title, null, "APPEARANCE"),
+    WALLPAPER(R.string.wallpaper_title, null, "APPEARANCE"),
+    APP_ICON(R.string.icon_title, null, "APPEARANCE"),
+    FONTS(R.string.font_title, null, "APPEARANCE"),
+    GLASS(R.string.glass_title, R.string.glass_subtitle, "SETTINGS"),
     SYSTEM_MODULE(R.string.module_title, null),
     RUNTIME(R.string.nav_runtime, R.string.subtitle_runtime),
+    ;
+
+    val parent: Overlay get() = valueOf(parentName)
 }
 
 class MainActivity : ComponentActivity() {
@@ -126,19 +154,23 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ZairenkaiRoot(c: AppContainer, activity: ComponentActivity?) {
     val settings by c.theme.settings.collectAsStateWithLifecycle()
+    // UI scale: every dp and sp of the app grows or shrinks together (Settings › Appearance).
+    val density = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(density.density * settings.uiScale, density.fontScale)) {
     ZairenkaiTheme(settings) {
         val dark = isDark(settings)
         if (activity != null) {
             // Keep status- and navigation-bar icons legible when the app theme differs from the system.
             DisposableEffect(dark) {
                 activity.enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
-                    navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
+                    statusBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark },
+                    navigationBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark },
                 )
                 onDispose {}
             }
         }
         App(c)
+    }
     }
 }
 
@@ -154,10 +186,16 @@ private fun App(c: AppContainer) {
     val modulesVm: SystemModuleViewModel = viewModel(factory = viewModelFactory { initializer { SystemModuleViewModel(c) } })
     val ai: AiViewModel = viewModel(factory = viewModelFactory { initializer { AiViewModel() } })
     val snapshot by main.registry.collectAsStateWithLifecycle()
+    val look by c.theme.settings.collectAsStateWithLifecycle()
+    val photo by c.wallpaper.photo.collectAsStateWithLifecycle()
+    val photoImage = remember(photo) { photo?.asImageBitmap() }
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
+    var editing by rememberSaveable { mutableStateOf<String?>(null) }
     val showOverlay = overlay != Overlay.NONE
-    BackHandler(enabled = showOverlay) { overlay = Overlay.NONE }
+    BackHandler(enabled = showOverlay) { overlay = overlay.parent }
+    val glass = rememberGlassState()
+    val backdrop = look.hasBackdrop || look.glass.enabled
 
     // Compatibility checks run only when the user opens the System Module screen: granting root
     // alone neither checks nor installs anything.
@@ -176,6 +214,7 @@ private fun App(c: AppContainer) {
     val subtitle = if (showOverlay) overlay.subtitle?.let { stringResource(it) } else stringResource(tab.subtitle)
 
     BoxWithConstraints(Modifier.semantics { testTagsAsResourceId = true }) {
+        if (backdrop) AppBackdrop(look, photoImage, Modifier.glassSource(glass))
         val wide = maxWidth >= 600.dp
         Row {
             if (wide) {
@@ -194,6 +233,7 @@ private fun App(c: AppContainer) {
             }
             Scaffold(
                 modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
+                containerColor = if (backdrop) Color.Transparent else MaterialTheme.colorScheme.background,
                 topBar = {
                     Column {
                         MediumFlexibleTopAppBar(
@@ -201,7 +241,7 @@ private fun App(c: AppContainer) {
                             subtitle = subtitle?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
                             navigationIcon = {
                                 if (showOverlay) {
-                                    IconButton(onClick = { overlay = Overlay.NONE }) {
+                                    IconButton(onClick = { overlay = overlay.parent }) {
                                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                                     }
                                 }
@@ -217,6 +257,15 @@ private fun App(c: AppContainer) {
                                 }
                             },
                             scrollBehavior = scroll,
+                            colors = if (backdrop) {
+                                TopAppBarDefaults.topAppBarColors(
+                                    containerColor = Color.Transparent,
+                                    scrolledContainerColor = if (look.glass.enabled && look.glass.topBar) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+                                )
+                            } else {
+                                TopAppBarDefaults.topAppBarColors()
+                            },
+                            modifier = if (look.glass.topBar) Modifier.glassBar(glass, look.glass) else Modifier,
                         )
                         // Shown only while the registry is really probing the components.
                         if (snapshot.refreshing) WorkingBar(Modifier.padding(horizontal = ZairenkaiSpacing.gutter))
@@ -224,7 +273,10 @@ private fun App(c: AppContainer) {
                 },
                 bottomBar = {
                     if (!wide) {
-                        ShortNavigationBar {
+                        ShortNavigationBar(
+                            containerColor = if (look.glass.enabled) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier.glassBar(glass, look.glass),
+                        ) {
                             tabs.forEach { t ->
                                 ShortNavigationBarItem(
                                     modifier = Modifier.testTag("nav-${t.name.lowercase()}"),
@@ -248,13 +300,26 @@ private fun App(c: AppContainer) {
                 val goToRoot = { select(Tab.SYSTEM) }
                 val spatial = ZairenkaiMotion.spatial<IntOffset>()
                 val effects = ZairenkaiMotion.effects<Float>()
+                val openEditor = { id: String? -> editing = id; overlay = Overlay.THEME_EDITOR }
                 AnimatedContent(
+                    modifier = Modifier.glassSource(glass),
                     targetState = if (showOverlay) overlay else tab,
                     transitionSpec = { (fadeIn(effects) + slideInVertically(spatial) { it / 16 }) togetherWith fadeOut(effects) },
                     label = "destination",
                 ) { destination ->
                     when (destination) {
-                        Overlay.SETTINGS -> SettingsScreen(settingsVm, modulesVm, padding, openModule)
+                        Overlay.SETTINGS -> SettingsScreen(settingsVm, modulesVm, padding, openModule) { overlay = it }
+                        Overlay.APPEARANCE -> AppearanceScreen(
+                            settingsVm, padding, openEditor,
+                            openWallpaper = { overlay = Overlay.WALLPAPER },
+                            openIcon = { overlay = Overlay.APP_ICON },
+                            openFonts = { overlay = Overlay.FONTS },
+                        )
+                        Overlay.THEME_EDITOR -> ThemeEditorScreen(settingsVm, editing, padding) { overlay = Overlay.APPEARANCE }
+                        Overlay.WALLPAPER -> WallpaperScreen(settingsVm, padding)
+                        Overlay.APP_ICON -> AppIconScreen(settingsVm, padding)
+                        Overlay.FONTS -> FontScreen(settingsVm, padding)
+                        Overlay.GLASS -> GlassScreen(settingsVm, padding)
                         Overlay.SYSTEM_MODULE -> SystemModuleScreen(modulesVm, main, snapshot, padding)
                         Overlay.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
                         Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule, select)

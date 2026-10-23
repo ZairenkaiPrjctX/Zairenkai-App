@@ -3,6 +3,7 @@
 package com.zairenkaiprjctx.app.ui
 
 import androidx.lifecycle.ViewModel
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.viewModelScope
 import com.zairenkaiprjctx.app.AppContainer
 import com.zairenkaiprjctx.app.R
@@ -362,7 +363,53 @@ class SystemViewModel(private val c: AppContainer) : ViewModel() {
 
 class SettingsViewModel(private val c: AppContainer) : ViewModel() {
     val theme: StateFlow<com.zairenkaiprjctx.app.design.ThemeSettings> = c.theme.settings
+    val wallpaperPhoto = c.wallpaper.photo
+    private val icon = kotlinx.coroutines.flow.MutableStateFlow(c.icons.current())
+    val launcherIcon: StateFlow<com.zairenkaiprjctx.app.appearance.LauncherIcon> = icon
 
-    fun setMode(mode: com.zairenkaiprjctx.app.design.ThemeMode) = c.theme.update(theme.value.copy(mode = mode))
-    fun setDynamic(on: Boolean) = c.theme.update(theme.value.copy(dynamicColor = on))
+    private fun edit(f: (com.zairenkaiprjctx.app.design.ThemeSettings) -> com.zairenkaiprjctx.app.design.ThemeSettings) = c.theme.update(f(theme.value))
+
+    fun setMode(mode: com.zairenkaiprjctx.app.design.ThemeMode) = edit { it.copy(mode = mode) }
+    fun setDynamic(on: Boolean) = edit { it.copy(dynamicColor = on) }
+
+    /** A built-in palette; leaves wallpaper colours and any custom theme. */
+    fun selectPalette(p: com.zairenkaiprjctx.app.design.Palette) = edit { it.copy(palette = p, dynamicColor = false, customId = null) }
+    fun selectDynamic() = edit { it.copy(dynamicColor = true, customId = null) }
+    fun selectCustom(id: String) = edit { it.copy(customId = id, dynamicColor = false) }
+
+    /** Saves a new or edited custom theme and makes it the one in use. */
+    fun saveCustom(id: String?, name: String, seed: androidx.compose.ui.graphics.Color) = edit { s ->
+        val key = id ?: java.util.UUID.randomUUID().toString()
+        val theme = com.zairenkaiprjctx.app.design.CustomTheme(key, name.trim().ifBlank { "Custom" }, seed.toArgb())
+        val list = if (s.customThemes.any { it.id == key }) s.customThemes.map { if (it.id == key) theme else it } else s.customThemes + theme
+        s.copy(customThemes = list, customId = key, dynamicColor = false)
+    }
+
+    fun deleteCustom(id: String) = edit { s -> s.copy(customThemes = s.customThemes.filterNot { it.id == id }, customId = s.customId.takeIf { it != id }) }
+
+    fun setAmoled(on: Boolean) = edit { it.copy(amoled = on) }
+    fun setAnimation(a: com.zairenkaiprjctx.app.design.BackgroundAnimation) = edit { it.copy(animation = a) }
+    fun setUiScale(scale: Float) = edit { it.copy(uiScale = scale.coerceIn(0.85f, 1.2f)) }
+    fun setFont(f: com.zairenkaiprjctx.app.design.FontSettings) = edit { it.copy(font = f) }
+    fun setGlass(g: com.zairenkaiprjctx.app.design.GlassSettings) = edit { it.copy(glass = g) }
+    fun setWallpaper(w: com.zairenkaiprjctx.app.design.WallpaperSettings) = edit { it.copy(wallpaper = w) }
+
+    /** Stores the picked photo and shows it; false when the file could not be read as an image. */
+    fun usePhoto(uri: android.net.Uri): Boolean {
+        val ok = c.wallpaper.save(uri)
+        if (ok) setWallpaper(theme.value.wallpaper.copy(source = com.zairenkaiprjctx.app.design.WallpaperSource.PHOTO))
+        return ok
+    }
+
+    fun clearPhoto() {
+        c.wallpaper.clear()
+        if (theme.value.wallpaper.source == com.zairenkaiprjctx.app.design.WallpaperSource.PHOTO) {
+            setWallpaper(theme.value.wallpaper.copy(source = com.zairenkaiprjctx.app.design.WallpaperSource.NONE))
+        }
+    }
+
+    fun applyIcon(i: com.zairenkaiprjctx.app.appearance.LauncherIcon) {
+        c.icons.apply(i)
+        icon.value = c.icons.current()
+    }
 }

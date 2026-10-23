@@ -226,3 +226,32 @@ fun ConnectedChoice(options: List<String>, selected: Int, onSelect: (Int) -> Uni
         }
     }
 }
+
+/**
+ * A single choice among more options than fit a connected group: chips that wrap to the next line,
+ * the chosen one with a check mark, each announced as a radio button.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun ChipChoice(options: List<String>, selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.layout.FlowRow(
+        modifier.fillMaxWidth().selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s),
+        verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs),
+    ) {
+        options.forEachIndexed { i, label ->
+            androidx.compose.material3.FilterChip(
+                selected = i == selected,
+                onClick = { onSelect(i) },
+                label = { Text(label, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+                leadingIcon = if (i == selected) {
+                    { Icon(androidx.compose.material.icons.Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                } else {
+                    null
+                },
+                shape = ZairenkaiShapes.pill,
+                modifier = Modifier.semantics { role = Role.RadioButton },
+            )
+        }
+    }
+}

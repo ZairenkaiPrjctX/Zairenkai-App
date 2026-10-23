@@ -43,40 +43,86 @@ import com.zairenkaiprjctx.app.design.Detail
 import com.zairenkaiprjctx.app.design.ThemeMode
 import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
+import com.zairenkaiprjctx.app.design.ZairenkaiShapes
+import com.zairenkaiprjctx.app.design.InfoChip
+import com.zairenkaiprjctx.app.Overlay
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.fillMaxWidth
+
+/** One searchable setting: where it lives and the words it is found by. */
+private data class SettingEntry(@androidx.annotation.StringRes val title: Int, @androidx.annotation.StringRes val place: Int, val target: Overlay, val keywords: String)
+
+private val SETTING_ENTRIES = listOf(
+    SettingEntry(R.string.settings_theme, R.string.appearance_title, Overlay.APPEARANCE, "theme dark light system mode tema gelap terang"),
+    SettingEntry(R.string.app_theme, R.string.appearance_title, Overlay.APPEARANCE, "palette colour color dynamic material you warna"),
+    SettingEntry(R.string.theme_new, R.string.appearance_title, Overlay.THEME_EDITOR, "custom theme colour wheel picker kustom"),
+    SettingEntry(R.string.amoled_title, R.string.appearance_title, Overlay.APPEARANCE, "amoled black oled hitam"),
+    SettingEntry(R.string.wallpaper_title, R.string.appearance_title, Overlay.WALLPAPER, "wallpaper background photo image latar foto"),
+    SettingEntry(R.string.icon_title, R.string.appearance_title, Overlay.APP_ICON, "icon launcher ikon"),
+    SettingEntry(R.string.anim_title, R.string.appearance_title, Overlay.APPEARANCE, "animation rings waves orbs animasi"),
+    SettingEntry(R.string.font_title, R.string.appearance_title, Overlay.FONTS, "font typeface google fonts huruf"),
+    SettingEntry(R.string.ui_scale_title, R.string.appearance_title, Overlay.APPEARANCE, "scale size density zoom skala ukuran"),
+    SettingEntry(R.string.glass_title, R.string.nav_settings, Overlay.GLASS, "glass blur frost liquid kaca"),
+    SettingEntry(R.string.settings_language, R.string.nav_settings, Overlay.SETTINGS, "language english indonesia bahasa"),
+    SettingEntry(R.string.module_title, R.string.nav_settings, Overlay.SYSTEM_MODULE, "module root magisk kernelsu apatch modul"),
+)
 
 @Composable
-fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, padding: PaddingValues, openModule: () -> Unit) {
+fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, padding: PaddingValues, openModule: () -> Unit, open: (Overlay) -> Unit) {
     val declined by modules.declined.collectAsStateWithLifecycle()
     val theme by vm.theme.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val dynamicSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val resources = androidx.compose.ui.platform.LocalResources.current
+    var query by rememberSaveable { mutableStateOf("") }
     LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
+        item {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                placeholder = { Text(stringResource(R.string.settings_search)) },
+                leadingIcon = { androidx.compose.material3.Icon(Icons.Filled.Search, contentDescription = null) },
+                singleLine = true,
+                shape = ZairenkaiShapes.pill,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (query.isNotBlank()) {
+            val q = query.trim()
+            val hits = SETTING_ENTRIES.filter { e -> resources.getString(e.title).contains(q, true) || e.keywords.contains(q, true) }
+            item {
+                SegmentedGroup(title = stringResource(R.string.settings_results), icon = Icons.Filled.Search) {
+                    if (hits.isEmpty()) row { GroupContent { Detail(stringResource(R.string.settings_no_results)) } }
+                    hits.forEach { e ->
+                        row { GroupRow(stringResource(e.title), supporting = stringResource(e.place), onClick = { query = ""; open(e.target) }, chevron = true) }
+                    }
+                }
+            }
+            return@LazyColumn
+        }
         item {
             SegmentedGroup(title = stringResource(R.string.settings_appearance), icon = ZairenkaiGlyphs.sliders) {
                 row {
-                    GroupContent {
-                        Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleSmall)
-                        val modes = listOf(ThemeMode.SYSTEM to R.string.theme_system, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark)
-                        ConnectedChoice(
-                            options = modes.map { stringResource(it.second) },
-                            selected = modes.indexOfFirst { it.first == theme.mode },
-                            onSelect = { vm.setMode(modes[it].first) },
-                        )
-                    }
+                    GroupRow(
+                        stringResource(R.string.appearance_title),
+                        supporting = stringResource(R.string.appearance_row),
+                        icon = ZairenkaiGlyphs.spark,
+                        onClick = { open(Overlay.APPEARANCE) },
+                        chevron = true,
+                    )
                 }
                 row {
-                    val dynamicLabel = stringResource(R.string.settings_dynamic)
                     GroupRow(
-                        dynamicLabel,
-                        supporting = stringResource(if (dynamicSupported) R.string.settings_dynamic_on else R.string.settings_dynamic_unsupported),
-                        trailing = {
-                            Switch(
-                                checked = theme.dynamicColor && dynamicSupported,
-                                onCheckedChange = vm::setDynamic,
-                                enabled = dynamicSupported,
-                                modifier = Modifier.semantics { contentDescription = dynamicLabel },
-                            )
-                        },
+                        stringResource(R.string.glass_title),
+                        supporting = stringResource(if (theme.glass.enabled) R.string.glass_row_on else R.string.glass_row_off),
+                        icon = ZairenkaiGlyphs.tiles,
+                        onClick = { open(Overlay.GLASS) },
+                        chevron = true,
+                        action = { InfoChip(stringResource(R.string.experimental), color = MaterialTheme.colorScheme.tertiaryContainer) },
                     )
                 }
                 row { GroupRow(stringResource(R.string.settings_motion), supporting = stringResource(if (LocalReducedMotion.current) R.string.settings_motion_reduced else R.string.settings_motion_full)) }

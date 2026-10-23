@@ -1,5 +1,34 @@
 # Verification report
 
+## Long text, richer screens, Settings › Appearance (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host under Robolectric.** Nothing ran on a device: blur,
+launcher icon switching on real launchers, Google Fonts download and the photo picker are
+**Unverified** on hardware.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 43 passed, 10 skipped (screenshot gallery) |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 53 passed, 0 skipped; 56 PNGs |
+| JVM tests | `./gradlew :integration-core:test` | 99 passed (unchanged) |
+| Lint | `./gradlew lint` | 0 errors; 24 warnings, all `GradleDependency` / `AndroidGradlePluginVersion` |
+| Build | `./gradlew assembleDebug assembleRelease -Pzairenkai.allowMissingComponents=true` | both APKs built |
+| Permissions | `aapt2 dump permissions app-release-unsigned.apk` | no INTERNET; only the AndroidX receiver permission |
+| Notices | `assets/licenses/android/NOTICES.txt` in the APK | `haze` 1.6.10 and `ui-text-google-fonts` 1.11.4 listed, Apache-2.0 |
+
+New tests:
+- `LongTextLayoutTest` (NATIVE): every component with oversized text on a 320 dp screen at 1.5×
+  font keeps its text on screen and never squeezed below 64 dp; checked to fail on a deliberately
+  squeezed row.
+- `AppearanceTest`: contrast of every generated scheme (see `docs/design/design-system.md`), hex
+  parsing, settings round trip (a broken stored list is dropped), launcher alias switching with
+  exactly one alias enabled, settings search opening the wallpaper page.
+
+The mpvRx repository (AGPL-3.0, `Riteshp2001/mpvRx` at `f5f616b`) was read for behaviour only:
+the app is Apache-2.0, so no code was copied. The Google Play services font-provider certificates
+come from `android/user-interface-samples` at `2c0b04e` (Apache-2.0), unchanged
+(`integration/third-party-assets.json`).
+
 ## UI/UX redesign: Material 3 Expressive, Zairenkai AI screen (2026-10-23)
 
 **Verdict: verified on an x86-64 Linux host under Robolectric.** Nothing ran on a device or an

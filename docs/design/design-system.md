@@ -68,6 +68,38 @@ record `intelligence.analysis` reports `NO_UPSTREAM_IMPLEMENTATION` and the scre
   Core's dry-run decision first; Approve is enabled only when Core allows it; applying stays
   with Core). `AiViewModel.decide` only answers a pending preview.
 
+## Settings › Appearance
+
+Inspired by the appearance settings of mpvRx (AGPL-3.0); none of its code was copied, only the
+behaviour was studied, and everything here is written for this app.
+
+- **Theme:** System / Light / Dark; **app theme** as a row of live preview cards: Dynamic
+  (Android 12+), Zairenkai (the hand-tuned brand scheme), eleven generated palettes, the user's
+  custom themes and "Custom theme".
+- **Generated schemes** (`schemeFromSeed`): every Material role from one seed, each at the tone
+  Material assigns it (primary 40/80, containers 90/30, surfaces 98/6, ...). Tones are found by
+  luminance (CIE L*), not HSL lightness, so contrast holds for any hue. `AppearanceTest` checks
+  4.5:1 for text on primary and on every container, and 7:1 on surfaces, for all palettes and
+  extreme seeds (yellow, cyan, white, black, grey, magenta), light, dark and AMOLED.
+- **Custom theme editor:** live light and dark preview, name, and a colour picker with three modes
+  (hue/saturation wheel with brightness, saturation/value square with a hue bar, RGB sliders), a
+  hex field (only a complete valid value applies) and quick colours.
+- **AMOLED black:** pure black background and darker containers in dark themes.
+- **Wallpaper:** four gradients drawn in code (no image files), or a photo picked with the system
+  photo picker, copied scaled down into private storage (no permission). Fill or fit, and a dim
+  (the app background laid over it) so text keeps its contrast.
+- **App icon:** ten launcher variants, each an `activity-alias` of MainActivity with its own
+  adaptive icon; exactly one is enabled (`LauncherIconSwitcher` enables the new one first). A
+  custom colour picks the nearest variant: launchers can only show icons in the APK.
+- **Background animation:** none, rings, waves or orbs; faint, slow, frozen when animations are off.
+- **App font:** Google Sans Flex (bundled), the system font, or one of 59 Google Fonts (see below).
+- **App UI scale:** 85–120 %, applied to every dp and sp through `LocalDensity`.
+- **Liquid glass (experimental):** a frosted navigation bar (and optionally top bar) through Haze
+  1.6.10 (Apache-2.0): blur (frost), tint, rim highlight and grain, with a checkerboard preview.
+  Android 11 and older get the tint without blur. Haze 2.x needs Compose 1.12 and Kotlin 2.4, so
+  1.6.x is pinned.
+- **Search:** Settings has a search box over every appearance setting, language and the module.
+
 ## Typography: Google Sans Flex
 
 - **File:** `res/font/google_sans_flex.ttf`, the variable font (wght 1–1000, opsz 1–144, wdth,
@@ -94,7 +126,12 @@ record `intelligence.analysis` reports `NO_UPSTREAM_IMPLEMENTATION` and the scre
 - **Fallback:** if the font cannot load, the platform sans-serif is used. Missing glyphs fall
   back per character through the system font chain. The font covers latin, latin-ext,
   vietnamese, math and symbols (`METADATA.pb`), which includes Indonesian.
-- **Offline:** the app never loads a font from the network.
+- **Offline:** the app itself never loads a font from the network: it has no INTERNET
+  permission. A Google Font chosen in Settings › Appearance › App font is fetched by Google Play
+  services' font provider (`GoogleFont.Provider`, verified against the provider certificates in
+  `res/values/font_certs.xml`, copied unchanged from AOSP's DownloadableFonts sample). Without
+  Play services, or until it arrives, the system font is shown. Nothing is requested until the
+  user picks a Google Font.
 
 ## Colour
 

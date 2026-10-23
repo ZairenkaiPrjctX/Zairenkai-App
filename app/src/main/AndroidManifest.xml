@@ -30,12 +30,132 @@
         android:theme="@style/Theme.Zairenkai">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true" />
+
+        <!--
+          Launcher entries, one per icon variant (Settings > Appearance > App icon). Exactly one is
+          enabled; LauncherIconSwitcher enables the chosen one before disabling the others.
+        -->
+        <activity-alias
+            android:name=".launcher.Midnight"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Ocean"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_ocean"
+            android:roundIcon="@mipmap/ic_launcher_ocean"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Mint"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_mint"
+            android:roundIcon="@mipmap/ic_launcher_mint"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Lime"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_lime"
+            android:roundIcon="@mipmap/ic_launcher_lime"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Amber"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_amber"
+            android:roundIcon="@mipmap/ic_launcher_amber"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Crimson"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_crimson"
+            android:roundIcon="@mipmap/ic_launcher_crimson"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Violet"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_violet"
+            android:roundIcon="@mipmap/ic_launcher_violet"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Cobalt"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_cobalt"
+            android:roundIcon="@mipmap/ic_launcher_cobalt"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Paper"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_paper"
+            android:roundIcon="@mipmap/ic_launcher_paper"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".launcher.Black"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_black"
+            android:roundIcon="@mipmap/ic_launcher_black"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- Serves only the staged, verified module zip to a root-manager app on handoff. -->
         <provider

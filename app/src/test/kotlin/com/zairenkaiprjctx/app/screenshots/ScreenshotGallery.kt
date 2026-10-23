@@ -149,6 +149,81 @@ class ScreenshotGallery {
         shoot(name)
     }
 
+    /** The page's vertical list (the palette row also scrolls, sideways). */
+    private val page = hasScrollAction() and androidx.compose.ui.test.SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.VerticalScrollAxisRange)
+
+    private fun open(text: String) {
+        compose.onNode(page).performScrollToNode(hasText(text))
+        compose.onNodeWithText(text).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        compose.waitForIdle()
+    }
+
+    /** Settings › Appearance and its pages. */
+    @Test
+    fun appearancePages() {
+        launch(app.container, ThemeMode.DARK)
+        compose.onNodeWithContentDescription(app.getString(R.string.action_open_settings)).performClick()
+        shoot("settings-1-hub")
+        open(app.getString(R.string.appearance_row))
+        shoot("settings-2-appearance")
+        compose.onNode(page).performScrollToNode(hasText(app.getString(R.string.ui_scale_title)))
+        shoot("settings-3-appearance-lower")
+        open(app.getString(R.string.wallpaper_title))
+        shoot("settings-4-wallpaper")
+        back()
+        open(app.getString(R.string.icon_title))
+        shoot("settings-5-app-icon")
+        back()
+        open(app.getString(R.string.font_title))
+        shoot("settings-6-font")
+        back()
+        compose.onNode(page).performScrollToNode(hasText(app.getString(R.string.app_theme)))
+        compose.onNode(hasScrollAction() and androidx.compose.ui.test.SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.HorizontalScrollAxisRange))
+            .performScrollToNode(hasText(app.getString(R.string.theme_new)))
+        compose.onAllNodesWithText(app.getString(R.string.theme_new)).onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        compose.waitForIdle()
+        shoot("settings-7-theme-editor")
+        back()
+        back()
+        open(app.getString(R.string.glass_row_off))
+        shoot("settings-8-glass")
+    }
+
+    /** The same app dressed up: a palette, a wallpaper, the glass bar and a background animation. */
+    private fun showcase(name: String, look: ThemeSettings) {
+        app.getSharedPreferences("zairenkai", 0).edit().putBoolean("root_granted", true).commit()
+        val c = AppContainer(app, CapturedOutputRunner())
+        c.theme.update(look)
+        compose.setContent { ZairenkaiRoot(c, activity = null) }
+        compose.waitUntil(60_000) { c.registry.snapshot.value.records.isNotEmpty() && !c.registry.snapshot.value.refreshing }
+        shoot("$name-1-home")
+        compose.onNodeWithTag("nav-performance").performClick()
+        shoot("$name-2-performance")
+        compose.onNodeWithTag("nav-ai").performClick()
+        shoot("$name-3-ai")
+    }
+
+    @Test
+    fun showcaseLavenderAuroraGlass() = showcase(
+        "showcase-dark",
+        ThemeSettings(
+            ThemeMode.DARK, dynamicColor = false, palette = com.zairenkaiprjctx.app.design.Palette.LAVENDER, amoled = true,
+            wallpaper = com.zairenkaiprjctx.app.design.WallpaperSettings(com.zairenkaiprjctx.app.design.WallpaperSource.AURORA, dim = 0.62f),
+            glass = com.zairenkaiprjctx.app.design.GlassSettings(enabled = true),
+        ),
+    )
+
+    @Test
+    fun showcaseSunsetOrbs() = showcase(
+        "showcase-light",
+        ThemeSettings(
+            ThemeMode.LIGHT, dynamicColor = false, palette = com.zairenkaiprjctx.app.design.Palette.SUNSET,
+            animation = com.zairenkaiprjctx.app.design.BackgroundAnimation.ORBS,
+            wallpaper = com.zairenkaiprjctx.app.design.WallpaperSettings(com.zairenkaiprjctx.app.design.WallpaperSource.SUNSET, dim = 0.78f),
+            glass = com.zairenkaiprjctx.app.design.GlassSettings(enabled = true),
+        ),
+    )
+
     /** Stress: Indonesian strings (often longer), a 360 dp screen and a 1.3× font. */
     @Test
     @Config(qualifiers = "in-w360dp-h780dp-xxhdpi")
