@@ -163,7 +163,8 @@ cp "$SRC/core/Cargo.lock" "$TMP/core-fixture/Cargo.lock"
 TUNING_SRC="$ROOT/integration/out/src/zairenkai-tuning"
 [ -f "$TUNING_SRC/Cargo.lock" ] || { echo "run integration/scripts/build-components.sh first ($TUNING_SRC missing)" >&2; exit 1; }
 (cd "$TUNING_SRC" && cargo build -q --locked --release -p ztune)
-(cd "$TMP/core-fixture" && cargo run -q --release -- tuning "$TUNING_SRC/target/release/ztune" "$DEST/core/tuning.json")
+mkdir "$TMP/tuning-root"
+(cd "$TMP/core-fixture" && cargo run -q --release -- tuning "$TUNING_SRC/target/release/ztune" "$TMP/tuning-root" "$DEST/core/tuning.json")
 
 FAS="$SRC/fas/target/release/zfasd"
 "$FAS" run --observe-only --dir "$TMP/fas" >"$TMP/fas.log" 2>&1 &
