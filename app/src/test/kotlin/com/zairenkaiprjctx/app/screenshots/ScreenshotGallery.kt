@@ -87,7 +87,8 @@ class ScreenshotGallery {
         c.theme.update(ThemeSettings(mode, dynamicColor = false))
         compose.setContent { ZairenkaiRoot(c, activity = null) }
         try {
-            compose.waitUntil(60_000) { c.registry.snapshot.value.records.isNotEmpty() && !c.registry.snapshot.value.refreshing }
+            // Generous: a full gallery run renders ~60 NATIVE screenshots in one JVM and slows the probes.
+            compose.waitUntil(120_000) { c.registry.snapshot.value.records.isNotEmpty() && !c.registry.snapshot.value.refreshing }
         } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
             Thread.getAllStackTraces().forEach { (t, st) -> println("THREAD ${t.name}\n  " + st.take(25).joinToString("\n  ")) }
             throw e
@@ -187,6 +188,59 @@ class ScreenshotGallery {
         back()
         open(app.getString(R.string.glass_row_off))
         shoot("settings-8-glass")
+    }
+
+    /** Settings › Updates and Settings › About on a tall screen, so each page shows whole. */
+    @Test
+    @Config(qualifiers = "w411dp-h2500dp-xxhdpi")
+    fun appPagesTall() {
+        launch(app.container, ThemeMode.LIGHT)
+        compose.onNodeWithContentDescription(app.getString(R.string.action_open_settings)).performClick()
+        open(app.getString(R.string.settings_about_row))
+        shoot("app-1-about")
+        back()
+        open(app.getString(R.string.update_title))
+        shoot("app-2-updates")
+    }
+
+    /** The System Module screen whole, with the captured root manager answers. */
+    @Test
+    @Config(qualifiers = "w411dp-h2900dp-xxhdpi")
+    fun moduleTall() {
+        app.getSharedPreferences("zairenkai", 0).edit().putBoolean("root_granted", true).commit()
+        launch(AppContainer(app, CapturedOutputRunner()), ThemeMode.DARK)
+        compose.onNodeWithContentDescription(app.getString(R.string.action_open_settings)).performClick()
+        open(app.getString(R.string.module_settings_open))
+        shoot("app-3-module-dark")
+    }
+
+    /**
+     * An update offer with a SAMPLE release, labelled `preview-*`: no release is published yet,
+     * so the app itself has never shown one. The notes are the app's own changelog entry.
+     */
+    @Test
+    @Config(qualifiers = "w411dp-h1600dp-xxhdpi")
+    fun updateOfferPreview() {
+        val v = com.zairenkaiprjctx.integration.update.AppVersion.parse("0.2.0-beta.2")!!
+        val notes = java.io.File("../CHANGELOG.md").readText().substringAfter("## [0.2.0-beta.1] - unreleased").substringBefore("## [0.1.0]")
+        val release = com.zairenkaiprjctx.integration.update.AppRelease(
+            v, "v$v", "Zairenkai $v", notes, "2026-10-30T09:00:00Z", "https://github.com/ZairenkaiPrjctX/Zairenkai-App/releases/tag/v$v", true,
+            com.zairenkaiprjctx.integration.update.ReleaseAsset("zairenkai-$v.apk", "https://github.com/x", 31_457_280),
+            com.zairenkaiprjctx.integration.update.ReleaseAsset("zairenkai-$v.apk.sha256", "https://github.com/x", 90),
+        )
+        val state = com.zairenkaiprjctx.app.update.UpdateState.Available(release)
+        compose.setContent {
+            ZairenkaiTheme(ThemeSettings(ThemeMode.DARK, dynamicColor = false)) {
+                Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+                    Column(Modifier.padding(16.dp).padding(top = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        com.zairenkaiprjctx.app.ui.settings.UpdateHero(state, System.currentTimeMillis() - 3_600_000, Modifier)
+                        com.zairenkaiprjctx.app.ui.settings.UpdateActions(app.container.updates, state, Modifier)
+                        com.zairenkaiprjctx.app.ui.settings.ReleaseCard(release, Modifier)
+                    }
+                }
+            }
+        }
+        shoot("preview-update-offer")
     }
 
     /** The same app dressed up: a palette, a wallpaper, the glass bar and a background animation. */

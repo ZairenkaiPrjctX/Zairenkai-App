@@ -115,6 +115,22 @@ teal-to-black gradient (`#0E5568` → `#0B2433` → `#0A1218`), and a cyan spark
 
 Keep the geometry identical everywhere; change it in `ZairenkaiMark` and the SVG together.
 
+## System Module, Updates and About
+
+- **System Module:** a hero tinted by the install phase (status glyph and phase name in words),
+  then a five-step journey — Root, Check, Install, Reboot, Active — where a done step shows a
+  check, the current one a ring (or "!" when the flow is stuck there) and later ones an outline;
+  the spoken description names the step. Under it the phase's actions, then the module's programs
+  as tiles (from the build record's `bin/` entries and their SHA-256), a Security group
+  (catalog signature, package digest, the checks run before install, on-device integrity from
+  `SHA256SUMS`, distribution) and the details behind expandable sections.
+- **Updates:** a hero with the update state in words, the next step with exactly the action that
+  state allows, the offered release (version and code, channel chip, size, date, notes rendered as
+  text), the channel as two choice cards, the daily check switch, and how updates are verified.
+- **About:** the logo large on a gradient, name, tagline and chips for the full version, the build
+  channel and the licence; then updates, this version's changelog entry, build facts (commit with
+  copy, signing certificate), packaged components, privacy, links and licences.
+
 ## Typography: Google Sans Flex
 
 - **File:** `res/font/google_sans_flex.ttf`, the variable font (wght 1–1000, opsz 1–144, wdth,
@@ -141,8 +157,8 @@ Keep the geometry identical everywhere; change it in `ZairenkaiMark` and the SVG
 - **Fallback:** if the font cannot load, the platform sans-serif is used. Missing glyphs fall
   back per character through the system font chain. The font covers latin, latin-ext,
   vietnamese, math and symbols (`METADATA.pb`), which includes Indonesian.
-- **Offline:** the app itself never loads a font from the network: it has no INTERNET
-  permission. A Google Font chosen in Settings › Appearance › App font is fetched by Google Play
+- **Offline:** the app itself never loads a font from the network (its INTERNET permission
+  serves only update checks, `docs/build/releases.md`). A Google Font chosen in Settings › Appearance › App font is fetched by Google Play
   services' font provider (`GoogleFont.Provider`, verified against the provider certificates in
   `res/values/font_certs.xml`, copied unchanged from AOSP's DownloadableFonts sample). Without
   Play services, or until it arrives, the system font is shown. Nothing is requested until the

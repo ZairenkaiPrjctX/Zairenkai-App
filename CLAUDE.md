@@ -49,21 +49,27 @@ Non-negotiables in this repo:
 - **Material 3 is pinned to 1.5.0-alpha18 on purpose** (`docs/design/design-system.md`). Do not
   move to alpha19+ without the compileSdk 37 / AGP 9.1 migration.
 - **No secrets, signing keys or tokens in the repository or the APK.**
+- **App updates come only from published GitHub Releases of this repository**, over HTTPS, and
+  install only after the SHA-256 file, the package, the exact version, a newer versionCode and
+  the same signing certificate check out, through Android's installer with the user's
+  confirmation (`docs/build/releases.md`). Never install silently, never accept another signer,
+  never publish a release (the release workflow only creates drafts). The network is used for
+  nothing else; never send device data.
 
 ## Commands
 
 | Purpose | Command | Status |
 |---|---|---|
-| Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0, 2026-10-21 |
+| Build components | `ANDROID_NDK_HOME=<ndk> integration/scripts/build-components.sh` | Verified. Evidence: exit 0 with NDK r27d, module 0.3.0 at Modules `2d1f548`, 2026-10-23 |
 | Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins; 2026-10-23 with the new tuning captures, exit 0) and as uid 1001 in CI (run 39645071811; full integration 39827139485, 2026-10-22; with the tuning captures, run 39888821755, 2026-10-23) |
-| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 99 passed, 0 skipped, 2026-10-23 |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 43 passed, 11 skipped (screenshot gallery), 2026-10-23, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 the NATIVE-graphics tests (`InfoRowNativeLayoutTest`, `ConnectedChoiceTouchTest`, `LongTextLayoutTest`, the gallery) are skipped: no Linux aarch64 runtime in Robolectric 4.14 |
-| Screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotGallery*'` | Verified. Evidence: 57 PNGs (host, captured binary output, Indonesian at 1.3× font, settings pages, styled showcases, brand logo, AI preview; light and dark), 2026-10-23 |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` | Verified. Evidence: 107 passed, 0 skipped, 2026-10-23 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 51 passed, 14 skipped (screenshot gallery), 2026-10-23, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 the NATIVE-graphics tests (`InfoRowNativeLayoutTest`, `ConnectedChoiceTouchTest`, `LongTextLayoutTest`, the gallery) are skipped: no Linux aarch64 runtime in Robolectric 4.14 |
+| Screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotGallery*'` | Verified. Evidence: 61 PNGs (host, captured binary output, Indonesian at 1.3× font, settings pages, styled showcases, brand logo, About, Updates, System Module whole, AI and update-offer previews; light and dark), 65 of 65 tests, 2026-10-23 |
 | Lint | `./gradlew lint` | Verified. Evidence: 0 errors (24 dependency-version warnings), 2026-10-23 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-21 |
-| Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-21 |
-| Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/access/build/apk/report ok; `--release` fails on 3 blockers (signing), 2026-10-21 |
-| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 17 passed, 2026-10-22 |
+| Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-23 |
+| Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/build/apk/report ok on the 0.2.0-beta.1 release APK, 2026-10-23; `--release` fails on 3 blockers (signing), 2026-10-21 |
+| Verifier tests | `python3 -m unittest discover -s integration/scripts/tests` | Verified. Evidence: 20 passed, 2026-10-23 |
 | Actions secrets (maintainer) | `integration/scripts/setup-actions-secrets.sh help\|status\|environment\|module-signing\|keystore` | Verified. Evidence: 9 tests with a fake `gh`, 2026-10-22 (the CI App subcommand was removed: the locked repositories are public); `status` against GitHub all ok, exit 0, 2026-10-22, before that change |
 | Device check (read only) | `integration/scripts/device-readonly-check.sh [--root]` | Configured (no device available) |
 | Validate agent foundation | `python3 <path-to-.github>/agent-foundation/scripts/validate_agent_setup.py .` | Configured |

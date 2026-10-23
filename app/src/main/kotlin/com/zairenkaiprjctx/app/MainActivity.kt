@@ -3,7 +3,12 @@
 package com.zairenkaiprjctx.app
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import androidx.compose.runtime.LaunchedEffect
+import com.zairenkaiprjctx.app.update.UpdateNotifier
+import com.zairenkaiprjctx.app.ui.settings.AboutScreen
+import com.zairenkaiprjctx.app.ui.settings.UpdatesScreen
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -130,6 +135,8 @@ enum class Overlay(@StringRes val title: Int, @StringRes val subtitle: Int?, val
     APP_ICON(R.string.icon_title, null, "APPEARANCE"),
     FONTS(R.string.font_title, null, "APPEARANCE"),
     GLASS(R.string.glass_title, R.string.glass_subtitle, "SETTINGS"),
+    UPDATES(R.string.update_title, R.string.update_subtitle, "SETTINGS"),
+    ABOUT(R.string.about_title, null, "SETTINGS"),
     SYSTEM_MODULE(R.string.module_title, null),
     RUNTIME(R.string.nav_runtime, R.string.subtitle_runtime),
     ;
@@ -147,7 +154,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val c = (application as ZairenkaiApplication).container
+        handle(intent)
         setContent { ZairenkaiRoot(c, this) }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handle(intent)
+    }
+
+    /** The update notification opens Settings › Updates. */
+    private fun handle(intent: Intent?) {
+        if (intent?.getStringExtra(UpdateNotifier.EXTRA_OPEN) == UpdateNotifier.OPEN_UPDATES) {
+            (application as ZairenkaiApplication).container.openRequest.value = Overlay.UPDATES.name
+        }
     }
 }
 
@@ -193,6 +213,11 @@ private fun App(c: AppContainer) {
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
     var editing by rememberSaveable { mutableStateOf<String?>(null) }
     val showOverlay = overlay != Overlay.NONE
+    val request by c.openRequest.collectAsStateWithLifecycle()
+    LaunchedEffect(request) {
+        request?.let { name -> runCatching { Overlay.valueOf(name) }.getOrNull()?.let { overlay = it } }
+        c.openRequest.value = null
+    }
     BackHandler(enabled = showOverlay) { overlay = overlay.parent }
     val glass = rememberGlassState()
     val backdrop = look.hasBackdrop || look.glass.enabled
@@ -320,6 +345,8 @@ private fun App(c: AppContainer) {
                         Overlay.APP_ICON -> AppIconScreen(settingsVm, padding)
                         Overlay.FONTS -> FontScreen(settingsVm, padding)
                         Overlay.GLASS -> GlassScreen(settingsVm, padding)
+                        Overlay.UPDATES -> UpdatesScreen(c.updates, padding)
+                        Overlay.ABOUT -> AboutScreen(c, padding) { overlay = Overlay.UPDATES }
                         Overlay.SYSTEM_MODULE -> SystemModuleScreen(modulesVm, main, snapshot, padding)
                         Overlay.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
                         Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule, select)

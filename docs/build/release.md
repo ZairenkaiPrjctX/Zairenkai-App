@@ -1,5 +1,7 @@
 # Release process and signing
 
+Versions, channels, draft releases and in-app updates: `docs/build/releases.md`.
+
 **Status (2026-10-22): no release has been produced, and none is ready.** The licences are
 settled: App, ART, Core, FAS and ThermalTools are Apache-2.0, Zairenkai-Tuning (not yet in the
 app's lock) GPL-3.0-only (`docs/integration/license-inventory.md`).
