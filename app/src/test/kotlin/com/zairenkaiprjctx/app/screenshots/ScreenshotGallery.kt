@@ -129,7 +129,7 @@ class ScreenshotGallery {
      * come from a stand-in device (no device ran this). `ai-model-*` is the model card before import.
      */
     private fun aiPreview(mode: ThemeMode, name: String) {
-        val host = com.zairenkaiprjctx.app.CapturedAiHost(app.assets, { prompt ->
+        val host = com.zairenkaiprjctx.app.CapturedAiHost({ prompt ->
             if (prompt.contains("panas")) com.zairenkaiprjctx.app.CapturedAnswers.TEMPERATURE else com.zairenkaiprjctx.app.CapturedAnswers.FAS
         })
         val vm = AiViewModel(host = host, io = kotlinx.coroutines.Dispatchers.Unconfined)
@@ -157,7 +157,7 @@ class ScreenshotGallery {
     }
 
     private fun aiModel(mode: ThemeMode, name: String) {
-        aiScreen(AiViewModel(host = com.zairenkaiprjctx.app.CapturedAiHost(app.assets, { "" })), mode, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        aiScreen(AiViewModel(host = com.zairenkaiprjctx.app.CapturedAiHost({ "" })), mode, AvailabilityState.COMPONENT_NOT_INSTALLED)
         compose.onNode(hasScrollAction()).performScrollToNode(hasText(app.getString(R.string.ai_model_import)))
         shoot(name)
     }

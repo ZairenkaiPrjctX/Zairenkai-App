@@ -33,21 +33,23 @@ class IntelligenceSubsystem(
     override val provider = Provider("ZairenkaiPrjctX/Zairenkai-Intelligence-Engine", revision, "zie-run (llama.cpp), tool registry, model manifest")
 
     override fun probe(): List<CapabilityRecord> {
-        val a = assets().fold(
-            onSuccess = { ai ->
-                val mem = totalMemoryBytes()
-                when (val v = runtime.version()) {
-                    is RuntimeCall.Unavailable -> Availability(NATIVE_COMPONENT_UNAVAILABLE, v.reason)
-                    is RuntimeCall.Ok -> when {
+        // The runner first: without zie-run for this ABI nothing else matters (a reduced build
+        // packages neither the runner nor its assets).
+        val a = when (val v = runtime.version()) {
+            is RuntimeCall.Unavailable -> Availability(NATIVE_COMPONENT_UNAVAILABLE, v.reason)
+            is RuntimeCall.Ok -> assets().fold(
+                onSuccess = { ai ->
+                    val mem = totalMemoryBytes()
+                    when {
                         mem != null && mem < ai.store.manifest.minMemoryBytes ->
                             Availability(UNSUPPORTED_DEVICE, "The model needs ${ai.store.manifest.minMemoryBytes / MIB} MiB of memory; this device has ${mem / MIB} MiB.")
                         !ai.store.installed() -> Availability(COMPONENT_NOT_INSTALLED, "${v.value} is ready; the model file (${ai.store.manifest.displayName}) has not been imported.")
                         else -> Availability(NOT_VERIFIED, "${v.value}; ${ai.store.manifest.displayName} matches its SHA-256. Not validated on hardware yet.")
                     }
-                }
-            },
-            onFailure = { Availability(INITIALIZATION_FAILED, "Local AI assets could not be loaded: ${it.message}") },
-        )
+                },
+                onFailure = { Availability(INITIALIZATION_FAILED, "Local AI assets could not be loaded: ${it.message}") },
+            )
+        }
         return listOf(
             CapabilityRecord(
                 "intelligence.analysis", "Zairenkai Local AI",

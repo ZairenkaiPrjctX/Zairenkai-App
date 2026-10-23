@@ -2,7 +2,6 @@
 // Copyright 2026 ZairenkaiPrjctX contributors
 package com.zairenkaiprjctx.app
 
-import android.content.res.AssetManager
 import android.net.Uri
 import com.zairenkaiprjctx.app.ui.ai.LocalAiHost
 import com.zairenkaiprjctx.integration.ai.AiDevice
@@ -18,6 +17,7 @@ import com.zairenkaiprjctx.integration.core.ActionResult
 import com.zairenkaiprjctx.integration.core.CoreCall
 import com.zairenkaiprjctx.integration.core.CoreOperation
 import com.zairenkaiprjctx.integration.core.Decision
+import java.io.File
 
 /**
  * zie-run's answers as it printed them on a Linux host (integration-core
@@ -43,11 +43,15 @@ internal class StandInDevice : AiDevice {
     }
 }
 
-/** The real agent over the packaged registry, answering with [answer] for each prompt. */
-internal class CapturedAiHost(assets: AssetManager, answer: (String) -> String, val device: StandInDevice = StandInDevice()) : LocalAiHost {
-    private fun asset(a: AssetManager, path: String) = a.open(path).use { it.readBytes().decodeToString() }
-    override val manifest = ModelManifest.parse(asset(assets, "intelligence/model.json"))
-    private val agent = LocalAgent(AiToolRegistry.parse(asset(assets, "intelligence/tools.json")), { RuntimeCall.Ok(answer(it)) }, device)
+/**
+ * The real agent over the engine's registry and manifest, answering with [answer] for each prompt.
+ * They are read from integration-core's copies (`contracts/intelligence/`, byte copies of what
+ * build-components.sh packages), so the reduced build without packaged components runs this too.
+ */
+internal class CapturedAiHost(answer: (String) -> String, val device: StandInDevice = StandInDevice()) : LocalAiHost {
+    private fun copy(name: String) = File("../integration-core/src/test/resources/contracts/intelligence", name).readText()
+    override val manifest = ModelManifest.parse(copy("model.json"))
+    private val agent = LocalAgent(AiToolRegistry.parse(copy("tools.json")), { RuntimeCall.Ok(answer(it)) }, device)
     var imported = 0
 
     override fun agent() = agent

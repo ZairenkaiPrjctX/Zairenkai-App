@@ -41,7 +41,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The AI screen over the real agent code with the packaged registry and manifest. The runtime
+ * The AI screen over the real agent code with the engine's registry and manifest. The runtime
  * answers with zie-run's captured outputs (integration-core `contracts/intelligence/`); the
  * device is a stand-in that records what reached Core.
  */
@@ -53,7 +53,7 @@ class AiUiTest {
 
     private val app get() = ApplicationProvider.getApplicationContext<ZairenkaiApplication>()
 
-    private fun host(answer: String) = CapturedAiHost(app.assets, { answer })
+    private fun host(answer: String) = CapturedAiHost({ answer })
 
     private fun snapshot(state: AvailabilityState) = RegistrySnapshot(
         listOf(CapabilityRecord(AI_CAPABILITY, "Zairenkai Local AI", "", Provider("ZairenkaiPrjctX/Zairenkai-Intelligence-Engine", null, "zie-run"), Privilege.STANDARD, Availability(state, "probe reason"))),
