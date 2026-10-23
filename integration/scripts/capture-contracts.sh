@@ -4,7 +4,7 @@
 # Capture real outputs of the locked component revisions as contract fixtures for the parser
 # tests (integration-core/src/test/resources/contracts/).
 #
-# Builds zart, zthermal, zcored and zfasd for the host at the commits in integration/repository-lock.json
+# Builds zart, zthermal, zcored, zfasd and ztune for the host at the commits in integration/repository-lock.json
 # and runs them in temporary directories:
 #   - zart inspect / dexopt-status (host: Android inputs report "unavailable");
 #   - zthermal snapshot against ThermalTools' own synthetic device fixtures (--root, read only)
@@ -15,6 +15,9 @@
 #     zfasd ctl status and profile.
 #   - Core's own module inventory over a temporary root holding the module.prop packaged in
 #     zairenkai.zip, so the modules result carries an installed module and its version;
+#   - zcored ctl tuning on the host daemon, which has no ztune installed (Core's real error), and
+#     Core's own tuning adapter running ztune (built for the host from the commit
+#     Zairenkai-Modules locks) on this host's /sys and /proc, wrapped in Core's Response;
 #   - the module catalog build-components.sh wrote from the real module zips (run it first).
 # Requires: git read access to the repositories, Rust (stable), python3.
 set -euo pipefail
@@ -58,6 +61,18 @@ capture() {
     cat "$out" >&2
     exit "$code"
   }
+}
+# capture_error <file> <command...>: like capture, for a command that must answer with Core's
+# error response and exit 1 (zcored ctl's code for an error response).
+capture_error() {
+  local out=$1 code=0
+  shift
+  "$@" >"$out" || code=$?
+  if [ "$code" -ne 1 ] || ! python3 -c 'import json,sys; sys.exit(json.load(open(sys.argv[1]))["ok"] is not False)' "$out"; then
+    echo "capture-contracts: '$*' exited $code; expected an error response with exit 1. Output:" >&2
+    cat "$out" >&2
+    exit 1
+  fi
 }
 
 mkdir -p "$SRC" "$DEST/zart" "$DEST/zthermal" "$DEST/core" "$DEST/fas" "$DEST/system-modules"
@@ -118,6 +133,8 @@ done
 capture "$DEST/core/audit.json" "$CORE" ctl --dir "$TMP/core" audit '{"limit":5}'
 capture "$DEST/core/submit-dry-run.json" "$CORE" ctl --dir "$TMP/core" submit \
   '{"operation":{"op":"fas_set_profile","profile":"performance"},"dry_run":true}'
+# The host has no installed module, so Core reports ztune as not installed.
+capture_error "$DEST/core/tuning-not-installed.json" "$CORE" ctl --dir "$TMP/core" tuning
 
 # The host has no /data/adb/modules: the daemon reports every module not_installed with
 # version null. Core's inventory and Response types serialise one installed module instead.
@@ -135,11 +152,19 @@ publish = false
 zcore-domain = { path = "$SRC/core/crates/zcore-domain" }
 zcore-platform = { path = "$SRC/core/crates/zcore-platform" }
 serde_json = "1"
+libc = "0.2"
 [workspace]
 TOML
 cp "$ROOT/integration/scripts/core_fixture_main.rs" "$TMP/core-fixture/src/main.rs"
 cp "$SRC/core/Cargo.lock" "$TMP/core-fixture/Cargo.lock"
-(cd "$TMP/core-fixture" && cargo run -q --release -- "$TMP/core-module.prop" "$TMP/core-root" "$DEST/core/modules-installed.json")
+(cd "$TMP/core-fixture" && cargo run -q --release -- modules "$TMP/core-module.prop" "$TMP/core-root" "$DEST/core/modules-installed.json")
+
+# ztune at the commit Zairenkai-Modules locks (fetched by build-components.sh), built for the host.
+TUNING_SRC="$ROOT/integration/out/src/zairenkai-tuning"
+[ -f "$TUNING_SRC/Cargo.lock" ] || { echo "run integration/scripts/build-components.sh first ($TUNING_SRC missing)" >&2; exit 1; }
+(cd "$TUNING_SRC" && cargo build -q --locked --release -p ztune)
+mkdir "$TMP/tuning-root"
+(cd "$TMP/core-fixture" && cargo run -q --release -- tuning "$TUNING_SRC/target/release/ztune" "$TMP/tuning-root" "$DEST/core/tuning.json")
 
 FAS="$SRC/fas/target/release/zfasd"
 "$FAS" run --observe-only --dir "$TMP/fas" >"$TMP/fas.log" 2>&1 &
@@ -149,7 +174,7 @@ sleep 3 # let the daemon publish a full snapshot
 capture "$DEST/fas/status.json" "$FAS" ctl --dir "$TMP/fas" status
 capture "$DEST/fas/profile-ok.json" "$FAS" ctl --dir "$TMP/fas" profile balanced
 
-python3 - "$DEST" "$LOCK" <<'PY'
+python3 - "$DEST" "$LOCK" "$(git -C "$TUNING_SRC" rev-parse HEAD)" <<'PY'
 import json, sys, pathlib
 dest, lock = pathlib.Path(sys.argv[1]), json.load(open(sys.argv[2]))
 rev = {c["id"]: c["commit"] for c in lock["components"]}
@@ -157,6 +182,7 @@ rev = {c["id"]: c["commit"] for c in lock["components"]}
     "captured_by": "integration/scripts/capture-contracts.sh",
     "host": "Linux container (no Android services: device inputs report unavailable)",
     "zart": rev["zart"], "zthermal": rev["zthermal"], "zcored": rev["zcored-ctl-contract"], "zfasd": rev["zfasd-ctl-contract"],
+    "ztune": sys.argv[3],
 }, indent=2) + "\n")
 PY
 ls -R "$DEST"

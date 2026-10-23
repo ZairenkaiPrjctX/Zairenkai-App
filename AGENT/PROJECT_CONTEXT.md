@@ -20,8 +20,8 @@
 | Area | Location | Status |
 |---|---|---|
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
-| JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 74 tests, 2026-10-21 |
-| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 24 Robolectric tests, 2026-10-21. **Unverified** on a device |
+| JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 99 tests, 2026-10-23 |
+| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 29 Robolectric tests, 2026-10-23. **Unverified** on a device |
 | Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
 | CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration failed there at "Require the CI GitHub App"; since 2026-10-22 it fetches the public locked repositories without a token (`docs/build/ci.md`). **Unverified** on GitHub: no run of that version yet |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
@@ -63,9 +63,11 @@
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
-- Core, FAS and Modules are pinned to topic-branch commits (Core PR #3 `8931cbb`, FAS PR #4
-  `99cfb18`, Modules PR #1 `298311c`); ART, ThermalTools and Database-Source stay on `dev` merge
-  commits. Verified. Evidence: `integration/repository-lock.json`, 2026-10-22.
+- Every locked commit is in its repository's `dev`: Core `8931cbb`, FAS `99cfb18` and Modules
+  `298311c` since the merges of Core #3, FAS #4 and Modules #1 (`"merged": true`); ART,
+  ThermalTools and Database-Source on `dev` merge commits. Zairenkai-Tuning has no `dev`; it is
+  pinned through Modules' `components.lock.json` (`0c226b2`). Verified. Evidence: `git merge-base
+  --is-ancestor <pin> origin/dev` in each repository, `verify_integration.py lock`, 2026-10-23.
 - The full-integration CI job passed for the first time on `d0db6b7` (run 39827139485: every
   component built at its locked commit, contracts re-captured, tests, lint, APKs with native
   components required, integration report), fetching the public sources without a token.
@@ -85,16 +87,21 @@
 
 - Zairenkai-ART (`0d8cd72`), Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source
   (`d9c4290`), on `dev`, are integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
-- Zairenkai-Modules (`298311c`, topic branch) is integrated as the module source; Core (`8931cbb`)
-  and FAS (`99cfb18`) are pinned to topic-branch commits (`"merged": false`). Verified.
-  Evidence: `integration/repository-lock.json`, 2026-10-22.
+- Zairenkai-Modules (`298311c`) is integrated as the module source; Core (`8931cbb`) and FAS
+  (`99cfb18`) are pinned with it. All three commits are in `dev` (`"merged": true`). Verified.
+  Evidence: `integration/repository-lock.json`, `git merge-base --is-ancestor`, 2026-10-23.
 - Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) ships in
-  the module the app packages, with its source, and is run only by Core. The app shows Core's
-  `tuning.*` capabilities generically and has no tuning-specific client yet. Verified. Evidence:
-  `build-components.sh` and `verify_integration.py build` at the new pins, 2026-10-22.
-- The other 8 Zairenkai repositories have no runtime capability. anime-extensions is a separate
-  product and is excluded from the ecosystem audit (maintainer, 2026-10-22). Verified. Evidence:
-  `integration/repository-audit.md` (re-audit 2026-10-21).
+  the module the app packages, with its source, and is run only by Core. The app reads ztune's
+  telemetry through Core's `tuning` method (`core/Tuning.kt`, record `tuning.telemetry`, read
+  only) and shows Core's `tuning.*` capabilities generically. Verified on the host. Evidence:
+  `TuningContractTest` on fixtures from Core's adapter running the real ztune and from the live
+  daemon, 2026-10-23. **Unverified** on a device.
+- The other 8 Zairenkai repositories have no runtime capability for the app. Zairenkai-Sdk
+  (contracts only, `ed44c90`) and Zairenkai-Intelligence-Engine (host-only Local AI spike,
+  `cc3d48c`) now have code; the registry reports them `NO_UPSTREAM_IMPLEMENTATION` with that
+  reason. anime-extensions is a separate product and is excluded from the ecosystem audit
+  (maintainer, 2026-10-22). Verified. Evidence: `integration/repository-audit.md` (re-audit
+  2026-10-21), `integration/organization-repositories.json` (re-audit 2026-10-23), `RegistryTest`.
 
 ## Open questions
 
