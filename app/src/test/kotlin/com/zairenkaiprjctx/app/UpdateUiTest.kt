@@ -144,6 +144,40 @@ class UpdateUiTest {
     }
 
     @Test
+    fun aModuleReleaseIsNotifiedOnlyWhenNewerThanTheInstalledModule() {
+        val rel = com.zairenkaiprjctx.integration.update.ModuleRelease(
+            AppVersion.parse("0.4.0")!!, "v0.4.0", "### Added\n- Faster boot", "2026-10-30T00:00:00Z", "https://github.com/x",
+            ReleaseAsset("zairenkai-v0.4.0.zip", "https://github.com/x", 1),
+        )
+        val nm = shadowOf(app.getSystemService(NotificationManager::class.java))
+        val prefs = app.container.updates.prefs
+        shadowOf(app).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+        val m = com.zairenkaiprjctx.app.update.ModuleUpdate(rel, installedCode = null, packagedCode = 300)
+        assertTrue(m.newerThanPackaged)
+        // Not installed (or never read): nothing to update, no notification.
+        UpdateNotifier.notifyModuleOnce(app, prefs, m)
+        assertEquals(0, nm.allNotifications.size)
+        // Installed and current: nothing either.
+        UpdateNotifier.notifyModuleOnce(app, prefs, m.copy(installedCode = 400))
+        assertEquals(0, nm.allNotifications.size)
+        // Installed and older: one notification, once.
+        UpdateNotifier.notifyModuleOnce(app, prefs, m.copy(installedCode = 300))
+        UpdateNotifier.notifyModuleOnce(app, prefs, m.copy(installedCode = 300))
+        assertEquals(1, nm.allNotifications.size)
+        assertEquals("Zairenkai module v0.4.0 is available", shadowOf(nm.allNotifications.single()).contentTitle)
+        assertEquals("v0.4.0", prefs.moduleNotified)
+    }
+
+    @Test
+    fun theInstalledModuleVersionIsRemembered() {
+        val u = app.container.updates
+        u.recordInstalledModule(300)
+        assertEquals(300L, u.prefs.knownModuleCode)
+        u.recordInstalledModule(null)
+        assertNull(u.prefs.knownModuleCode)
+    }
+
+    @Test
     fun manifestDeclaresOnlyWhatUpdatesNeed() {
         val pm = app.packageManager
         val info = pm.getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS or PackageManager.GET_SERVICES or PackageManager.GET_RECEIVERS)

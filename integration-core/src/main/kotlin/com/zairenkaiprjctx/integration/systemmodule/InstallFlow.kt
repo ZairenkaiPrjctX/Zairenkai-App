@@ -65,6 +65,8 @@ data class InstallFlowState(
     val removalHandoff: List<String> = emptyList(),
     /** The module is installed but disabled in the root manager. */
     val disabled: Boolean = false,
+    /** module.prop versionCode of the active installed module, when the last check read one. */
+    val installedVersionCode: Long? = null,
 )
 
 /** Copies the packaged module to a file the root manager can read. */
@@ -137,6 +139,7 @@ class ModuleInstallController(
             is ManagerResult.Ok -> i.value
             is ManagerResult.Failed -> return update(InstallPhase.UNSUPPORTED, "Could not read the installed modules: ${i.detail}")
         }
+        update(InstallPhase.COMPATIBILITY_CHECK) { it.copy(installedVersionCode = installed.active?.versionCode) }
         val ids = (probe.installedIds() as? ManagerResult.Ok)?.value.orEmpty()
         val device = facts().copy(kernelMachine = probe.machine(), kernelRelease = probe.kernelRelease())
         val decision = Preflight.decide(
@@ -256,7 +259,8 @@ class ModuleInstallController(
             active == null -> update(InstallPhase.MODULE_AVAILABLE, "${module.id} is not installed.")
             active.removePending -> update(InstallPhase.REMOVAL_PENDING_REBOOT, "${module.id} is marked for removal; reboot to finish.")
             !active.enabled -> update(InstallPhase.DEGRADED, "${module.id} ${active.version} is installed but disabled in the root manager.") { it.copy(disabled = true) }
-            active.versionCode != module.versionCode -> update(InstallPhase.DEGRADED, "${module.id} ${active.version} is installed; this build packages ${module.version}.")
+            // Older than this build: the app offers its packaged version as an update.
+            (active.versionCode ?: 0) < module.versionCode -> update(InstallPhase.DEGRADED, "${module.id} ${active.version} is installed; this build packages ${module.version}.")
             else -> when (val r = runtime.status(module)) {
                 is RuntimeStatus.Healthy -> update(InstallPhase.ACTIVE, "${module.name} ${active.version} is installed, enabled and answering: ${r.detail}")
                 is RuntimeStatus.Degraded -> update(InstallPhase.DEGRADED, "${module.name} ${active.version} answers but reports a problem: ${r.detail}")

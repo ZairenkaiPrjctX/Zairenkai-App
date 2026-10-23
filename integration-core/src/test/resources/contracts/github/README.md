@@ -4,6 +4,8 @@
 `GET https://api.github.com/repos/ZairenkaiPrjctX/Zairenkai-App/releases?per_page=5`
 (header `Accept: application/vnd.github+json`, API version 2022-11-28), fetched with curl on
 2026-10-23. It is an empty list: the app had no published release yet.
+`releases-zairenkai-modules-2026-10-23.json` is the same request for
+ZairenkaiPrjctX/Zairenkai-Modules, the same day: also empty.
 
 No populated answer could be captured here (no release exists, and this environment reaches
 only the ZairenkaiPrjctX repositories). `UpdateTest` therefore builds its populated feeds in code,

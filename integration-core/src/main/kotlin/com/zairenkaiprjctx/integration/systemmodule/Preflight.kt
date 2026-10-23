@@ -155,8 +155,12 @@ object Preflight {
                 checks += PreflightCheck("existing", CheckStatus.FAIL, "${active.version} is marked for removal: reboot first")
             active.versionCode == null ->
                 checks += PreflightCheck("existing", CheckStatus.FAIL, "an installed ${module.id} has no readable versionCode")
+            // A newer module, e.g. updated by the root manager from a published module release
+            // (module.prop updateJson): kept as it is, checked like any install, never downgraded.
             active.versionCode > module.versionCode ->
-                checks += PreflightCheck("existing", CheckStatus.FAIL, "${active.version} is newer than ${module.version}: downgrades are refused")
+                settled = Verdict.ALREADY_INSTALLED.also {
+                    checks += PreflightCheck("existing", CheckStatus.INFO, "${active.version} is installed, newer than ${module.version} in this build; it is kept (downgrades are refused)")
+                }
             active.versionCode == module.versionCode && active.enabled ->
                 settled = Verdict.ALREADY_INSTALLED.also { checks += PreflightCheck("existing", CheckStatus.INFO, "${module.version} is already installed") }
             active.versionCode == module.versionCode ->

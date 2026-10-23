@@ -145,6 +145,7 @@ fun UpdatesScreen(updates: UpdateController, padding: PaddingValues) {
             else -> null
         }
         if (release != null) item { ReleaseCard(release, Modifier.entrance(entrance, 2)) }
+        item { ModuleReleaseCard(updates, Modifier.entrance(entrance, 2)) }
         item {
             Column(Modifier.entrance(entrance, 3), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
                 Text(stringResource(R.string.update_channel), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
@@ -296,6 +297,49 @@ internal fun ReleaseCard(r: AppRelease, modifier: Modifier) {
         }
         Text(stringResource(R.string.update_whats_new), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = ZairenkaiSpacing.s))
         if (blocks.isEmpty()) Detail(stringResource(R.string.update_no_notes)) else ReleaseNotes(blocks)
+    }
+}
+
+/** "v0.3.0 (300)" for a module versionCode (MAJOR·10000 + MINOR·100 + PATCH). */
+fun moduleVersionLabel(code: Long): String = "v${code / 10_000}.${code / 100 % 100}.${code % 100} ($code)"
+
+/**
+ * The zairenkai root module: the newest release next to the installed and packaged versions. The
+ * app does not download modules; the card says where an update comes from.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun ModuleReleaseCard(updates: UpdateController, modifier: Modifier) {
+    val m by updates.module.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val u = m
+    SectionCard(
+        stringResource(R.string.module_update_title),
+        modifier,
+        emphasis = if (u?.updateAvailable == true) com.zairenkaiprjctx.app.design.Emphasis.HIGH else com.zairenkaiprjctx.app.design.Emphasis.NORMAL,
+    ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+            InfoChip(
+                stringResource(R.string.module_update_installed, u?.installedCode?.let(::moduleVersionLabel) ?: stringResource(R.string.module_update_unknown)),
+                icon = ZairenkaiGlyphs.phone,
+            )
+            u?.packagedCode?.let { InfoChip(stringResource(R.string.module_update_packaged, moduleVersionLabel(it)), icon = ZairenkaiGlyphs.box) }
+            u?.latest?.let { InfoChip(stringResource(R.string.module_update_latest, moduleVersionLabel(it.versionCode)), icon = ZairenkaiGlyphs.spark, color = MaterialTheme.colorScheme.tertiaryContainer) }
+        }
+        when {
+            u == null -> Detail(stringResource(R.string.module_update_not_checked))
+            u.error != null -> Detail(stringResource(R.string.module_update_error, u.error))
+            u.latest == null -> Detail(stringResource(R.string.module_update_none))
+            u.updateAvailable -> {
+                Text(stringResource(R.string.module_update_available, u.latest.tag), style = MaterialTheme.typography.titleSmall)
+                Detail(stringResource(R.string.module_update_how), maxLines = 6)
+                val blocks = remember(u.latest.notes) { Notes.parse(u.latest.notes) }
+                if (blocks.isNotEmpty()) ReleaseNotes(blocks)
+            }
+            u.installedCode == null -> Detail(stringResource(R.string.module_update_not_installed, u.latest.tag))
+            else -> Detail(stringResource(R.string.module_update_current))
+        }
+        OutlinedButton(onClick = { open(context, ReleaseSource.MODULES_PAGE) }) { Text(stringResource(R.string.module_update_releases)) }
     }
 }
 

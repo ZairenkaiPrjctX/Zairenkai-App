@@ -720,4 +720,19 @@
         <item quantity="one">%1$d program in this module, with the SHA-256 recorded at build time</item>
         <item quantity="other">%1$d programs in this module, each with the SHA-256 recorded at build time</item>
     </plurals>
+    <string name="module_update_title">Zairenkai system module</string>
+    <string name="module_update_installed">Installed %1$s</string>
+    <string name="module_update_packaged">In this app %1$s</string>
+    <string name="module_update_latest">Latest release %1$s</string>
+    <string name="module_update_unknown">not read yet</string>
+    <string name="module_update_not_checked">Not checked yet. Check now to read the module\'s releases on GitHub.</string>
+    <string name="module_update_error">Could not read the module releases: %1$s</string>
+    <string name="module_update_none">No module release has been published yet.</string>
+    <string name="module_update_available">Module %1$s is available</string>
+    <string name="module_update_how">Update it in your root manager (Modules, then Update), which reads the release from GitHub, or install the app version that packages it. Reboot to activate.</string>
+    <string name="module_update_not_installed">%1$s is the latest release. The module is not installed (or this app has not read it yet: open System Module).</string>
+    <string name="module_update_current">The installed module is up to date.</string>
+    <string name="module_update_releases">Module releases</string>
+    <string name="module_update_notify_title">Zairenkai module %1$s is available</string>
+    <string name="module_update_notify_body">Update it in your root manager, then reboot.</string>
 </resources>

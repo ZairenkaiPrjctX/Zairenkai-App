@@ -99,6 +99,23 @@ class UpdateTest {
     }
 
     @Test
+    fun moduleReleasesAreReadFromTheirOwnFeed() {
+        assertEquals(emptyList<Any>(), ReleaseFeed.parseModules(contract("github/releases-zairenkai-modules-2026-10-23.json")))
+        // Synthetic (contracts/github/README.md): the module workflow's asset names.
+        fun rel(tag: String, pre: Boolean = false, draft: Boolean = false, zip: String = "zairenkai-$tag.zip") =
+            """{"tag_name":"$tag","body":"### Added\n- x","draft":$draft,"prerelease":$pre,"published_at":${if (draft) "null" else "\"2026-10-30T00:00:00Z\""},
+               "html_url":"https://github.com/ZairenkaiPrjctX/Zairenkai-Modules/releases/tag/$tag",
+               "assets":[{"name":"$zip","browser_download_url":"https://github.com/x/$zip","size":5},{"name":"update.json","browser_download_url":"https://github.com/x/u","size":1}]}"""
+        val feed = ReleaseFeed.parseModules("[" + listOf(
+            rel("v0.3.0"), rel("v0.4.0"), rel("v0.5.0", pre = true), rel("v0.6.0", draft = true),
+            rel("0.7.0"), rel("v0.8.0", zip = "module.zip"), rel("v0.9.0-beta.1"),
+        ).joinToString(",") + "]")
+        assertEquals(listOf("v0.4.0", "v0.3.0"), feed.map { it.tag })
+        assertEquals(400L, feed.first().versionCode)
+        assertEquals("zairenkai-v0.4.0.zip", feed.first().zip.name)
+    }
+
+    @Test
     fun checksumFiles() {
         val d = "a".repeat(64)
         assertEquals(d, parseChecksumFile("$d  zairenkai-0.2.0.apk\n", "zairenkai-0.2.0.apk"))

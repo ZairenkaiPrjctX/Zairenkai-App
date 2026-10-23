@@ -69,6 +69,20 @@ class UpdatePreferences(private val prefs: SharedPreferences) {
         state.value = s
     }
 
+    /**
+     * The installed zairenkai module's versionCode as the System Module screen last read it
+     * (through root, when the user opened it); null when not installed or never read. The daily
+     * check compares module releases with it, so it never needs root itself.
+     */
+    var knownModuleCode: Long?
+        get() = prefs.getLong(KEY_MODULE_CODE, -1).takeIf { it >= 0 }
+        set(v) = prefs.edit { if (v == null) remove(KEY_MODULE_CODE) else putLong(KEY_MODULE_CODE, v) }
+
+    /** The module release the user was last notified about. */
+    var moduleNotified: String?
+        get() = prefs.getString(KEY_MODULE_NOTIFIED, null)
+        set(v) = prefs.edit { putString(KEY_MODULE_NOTIFIED, v) }
+
     /** The version the user was last notified about, so one release notifies once. */
     var notified: String?
         get() = prefs.getString(KEY_NOTIFIED, null)
@@ -79,6 +93,8 @@ class UpdatePreferences(private val prefs: SharedPreferences) {
         const val KEY_AUTO = "update_auto_check"
         const val KEY_LAST = "update_last_check"
         const val KEY_NOTIFIED = "update_notified"
+        const val KEY_MODULE_CODE = "module_known_version_code"
+        const val KEY_MODULE_NOTIFIED = "module_update_notified"
     }
 }
 
@@ -95,6 +111,25 @@ sealed interface UpdateState {
     data class NeedsInstallPermission(val release: AppRelease, val file: File, val sha256: String) : UpdateState
     data class Installing(val release: AppRelease) : UpdateState
     data class Failed(val message: String, val release: AppRelease? = null) : UpdateState
+}
+
+/**
+ * What the app knows about the zairenkai root module's releases: the newest published one, the
+ * installed version (as last read) and the one this APK packages. The app never downloads a
+ * module release: root managers update through module.prop's updateJson, and the app's own
+ * installer uses only the module packaged in its signed APK.
+ */
+data class ModuleUpdate(
+    val latest: com.zairenkaiprjctx.integration.update.ModuleRelease?,
+    val installedCode: Long?,
+    val packagedCode: Long?,
+    val error: String? = null,
+) {
+    /** A published release newer than the installed module (nothing to offer when not installed). */
+    val updateAvailable: Boolean get() = latest != null && installedCode != null && latest.versionCode > installedCode
+
+    /** A release newer than the module this app version packages. */
+    val newerThanPackaged: Boolean get() = latest != null && packagedCode != null && latest.versionCode > packagedCode
 }
 
 /** The running app as an [ApkFacts], and APK files read by PackageManager. */
@@ -119,7 +154,7 @@ class ApkInspector(private val context: Context) {
  * release's SHA-256 file, be this package, carry exactly the version the release names, be newer,
  * and be signed by the same key as the installed app; Android's installer then asks the user.
  */
-class UpdateController(private val context: Context, val prefs: UpdatePreferences) {
+class UpdateController(private val context: Context, val prefs: UpdatePreferences, private val packagedModuleCode: () -> Long? = { null }) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val client = ReleaseClient(HttpsTransport("Zairenkai-App/${BuildConfig.VERSION_NAME} (+https://github.com/ZairenkaiPrjctX/Zairenkai-App)"))
     private val inspector = ApkInspector(context)
@@ -128,6 +163,22 @@ class UpdateController(private val context: Context, val prefs: UpdatePreference
     val state: StateFlow<UpdateState> = flow.asStateFlow()
 
     val current: AppVersion? = AppVersion.parse(BuildConfig.VERSION_NAME)
+
+    private val moduleFlow = MutableStateFlow<ModuleUpdate?>(null)
+    val module: StateFlow<ModuleUpdate?> = moduleFlow.asStateFlow()
+
+    /** Recorded by the System Module screen whenever it reads the installed module. */
+    fun recordInstalledModule(versionCode: Long?) {
+        prefs.knownModuleCode = versionCode
+        moduleFlow.value = moduleFlow.value?.copy(installedCode = versionCode)
+    }
+
+    /** Reads the module release list; a failure here never fails the app's own check. */
+    private fun checkModule(): ModuleUpdate = try {
+        ModuleUpdate(client.moduleReleases().firstOrNull(), prefs.knownModuleCode, packagedModuleCode())
+    } catch (e: Exception) {
+        ModuleUpdate(null, prefs.knownModuleCode, packagedModuleCode(), e.message ?: e.javaClass.simpleName)
+    }.also { moduleFlow.value = it }
 
     /**
      * Checks now; also used by the daily job, which then notifies once per release. Returns false
@@ -142,6 +193,7 @@ class UpdateController(private val context: Context, val prefs: UpdatePreference
         flow.value = UpdateState.Checking
         scope.launch {
             val s = prefs.settings.value
+            checkModule()
             val result = try {
                 val r = client.check(s.channel, v)
                 prefs.update(s.copy(lastCheck = System.currentTimeMillis()))
@@ -275,6 +327,7 @@ class UpdateCheckJob : JobService() {
         // false: something is already running (the user is updating), so this day's check is done.
         return c.updates.check { result ->
             if (result is UpdateState.Available) UpdateNotifier.notifyOnce(this, c.updates.prefs, result.release)
+            c.updates.module.value?.let { UpdateNotifier.notifyModuleOnce(this, c.updates.prefs, it) }
             jobFinished(params, result is UpdateState.Failed)
         }
     }
@@ -313,9 +366,20 @@ object UpdateNotifier {
         (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
             NotificationManagerCompat.from(context).areNotificationsEnabled()
 
-    /** One notification per release: the version, its channel and the first line of its notes. */
-    fun notifyOnce(context: Context, prefs: UpdatePreferences, release: AppRelease) {
-        if (prefs.notified == release.version.toString() || !canNotify(context)) return
+    private const val MODULE_ID = 7003
+
+    /** One notification per module release newer than the installed module. */
+    fun notifyModuleOnce(context: Context, prefs: UpdatePreferences, m: ModuleUpdate) {
+        val latest = m.latest ?: return
+        if (!m.updateAvailable || prefs.moduleNotified == latest.tag || !canNotify(context)) return
+        val summary = com.zairenkaiprjctx.integration.update.Notes.parse(latest.notes)
+            .firstNotNullOfOrNull { (it as? com.zairenkaiprjctx.integration.update.NoteBlock.Bullet)?.text ?: (it as? com.zairenkaiprjctx.integration.update.NoteBlock.Paragraph)?.text }
+            ?: context.getString(R.string.module_update_notify_body)
+        post(context, MODULE_ID, context.getString(R.string.module_update_notify_title, latest.tag), summary)?.let { prefs.moduleNotified = latest.tag }
+    }
+
+    /** Posts on the updates channel; null when the system refused. */
+    private fun post(context: Context, id: Int, title: String, text: String): Unit? {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, context.getString(R.string.update_channel_name), NotificationManager.IMPORTANCE_DEFAULT).apply {
@@ -323,10 +387,28 @@ object UpdateNotifier {
             },
         )
         val open = PendingIntent.getActivity(
-            context, 0,
+            context, id,
             Intent(context, MainActivity::class.java).putExtra(EXTRA_OPEN, OPEN_UPDATES).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        val n = NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        return try {
+            NotificationManagerCompat.from(context).notify(id, n)
+        } catch (_: SecurityException) {
+            null // permission withdrawn between the check and the call: nothing is shown
+        }
+    }
+
+    /** One notification per release: the version, its channel and the first line of its notes. */
+    fun notifyOnce(context: Context, prefs: UpdatePreferences, release: AppRelease) {
+        if (prefs.notified == release.version.toString() || !canNotify(context)) return
         val title = context.getString(
             if (release.version.isBeta) R.string.update_notify_title_beta else R.string.update_notify_title,
             release.version.toString(),
@@ -334,19 +416,6 @@ object UpdateNotifier {
         val summary = com.zairenkaiprjctx.integration.update.Notes.parse(release.notes)
             .firstNotNullOfOrNull { (it as? com.zairenkaiprjctx.integration.update.NoteBlock.Bullet)?.text ?: (it as? com.zairenkaiprjctx.integration.update.NoteBlock.Paragraph)?.text }
             ?: context.getString(R.string.update_notify_body)
-        val n = NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_launcher_monochrome)
-            .setContentTitle(title)
-            .setContentText(summary)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(summary))
-            .setContentIntent(open)
-            .setAutoCancel(true)
-            .build()
-        try {
-            NotificationManagerCompat.from(context).notify(ID, n)
-            prefs.notified = release.version.toString()
-        } catch (_: SecurityException) {
-            // Permission withdrawn between the check and the call: nothing is shown.
-        }
+        post(context, ID, title, summary)?.let { prefs.notified = release.version.toString() }
     }
 }

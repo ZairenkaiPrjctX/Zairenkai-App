@@ -696,4 +696,19 @@
     <plurals name="module_components_summary">
         <item quantity="other">%1$d program dalam modul ini, masing-masing dengan SHA-256 yang dicatat saat build</item>
     </plurals>
+    <string name="module_update_title">Modul sistem Zairenkai</string>
+    <string name="module_update_installed">Terpasang %1$s</string>
+    <string name="module_update_packaged">Di aplikasi ini %1$s</string>
+    <string name="module_update_latest">Rilis terbaru %1$s</string>
+    <string name="module_update_unknown">belum dibaca</string>
+    <string name="module_update_not_checked">Belum dicek. Cek sekarang untuk membaca rilis modul di GitHub.</string>
+    <string name="module_update_error">Tidak bisa membaca rilis modul: %1$s</string>
+    <string name="module_update_none">Belum ada rilis modul yang diterbitkan.</string>
+    <string name="module_update_available">Modul %1$s tersedia</string>
+    <string name="module_update_how">Perbarui di root manager Anda (Modul, lalu Perbarui), yang mengambil rilis dari GitHub, atau pasang versi aplikasi yang membawanya. Reboot untuk mengaktifkan.</string>
+    <string name="module_update_not_installed">%1$s adalah rilis terbaru. Modul belum terpasang (atau aplikasi ini belum membacanya: buka System Module).</string>
+    <string name="module_update_current">Modul yang terpasang sudah terbaru.</string>
+    <string name="module_update_releases">Rilis modul</string>
+    <string name="module_update_notify_title">Modul Zairenkai %1$s tersedia</string>
+    <string name="module_update_notify_body">Perbarui di root manager Anda, lalu reboot.</string>
 </resources>

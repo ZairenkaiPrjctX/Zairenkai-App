@@ -187,7 +187,10 @@ class AppContainer(private val app: Application, val runner: CommandRunner = Pro
     val theme = ThemePreferences(prefs)
     val wallpaper = com.zairenkaiprjctx.app.appearance.WallpaperStore(app)
     val icons = com.zairenkaiprjctx.app.appearance.LauncherIconSwitcher(app)
-    val updates = com.zairenkaiprjctx.app.update.UpdateController(app, com.zairenkaiprjctx.app.update.UpdatePreferences(prefs))
+    val updates = com.zairenkaiprjctx.app.update.UpdateController(
+        app, com.zairenkaiprjctx.app.update.UpdatePreferences(prefs),
+        packagedModuleCode = { moduleCatalog?.base?.versionCode },
+    )
 
     /** A page to open on the next frame (the name of an Overlay), e.g. from a notification. */
     val openRequest = MutableStateFlow<String?>(null)

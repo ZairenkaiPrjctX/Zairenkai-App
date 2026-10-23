@@ -156,11 +156,28 @@ android {
             storePassword = System.getenv("ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD")
             keyAlias = System.getenv("ZAIRENKAI_RELEASE_KEY_ALIAS")
             keyPassword = System.getenv("ZAIRENKAI_RELEASE_KEY_PASSWORD")
+            // minSdk 29: APK Signature Scheme v2 and v3 (v3 allows key rotation); the JAR (v1)
+            // signature would only serve Android 6 and older.
+            enableV1Signing = false
+            enableV2Signing = true
+            enableV3Signing = true
         }
+    }
+
+    // No encrypted dependency report in the APK or bundle: the dependencies are in the generated
+    // NOTICES, and the APK stays reproducible from source.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     buildTypes {
         release {
+            isDebuggable = false
+            isJniDebuggable = false
+            // R8 stays off until a release has been exercised on a device: shrinking can remove
+            // code reached only through reflection (kotlinx.serialization, Compose), and no
+            // instrumented test covers the release APK yet.
             isMinifyEnabled = false
             if (releaseKeystore != null) signingConfig = signingConfigs.getByName("release")
         }

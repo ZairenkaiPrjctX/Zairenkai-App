@@ -207,17 +207,73 @@ def apk_facts(apk: pathlib.Path) -> dict:
     return {"names": names, "digests": digests, "secrets": secrets}
 
 
-def apk_signed(apk: pathlib.Path) -> tuple:
-    tool = shutil.which("apksigner")
+def build_tool(name: str):
+    """A build-tools executable (apksigner, aapt2) from PATH or the newest SDK build-tools."""
+    tool = shutil.which(name)
     sdk = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
     if tool is None and sdk:
-        cands = sorted(pathlib.Path(sdk, "build-tools").glob("*/apksigner"))
+        cands = sorted(pathlib.Path(sdk, "build-tools").glob(f"*/{name}"), key=lambda p: [int(x) if x.isdigit() else x for x in re.split(r"[.-]", p.parent.name)])
         tool = str(cands[-1]) if cands else None
+    return tool
+
+
+# The only android.permission entries the app may request (docs/build/releases.md): every one
+# serves app updates. A new one is a reviewed change to this list.
+ALLOWED_PERMISSIONS = {
+    "android.permission.INTERNET", "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.RECEIVE_BOOT_COMPLETED", "android.permission.POST_NOTIFICATIONS",
+    "android.permission.REQUEST_INSTALL_PACKAGES",
+}
+
+
+def manifest_problems(apk: pathlib.Path) -> list:
+    """Release hardening read from the compiled manifest (aapt2): not debuggable, not test-only, no
+    cleartext traffic, a network security config, no backup, and only the allowed permissions."""
+    tool = build_tool("aapt2")
+    if tool is None:
+        return ["release: aapt2 not found: the manifest cannot be checked"]
+    r = subprocess.run([tool, "dump", "xmltree", "--file", "AndroidManifest.xml", str(apk)], capture_output=True, text=True)
+    if r.returncode != 0:
+        return [f"release: aapt2 could not read the manifest: {r.stderr.strip()[:200]}"]
+    tree = r.stdout
+    def attr(name):
+        m = re.search(r"A: http://schemas\.android\.com/apk/res/android:" + name + r"\([^)]*\)=([^\s]+)", tree)
+        return m.group(1).strip('"') if m else None
+    problems = []
+    if attr("debuggable") not in (None, "false", "0x0"):
+        problems.append("release: the APK is debuggable")
+    if attr("testOnly") not in (None, "false", "0x0"):
+        problems.append("release: the APK is test-only")
+    if attr("usesCleartextTraffic") not in ("false", "0x0"):
+        problems.append("release: cleartext traffic is not disabled (android:usesCleartextTraffic)")
+    if attr("networkSecurityConfig") is None:
+        problems.append("release: no android:networkSecurityConfig")
+    if attr("allowBackup") not in ("false", "0x0"):
+        problems.append("release: android:allowBackup is not false")
+    requested, element = set(), None
+    for line in tree.splitlines():
+        e = re.match(r"\s*E: (\S+)", line)
+        if e:
+            element = e.group(1)
+            continue
+        n = re.match(r'\s*A: http://schemas\.android\.com/apk/res/android:name\([^)]*\)="([^"]+)"', line)
+        if n and element == "uses-permission":
+            requested.add(n.group(1))
+    requested = {p for p in requested if p.startswith("android.permission.")}
+    if extra := requested - ALLOWED_PERMISSIONS:
+        problems.append(f"release: unexpected permissions {sorted(extra)}")
+    return problems
+
+
+def apk_signed(apk: pathlib.Path) -> tuple:
+    tool = build_tool("apksigner")
     if tool is None:
         return None, "apksigner not found"
-    r = subprocess.run([tool, "verify", "--print-certs", str(apk)], capture_output=True, text=True)
+    r = subprocess.run([tool, "verify", "--print-certs", "--verbose", str(apk)], capture_output=True, text=True)
     if r.returncode != 0:
         return False, "unsigned or invalid signature"
+    if not re.search(r"Verified using v(2|3|3\.1) scheme \(APK Signature Scheme v(2|3|3\.1)\): true", r.stdout):
+        return False, "signed without an APK Signature Scheme v2/v3 signature"
     cert = re.search(r"certificate SHA-256 digest: ([0-9a-f]+)", r.stdout)
     dn = re.search(r"certificate DN: (.*)", r.stdout)
     return True, f"{dn.group(1) if dn else '?'} (SHA-256 {cert.group(1)[:16] if cert else '?'}…)"
@@ -251,6 +307,7 @@ def check_apk(apk: pathlib.Path, release: bool) -> list:
         signed, detail = apk_signed(apk)
         if signed is not True:
             errors.append(f"release: APK not signed ({detail})")
+        errors.extend(manifest_problems(apk))
         if "assets/system-modules.json.sig" not in facts["names"]:
             errors.append("release: module catalog not signed (no ZAIRENKAI_MODULE_SIGNING_KEY_FILE)")
         trust = json.loads((ROOT / "integration/module-trust.json").read_text())

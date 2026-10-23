@@ -230,8 +230,17 @@ private fun ModuleJourney(vm: SystemModuleViewModel, m: BundledModule, modifier:
     val s = rememberModuleState(vm, m) ?: return
     val busy by vm.busy.collectAsStateWithLifecycle()
     var confirmRemove by rememberSaveable(m.id) { mutableStateOf(false) }
+    val release by vm.moduleUpdate.collectAsStateWithLifecycle()
     SectionCard(stringResource(R.string.module_journey), modifier) {
         JourneySteps(s.phase)
+        release?.takeIf { it.updateAvailable }?.latest?.let { r ->
+            Surface(color = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer, shape = ZairenkaiShapes.metric) {
+                Column(Modifier.fillMaxWidth().padding(ZairenkaiSpacing.m), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
+                    Text(stringResource(R.string.module_update_available, r.tag), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.module_update_how), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
         if (busy && s.phase in WORKING) {
             // A real step is running: the wavy bar moves (none if reduced) and the step is named.
             WorkingBar()

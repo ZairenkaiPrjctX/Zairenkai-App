@@ -15,6 +15,28 @@ object ReleaseSource {
     /** The APK and its checksum file, as the release workflow names them. */
     fun apkName(v: AppVersion) = "zairenkai-$v.apk"
     fun checksumName(v: AppVersion) = "zairenkai-$v.apk.sha256"
+
+    /** Zairenkai-Modules releases: the root module (docs/RELEASING.md there). */
+    const val MODULES_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Modules"
+    const val MODULES_API = "https://api.github.com/repos/$MODULES_REPOSITORY/releases?per_page=30"
+    const val MODULES_PAGE = "https://github.com/$MODULES_REPOSITORY/releases"
+    fun moduleZipName(v: AppVersion) = "zairenkai-v$v.zip"
+}
+
+/**
+ * A published release of the zairenkai root module. [versionCode] is module.prop's
+ * (MAJOR·10000 + MINOR·100 + PATCH, Zairenkai-Modules assemble.py), the number root managers and
+ * the app compare with the installed module.
+ */
+data class ModuleRelease(
+    val version: AppVersion,
+    val tag: String,
+    val notes: String,
+    val publishedAt: String,
+    val page: String,
+    val zip: ReleaseAsset,
+) {
+    val versionCode: Long get() = version.major * 10_000L + version.minor * 100L + version.patch
 }
 
 /** One downloadable file of a release. */
@@ -98,6 +120,19 @@ object ReleaseFeed {
         }
         return ReleaseFeedResult(ok.sortedByDescending { it.version }, skipped)
     }
+
+    /**
+     * Module releases: published, not pre-release, tag `vMAJOR.MINOR.PATCH`, with the zip under
+     * the name the module's release workflow uses. Newest first.
+     */
+    fun parseModules(text: String): List<ModuleRelease> =
+        json.decodeFromString<List<GhRelease>>(text).mapNotNull { r ->
+            if (r.draft || r.prerelease || r.publishedAt == null) return@mapNotNull null
+            val v = AppVersion.parse(r.tag)?.takeIf { !it.isBeta && r.tag.startsWith("v") } ?: return@mapNotNull null
+            val zip = r.assets.firstOrNull { it.state == "uploaded" && it.name == ReleaseSource.moduleZipName(v) } ?: return@mapNotNull null
+            if (!zip.url.startsWith("https://")) return@mapNotNull null
+            ModuleRelease(v, r.tag, r.body.orEmpty(), r.publishedAt, r.page, ReleaseAsset(zip.name, zip.url, zip.size))
+        }.sortedByDescending { it.version }
 
     /**
      * The newest release on [channel] that is newer than [current], or null. The beta channel
