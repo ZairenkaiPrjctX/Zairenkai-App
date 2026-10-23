@@ -2,8 +2,8 @@
 
 ## Typed tuning telemetry; every pin in `dev` (2026-10-23)
 
-**Verdict: verified on an x86-64 Linux host; CI on the pushed commit is the remaining check.**
-Nothing ran on a device.
+**Verdict: verified on an x86-64 Linux host and in CI** (run 39888821755 at `fbe9e44`: all three
+jobs green, the tuning fixtures re-captured as uid 1001). Nothing ran on a device.
 
 | Check | Command / evidence | Result |
 |---|---|---|
@@ -22,7 +22,12 @@ any value sent with a failed status, and never coerces a string into a number. C
 installed`) separates a module without ztune (`COMPONENT_NOT_INSTALLED`) from a failing ztune
 (`INITIALIZATION_FAILED`). A distinct Core error code would remove that dependency on wording.
 
-Not verified: the tuning captures in CI; ztune on any phone (on this host every frequency,
+The first CI run (39887060148 at `cf6fdb8`) failed in `capture-contracts.sh`: Core's binary check
+walks from ztune to the SysRoot and requires the capturing uid at every step, which never holds
+under `/` for uid 1001. Reproduced locally with `runuser -u ci` (uid 1001), fixed in the fixture with
+a user-owned temporary SysRoot (Core unchanged), verified the same way, then green in CI.
+
+Not verified: ztune on any phone (on this host every frequency,
 governor and temperature reading is `unsupported`).
 
 ## Module with ztune; first green full-integration run (2026-10-22)
