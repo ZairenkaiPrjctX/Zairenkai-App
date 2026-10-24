@@ -295,6 +295,21 @@ class AppContainer(private val app: Application, val runner: CommandRunner = Pro
             }.getOrElse { ModelImport.Failed(it.message ?: "the file could not be read") }
         }
 
+        override fun downloadModel(progress: (Long) -> Unit, cancelled: () -> Boolean): ModelImport {
+            val store = localAiAssets.getOrNull()?.store ?: return ModelImport.Failed("Local AI assets are not packaged")
+            val transport = com.zairenkaiprjctx.integration.update.HttpsTransport(
+                "Zairenkai-App/${BuildConfig.VERSION_NAME} (+https://github.com/ZairenkaiPrjctX/Zairenkai-App)",
+            )
+            return runCatching {
+                store.download({ offset -> transport.get(store.manifest.releaseUrl, "application/octet-stream", offset) }, progress, cancelled)
+            }.getOrElse { ModelImport.Failed(it.message ?: it.javaClass.simpleName) }
+        }
+
+        override fun partialBytes(): Long = localAiAssets.getOrNull()?.store?.partialBytes() ?: 0
+
+        override fun meteredNetwork(): Boolean =
+            runCatching { app.getSystemService(android.net.ConnectivityManager::class.java).isActiveNetworkMetered }.getOrDefault(true)
+
         override fun deleteModel() {
             localAiAssets.getOrNull()?.store?.delete()
         }

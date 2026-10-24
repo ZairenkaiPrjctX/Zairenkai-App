@@ -4,7 +4,9 @@ package com.zairenkaiprjctx.integration.ai
 
 import com.zairenkaiprjctx.integration.exec.CommandOutcome
 import com.zairenkaiprjctx.integration.exec.CommandRunner
+import com.zairenkaiprjctx.integration.update.HttpResponse
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.security.MessageDigest
@@ -92,48 +94,114 @@ sealed interface ModelImport {
     data class WrongSize(val actual: Long) : ModelImport
     data class WrongDigest(val actual: String) : ModelImport
     data class Failed(val detail: String) : ModelImport
+
+    /** The release answered with this HTTP status (404: the model release is not published yet). */
+    data class HttpStatus(val code: Int) : ModelImport
+
+    /** The download stopped (cancelled or the connection dropped) at [done] bytes; the next one resumes there. */
+    data class Interrupted(val done: Long, val detail: String) : ModelImport
 }
 
 /**
- * The model file in app-private storage. The app never downloads it: the user picks the GGUF
- * file the manifest names (from the source and revision it gives), and it is kept only if its
- * size and SHA-256 match the manifest. A copy that grows past the expected size is stopped at once.
+ * The model file in app-private storage. It comes from the model release of
+ * Zairenkai-Intelligence-Engine ([ModelManifest.releaseUrl], downloaded only when the user asks)
+ * or from a file the user picks, and it is kept only if its size and SHA-256 match the manifest.
+ * A copy that grows past the expected size is stopped at once.
  */
 class ModelStore(private val dir: File, val manifest: ModelManifest) {
     val file: File get() = File(dir, manifest.fileName)
     private val marker: File get() = File(dir, manifest.fileName + ".sha256")
+    private val part: File get() = File(dir, manifest.fileName + ".part")
 
     /** True once an import was verified; the marker avoids re-hashing hundreds of MB on every start. */
     fun installed(): Boolean =
         file.isFile && file.length() == manifest.sizeBytes && runCatching { marker.readText().trim() }.getOrNull() == manifest.sha256
 
+    /** Bytes of an interrupted download kept for resuming (0 when there is none). */
+    fun partialBytes(): Long = part.length().takeIf { it in 1 until manifest.sizeBytes } ?: 0
+
     fun import(input: InputStream, progress: (Long) -> Unit = {}): ModelImport {
         dir.mkdirs()
-        val part = File(dir, manifest.fileName + ".part")
+        part.delete()
         val digest = MessageDigest.getInstance("SHA-256")
-        var total = 0L
-        try {
-            part.outputStream().use { out ->
-                val buf = ByteArray(1 shl 16)
-                while (true) {
-                    val n = input.read(buf)
-                    if (n < 0) break
-                    total += n
-                    if (total > manifest.sizeBytes) {
-                        part.delete()
-                        return ModelImport.WrongSize(total)
-                    }
-                    digest.update(buf, 0, n)
-                    out.write(buf, 0, n)
-                    progress(total)
-                }
-            }
+        val total = try {
+            copy(input, digest, 0, append = false, progress) { false } ?: return ModelImport.WrongSize(manifest.sizeBytes + 1).also { part.delete() }
         } catch (e: IOException) {
             part.delete()
             return ModelImport.Failed(e.message ?: "read failed")
         }
+        return finish(total, digest, keepPartial = false)
+    }
+
+    /**
+     * Downloads the model through [open] (a GET from a byte offset, see `HttpsTransport.get`),
+     * resuming an interrupted download when the server honours the range. [cancelled] is polled
+     * between blocks; a cancelled or broken download keeps its bytes for the next attempt.
+     */
+    fun download(open: (offset: Long) -> HttpResponse, progress: (Long) -> Unit = {}, cancelled: () -> Boolean = { false }): ModelImport {
+        dir.mkdirs()
+        val digest = MessageDigest.getInstance("SHA-256")
+        var offset = partialBytes()
+        if (offset == 0L) part.delete() else hashExisting(digest)
+        val response = try {
+            open(offset)
+        } catch (e: IOException) {
+            return ModelImport.Interrupted(offset, e.message ?: "connection failed")
+        }
+        var total = offset
+        try {
+            response.use { r ->
+                when {
+                    r.status == 206 && offset > 0 -> Unit
+                    r.status == 200 -> {
+                        // The server sent the whole file: start over.
+                        if (offset > 0) digest.reset()
+                        offset = 0
+                    }
+                    else -> return ModelImport.HttpStatus(r.status)
+                }
+                total = copy(r.body, digest, offset, append = offset > 0, progress, cancelled)
+                    ?: return ModelImport.WrongSize(manifest.sizeBytes + 1).also { part.delete() }
+            }
+        } catch (e: IOException) {
+            return ModelImport.Interrupted(partialBytes(), e.message ?: "connection lost")
+        }
+        if (total < manifest.sizeBytes) return ModelImport.Interrupted(total, if (cancelled()) "cancelled" else "the connection ended early")
+        return finish(total, digest, keepPartial = true)
+    }
+
+    /** Appends [input] to the partial file; null when it grows past the manifest's size. */
+    private fun copy(input: InputStream, digest: MessageDigest, start: Long, append: Boolean, progress: (Long) -> Unit, cancelled: () -> Boolean): Long? {
+        var total = start
+        FileOutputStream(part, append).use { out ->
+            val buf = ByteArray(1 shl 16)
+            while (!cancelled()) {
+                val n = input.read(buf)
+                if (n < 0) break
+                total += n
+                if (total > manifest.sizeBytes) return null
+                digest.update(buf, 0, n)
+                out.write(buf, 0, n)
+                progress(total)
+            }
+        }
+        return total
+    }
+
+    private fun hashExisting(digest: MessageDigest) {
+        part.inputStream().use { input ->
+            val buf = ByteArray(1 shl 16)
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                digest.update(buf, 0, n)
+            }
+        }
+    }
+
+    private fun finish(total: Long, digest: MessageDigest, keepPartial: Boolean): ModelImport {
         if (total != manifest.sizeBytes) {
-            part.delete()
+            if (!keepPartial) part.delete()
             return ModelImport.WrongSize(total)
         }
         val hex = digest.digest().joinToString("") { "%02x".format(it) }
@@ -153,6 +221,6 @@ class ModelStore(private val dir: File, val manifest: ModelManifest) {
     fun delete() {
         marker.delete()
         file.delete()
-        File(dir, manifest.fileName + ".part").delete()
+        part.delete()
     }
 }

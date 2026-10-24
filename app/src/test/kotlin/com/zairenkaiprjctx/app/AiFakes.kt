@@ -60,6 +60,18 @@ internal class CapturedAiHost(answer: (String) -> String, val device: StandInDev
         progress(manifest.sizeBytes / 2)
         return ModelImport.WrongDigest("0".repeat(64))
     }
+    var downloads = 0
+    var downloadResult: ModelImport = ModelImport.HttpStatus(404)
+    var metered = false
+
+    override fun downloadModel(progress: (Long) -> Unit, cancelled: () -> Boolean): ModelImport {
+        downloads++
+        progress(manifest.sizeBytes / 4)
+        return downloadResult
+    }
+
+    override fun partialBytes(): Long = 0
+    override fun meteredNetwork() = metered
     override fun deleteModel() = Unit
     override suspend fun refreshAvailability() = Unit
 }

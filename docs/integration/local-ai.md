@@ -15,7 +15,7 @@ closed tool registry. The model's text never authorizes anything:
 | Tool registry (5 tools) | `registry/tools.json` | `assets/intelligence/tools.json` |
 | Grammar the output is sampled under | `registry/output.gbnf` (generated from the registry) | `assets/intelligence/output.gbnf` |
 | Model manifest (Qwen2.5-0.5B-Instruct q4_0: file name, size, SHA-256, source revision, licences, 1 GiB minimum memory) | `models/qwen2.5-0.5b-instruct-q4_0.json` | `assets/intelligence/model.json` |
-| The model file (428,730,208 bytes) | Hugging Face `Qwen/Qwen2.5-0.5B-Instruct-GGUF` at the manifest's revision | **not packaged**: the user imports it |
+| The model file (428,730,208 bytes) | Hugging Face `Qwen/Qwen2.5-0.5B-Instruct-GGUF` at the manifest's revision, republished unchanged as Intelligence-Engine's release `model-<model_id>` | **not packaged**: downloaded on request, or imported |
 | Licences | Engine `LICENSE`/`NOTICE` (Apache-2.0), llama.cpp `LICENSE` (MIT) | `assets/licenses/zie-run/`, `assets/licenses/llama.cpp/` |
 
 `integration/scripts/build-components.sh` builds and packages these at the commit
@@ -31,19 +31,27 @@ armeabi-v7a gets no runner. There, `intelligence.analysis` reports
 
 ## The model file
 
-The app never downloads the model, and the network is used only for app and module updates
-(`CLAUDE.md`). The AI tab shows:
+The model is not in the APK. Packaging it would make the APK about 470 MB, and every app update
+would download it again. The AI tab offers two ways to get it.
 
-- the file name, its size, SHA-256 and licence;
-- where to get the file (the source and revision in the manifest).
+**Download (default).** "Download model (429 MB)" fetches
+`https://github.com/ZairenkaiPrjctX/Zairenkai-Intelligence-Engine/releases/download/model-<model_id>/<file>`
+(`ModelManifest.releaseUrl`).
 
-The user then picks the file with the system file picker. `ModelStore` copies it into app-private
-storage (`files/models/`):
+- **The release.** The engine's Model release workflow drafts it from the manifest's pinned
+  Hugging Face revision; the maintainer publishes it (Intelligence-Engine `docs/MODEL_RELEASE.md`).
+- **When it runs.** It starts only when the user taps. On a metered network the app asks first.
+- **Transport.** The same `HttpsTransport` and host allowlist as the updater (HTTPS only; GitHub
+  and its release-asset hosts). No token is sent, and no device data.
+- **Interruptions.** A pause or a dropped connection keeps the bytes, and the next tap resumes with
+  a `Range` request. A server that ignores the range sends the whole file again.
+- **Missing release.** A 404 is shown as "not published yet"; the import still works.
 
-- while copying, it hashes the file and stops as soon as the copy grows past the expected size;
-- it keeps the file only if the size and SHA-256 match the manifest;
-- otherwise it deletes the partial copy and says why.
+**Import.** The user picks the GGUF file the manifest names with the system file picker.
 
+**Checks (both ways).** `ModelStore` writes the file into app-private storage (`files/models/`).
+It hashes the file while writing and stops as soon as it grows past the expected size. It keeps
+the file only if the size and SHA-256 match the manifest; otherwise it deletes it and says why.
 A marker records the verified digest, so a 400 MB file is not re-hashed on every start. Deleting
 the model removes the file and the marker.
 
@@ -97,7 +105,10 @@ the model removes the file and the marker.
   Kotlin agent with the host-built zie-run and the real model (`ZIE_RUN`, `ZIE_MODEL`). It
   answered "Switch FAS to the performance profile" with a `fas.set_profile` request in 8 s.
 - **UI (Robolectric).** `AiUiTest`: a question becomes a dry run, Approve applies it through
-  Core, read-only facts are shown, and a wrong model file is refused.
+  Core, read-only facts are shown, and a wrong model file is refused. The download starts only on
+  request, waits for a yes on mobile data, and reports a release that is not published.
+- **Download (JVM).** `AiTest`: resume after an interruption, restart when the server ignores
+  the range, cancel, 404, and a tampered or oversized file deleted.
 - **Screenshot gallery.** `preview-ai-chat-*` and `ai-model-*`.
 - **APK.** Both `libzierun.so` binaries import no networking function and need only libc, libm
   and libdl (`llvm-nm`, `llvm-readelf`).

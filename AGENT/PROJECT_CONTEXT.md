@@ -77,8 +77,10 @@
   `RedesignTest`, screenshot gallery, 2026-10-23. **Unverified** on a device.
 - Local AI (2026-10-23, `docs/integration/local-ai.md`): Intelligence-Engine's `zie-run`
   (`af31fd7`, llama.cpp b11500) is packaged as `libzierun.so` for arm64-v8a and x86_64 with the
-  tool registry, grammar and model manifest. The model file is not packaged and never downloaded
-  by the app: the user imports it and it is kept only if size and SHA-256 match. Read-only tools
+  tool registry, grammar and model manifest. The model file is not packaged: the user downloads it
+  on request from Intelligence-Engine's release `model-<model_id>` (resumable; asks first on
+  mobile data; maintainer decision 2026-10-24) or imports it, and it is kept only if size and
+  SHA-256 match. **Unverified**: no model release is published yet (IE PR #4 adds the workflow). Read-only tools
   run; `fas.set_profile` becomes a Core dry run the user approves. Verified on the host. Evidence:
   `AiTest` (prompt identical to the engine's; parser on the real model's captured answers; the
   real runner and model through the Kotlin agent, 8 s), `AiUiTest`, both APK binaries without

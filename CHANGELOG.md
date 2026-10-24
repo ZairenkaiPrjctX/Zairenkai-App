@@ -21,8 +21,9 @@ pre-release); see `docs/build/releases.md`.
 - Zairenkai AI runs on the phone: zie-run (Zairenkai-Intelligence-Engine, llama.cpp) answers
   questions by asking read-only tools (Core health and capabilities, FAS status, thermal
   snapshot). A FAS profile change goes to Core as a dry run, and only your approval applies it.
-  Import the model file once (Qwen2.5-0.5B-Instruct, 429 MB). The app never downloads it and
-  keeps it only if its SHA-256 matches. Nothing leaves the phone.
+  Get the model once (Qwen2.5-0.5B-Instruct, 429 MB): tap "Download model" (from Zairenkai's own
+  GitHub release, resumable, asks first on mobile data) or import the file. It is kept only if its
+  SHA-256 matches. Your questions and device data never leave the phone.
 - Module updates: the app also checks Zairenkai-Modules' releases and tells you when a newer
   module than the installed one is published.
 
@@ -39,8 +40,8 @@ pre-release); see `docs/build/releases.md`.
 - Release builds: no cleartext traffic, system CAs only, APK signature schemes v2/v3 only, not
   debuggable.
 - The app now requests the INTERNET permission, used only to read the release list and download
-  a release from GitHub when you check for updates (or the daily check you can turn off). It
-  sends no data about the device.
+  a release from GitHub when you check for updates (or the daily check you can turn off), and for
+  the AI model download you start. It sends no data about the device.
 
 ## [0.1.0] - 2026-10-19
 
