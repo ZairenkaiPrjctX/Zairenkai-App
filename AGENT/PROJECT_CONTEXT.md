@@ -64,9 +64,9 @@
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
 - Every locked commit but one is in its repository's `dev`: Core `345fc7f` and FAS `1c453db` (the
-  merge commits of Core #3 and FAS #4); ART, ThermalTools and Database-Source on `dev` merge
-  commits. Modules is pinned at `9175e1e` on its PR #5 branch (`"merged": false`) until that PR
-  merges. Zairenkai-Tuning has no `dev`; it is pinned through Modules' `components.lock.json`
+  merge commits of Core #3 and FAS #4); Modules `dec38fa` (the merge of Modules #5, 2026-10-24);
+  ART, ThermalTools and Database-Source on `dev` merge commits. Intelligence-Engine is pinned at
+  `af31fd7` on its PR #3 branch (`"merged": false`) until that PR merges. Zairenkai-Tuning has no `dev`; it is pinned through Modules' `components.lock.json`
   (`0c226b2`). Verified. Evidence: `verify_integration.py lock`, 2026-10-23.
 - The full-integration CI job passed for the first time on `d0db6b7` (run 39827139485: every
   component built at its locked commit, contracts re-captured, tests, lint, APKs with native
@@ -118,8 +118,7 @@
 
 - Zairenkai-ART (`0d8cd72`), Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source
   (`d9c4290`), on `dev`, are integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
-- Zairenkai-Modules is pinned at `9175e1e` (PR #5, module 0.3.1, not merged yet: `"merged": false`;
-  re-pin to the merge commit). Core (`345fc7f`) and FAS (`1c453db`), the `dev` merge commits of
+- Zairenkai-Modules is pinned at `dec38fa`, the merge of PR #5 into `dev` (module 0.3.1). Core (`345fc7f`) and FAS (`1c453db`), the `dev` merge commits of
   Core #3 and FAS #4, are pinned with it. Verified. Evidence: `integration/repository-lock.json`,
   `verify_integration.py lock`, `build-components.sh`, 2026-10-23.
 - Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) ships in
