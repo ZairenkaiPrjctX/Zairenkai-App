@@ -53,12 +53,13 @@ Non-negotiables in this repo:
   install only after the SHA-256 file, the package, the exact version, a newer versionCode and
   the same signing certificate check out, through Android's installer with the user's
   confirmation (`docs/build/releases.md`). Never install silently, never accept another signer,
-  never publish a release (the release workflow only creates drafts). The network is used for
-  nothing else; never send device data.
+  never publish a release (the release workflow only creates drafts). Apart from updates, the
+  network is used only for the model download the user starts (below); never send device data.
 - **Local AI is on-device only** (`docs/integration/local-ai.md`): `zie-run` runs as the app's uid
   with a fixed argv, and its build refuses networking imports. No remote AI API, ever. The model
-  file is never packaged or downloaded by the app: the user imports it, and it is kept only if
-  its size and SHA-256 match the manifest. The model's output is re-checked against the closed
+  file is never packaged in the APK. It is downloaded only when the user taps Download (asking first
+  on mobile data), only from Zairenkai-Intelligence-Engine's release `model-<model_id>`, or
+  imported from a file, and it is kept only if its size and SHA-256 match the manifest. The model's output is re-checked against the closed
   registry. A system tool is only a Core dry run until the user approves, and Core applies it.
 
 ## Commands
@@ -67,10 +68,10 @@ Non-negotiables in this repo:
 |---|---|---|
 | Build components | `ANDROID_NDK_HOME=<ndk> [LLAMA_CPP_SRC=<llama.cpp b11500 checkout>] integration/scripts/build-components.sh` (needs cmake and ninja for zie-run) | Verified. Evidence: exit 0 with NDK r27d, module 0.3.1 at Modules `dec38fa`, zie-run at IE `af31fd7`, 2026-10-24 |
 | Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins; 2026-10-23 with the new tuning captures, exit 0) and as uid 1001 in CI (run 39645071811; full integration 39827139485, 2026-10-22; with the tuning captures, run 39888821755, 2026-10-23) |
-| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` (with `ZIE_RUN` and `ZIE_MODEL` also the real runner and model) | Verified. Evidence: 121 passed, 1 skipped (real runner without the variables), 2026-10-23; the real-runner test passed with them, 8 s |
-| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 72 passed, 0 skipped with `ZAIRENKAI_SCREENSHOT_DIR` set (without it the gallery is skipped), 2026-10-23, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 the NATIVE-graphics tests (`InfoRowNativeLayoutTest`, `ConnectedChoiceTouchTest`, `LongTextLayoutTest`, the gallery) are skipped: no Linux aarch64 runtime in Robolectric 4.14 |
+| Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` (with `ZIE_RUN` and `ZIE_MODEL` also the real runner and model) | Verified. Evidence: 126 passed, 1 skipped (real runner without the variables), 2026-10-24; the real-runner test passed with them, 8 s, 2026-10-23 |
+| Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 74 passed, 0 skipped with `ZAIRENKAI_SCREENSHOT_DIR` set (without it the gallery is skipped), 2026-10-24, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 the NATIVE-graphics tests (`InfoRowNativeLayoutTest`, `ConnectedChoiceTouchTest`, `LongTextLayoutTest`, the gallery) are skipped: no Linux aarch64 runtime in Robolectric 4.14 |
 | Screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest --tests '*ScreenshotGallery*'` | Verified. Evidence: 63 PNGs (host, captured binary output, Indonesian at 1.3× font, settings pages, styled showcases, brand logo, About, Updates, System Module whole, AI chat over the real agent, AI model card, update-offer previews; light and dark), 2026-10-23 |
-| Lint | `./gradlew lint` | Verified. Evidence: 0 errors (24 dependency-version warnings), 2026-10-23 |
+| Lint | `./gradlew lint` | Verified. Evidence: 0 errors (24 dependency-version warnings), 2026-10-24 |
 | Build | `./gradlew assembleDebug assembleRelease` | Verified. Evidence: debug signed with the debug key, release unsigned, 2026-10-23; release signed in a dry run with a throwaway key, v3 verified (`docs/build/releases.md`) |
 | Shell lint | `shellcheck integration/scripts/*.sh` | Verified. Evidence: clean, 2026-10-23 |
 | Integration checks | `python3 integration/scripts/verify_integration.py lock\|access\|build\|apk <apk>\|report <apk> [--release]` | Verified. Evidence: lock/build/apk/report ok on the 0.2.0-beta.1 release APK, 2026-10-23; `--release` on the dry-run-signed APK: one blocker, the module catalog is unsigned (maintainer key), 2026-10-23 |

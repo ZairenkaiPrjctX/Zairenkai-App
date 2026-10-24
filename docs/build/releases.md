@@ -59,7 +59,7 @@ run against a real release or on a device.
 
 ## Permissions this needs
 
-`INTERNET`, `ACCESS_NETWORK_STATE` (the daily job waits for a network), `RECEIVE_BOOT_COMPLETED`
+`INTERNET` (also for the AI model download the user starts, `docs/integration/local-ai.md`), `ACCESS_NETWORK_STATE` (the daily job waits for a network; the model download asks first on mobile data), `RECEIVE_BOOT_COMPLETED`
 (the daily job survives reboots), `POST_NOTIFICATIONS` (asked when needed) and
 `REQUEST_INSTALL_PACKAGES` (granted by the user per app). `UpdateUiTest` fails if any other
 `android.permission` appears.

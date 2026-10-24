@@ -31,6 +31,7 @@ import com.zairenkaiprjctx.integration.exec.CommandResult
 import com.zairenkaiprjctx.integration.exec.CommandRunner
 import com.zairenkaiprjctx.integration.exec.ProcessCommandRunner
 import com.zairenkaiprjctx.integration.model.AvailabilityState
+import com.zairenkaiprjctx.integration.update.HttpResponse
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -43,6 +44,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.MessageDigest
 
@@ -174,6 +176,80 @@ class AiTest {
         assertTrue(store.installed())
         assertTrue(store.file.readBytes().contentEquals(good))
         store.delete()
+        assertFalse(store.installed())
+    }
+
+    @Test
+    fun theReleaseUrlFollowsTheEnginesTagScheme() {
+        assertEquals(
+            "https://github.com/ZairenkaiPrjctX/Zairenkai-Intelligence-Engine/releases/download/model-qwen2_5_0_5b_instruct_q4_0/qwen2.5-0.5b-instruct-q4_0.gguf",
+            ModelManifest.parse(contract("intelligence/model.json")).releaseUrl,
+        )
+        com.zairenkaiprjctx.integration.update.ReleaseClient.requireAllowed(ModelManifest.parse(contract("intelligence/model.json")).releaseUrl)
+    }
+
+    /** A server that serves [data] from the requested offset, honouring ranges unless [ranges] is false. */
+    private class Server(private val data: ByteArray, var ranges: Boolean = true, var status: Int? = null, var cutAt: Int? = null) {
+        val offsets = mutableListOf<Long>()
+
+        fun open(offset: Long): HttpResponse {
+            offsets += offset
+            status?.let { return HttpResponse("https://github.com/x", it, 0, ByteArrayInputStream(ByteArray(0))) }
+            val from = if (ranges) offset.toInt() else 0
+            val end = cutAt?.coerceAtLeast(from) ?: data.size
+            return HttpResponse("https://github.com/x", if (ranges && offset > 0) 206 else 200, (end - from).toLong(), ByteArrayInputStream(data.copyOfRange(from, end)))
+        }
+    }
+
+    @Test
+    fun aDownloadIsKeptOnlyIfItMatchesAndResumesWhereItStopped() {
+        val good = ByteArray(300_000) { (it % 251).toByte() }
+        val store = ModelStore(tmp.newFolder("dl"), manifestFor(good))
+        val server = Server(good, cutAt = 100_000)
+        val first = store.download(server::open)
+        assertEquals(ModelImport.Interrupted(100_000, "the connection ended early"), first)
+        assertEquals(100_000L, store.partialBytes())
+        assertFalse(store.installed())
+        server.cutAt = null
+        assertEquals(ModelImport.Verified, store.download(server::open))
+        assertEquals(listOf(0L, 100_000L), server.offsets)
+        assertTrue(store.installed())
+        assertTrue(store.file.readBytes().contentEquals(good))
+    }
+
+    @Test
+    fun aServerThatIgnoresTheRangeRestartsTheDownload() {
+        val good = ByteArray(50_000) { (it % 13).toByte() }
+        val store = ModelStore(tmp.newFolder("dl2"), manifestFor(good))
+        val server = Server(good, ranges = false, cutAt = 20_000)
+        assertTrue(store.download(server::open) is ModelImport.Interrupted)
+        server.cutAt = null
+        assertEquals(ModelImport.Verified, store.download(server::open))
+        assertTrue(store.file.readBytes().contentEquals(good))
+    }
+
+    @Test
+    fun cancellingKeepsTheBytesAndAMissingReleaseIsReported() {
+        val good = ByteArray(200_000) { 7 }
+        val store = ModelStore(tmp.newFolder("dl3"), manifestFor(good))
+        var calls = 0
+        val r = store.download(Server(good)::open, progress = { calls++ }, cancelled = { calls >= 1 })
+        assertTrue(r.toString(), r is ModelImport.Interrupted && r.detail == "cancelled")
+        assertTrue(store.partialBytes() > 0)
+        assertEquals(ModelImport.HttpStatus(404), store.download(Server(good, status = 404)::open))
+        assertTrue("a 404 keeps the partial file", store.partialBytes() > 0)
+    }
+
+    @Test
+    fun aTamperedDownloadIsDeleted() {
+        val good = ByteArray(10_000) { 1 }
+        val store = ModelStore(tmp.newFolder("dl4"), manifestFor(good))
+        val bad = good.copyOf().also { it[5_000] = 2 }
+        assertTrue(store.download(Server(bad)::open) is ModelImport.WrongDigest)
+        assertEquals(0L, store.partialBytes())
+        assertFalse(store.installed())
+        val longer = good + 1
+        assertTrue(store.download(Server(longer)::open) is ModelImport.WrongSize)
         assertFalse(store.installed())
     }
 

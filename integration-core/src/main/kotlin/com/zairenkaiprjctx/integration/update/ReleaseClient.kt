@@ -26,7 +26,13 @@ fun interface Transport {
  * the app version, nothing else.
  */
 class HttpsTransport(private val userAgent: String) : Transport {
-    override fun get(url: String, accept: String): HttpResponse {
+    override fun get(url: String, accept: String): HttpResponse = get(url, accept, 0)
+
+    /**
+     * GET from byte [offset] on (a `Range` request when it is above 0): status 206 means the server
+     * resumed there, 200 that it sent the whole file again.
+     */
+    fun get(url: String, accept: String, offset: Long): HttpResponse {
         var target = url
         repeat(5) {
             ReleaseClient.requireAllowed(target)
@@ -37,6 +43,7 @@ class HttpsTransport(private val userAgent: String) : Transport {
             c.setRequestProperty("Accept", accept)
             c.setRequestProperty("User-Agent", userAgent)
             c.setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+            if (offset > 0) c.setRequestProperty("Range", "bytes=$offset-")
             val code = c.responseCode
             if (code in 300..399) {
                 val next = c.getHeaderField("Location") ?: throw IOException("redirect without a location")

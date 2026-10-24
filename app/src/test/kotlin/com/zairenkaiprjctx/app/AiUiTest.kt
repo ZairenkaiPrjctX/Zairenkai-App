@@ -24,6 +24,7 @@ import com.zairenkaiprjctx.app.ui.ai.AiViewModel
 import com.zairenkaiprjctx.app.ui.ai.ApprovalState
 import com.zairenkaiprjctx.app.ui.ai.ModelImportUi
 import android.net.Uri
+import com.zairenkaiprjctx.integration.ai.ModelImport
 import com.zairenkaiprjctx.integration.core.CoreOperation
 import com.zairenkaiprjctx.integration.model.Availability
 import com.zairenkaiprjctx.integration.model.AvailabilityState
@@ -112,5 +113,35 @@ class AiUiTest {
         assertEquals(ModelImportUi.WrongDigest, vm.importState.value)
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Not this model", substring = true))
         assertTrue(vm.transcript.value.isEmpty())
+    }
+
+    @Test
+    fun theModelIsDownloadedOnlyOnRequestAndAMissingReleaseIsSaid() {
+        val host = host(CapturedAnswers.FAS)
+        val vm = AiViewModel(host = host, io = Dispatchers.Unconfined)
+        show(vm, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        assertEquals("nothing is downloaded until the user asks", 0, host.downloads)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download model", substring = true))
+        compose.onNodeWithText("Download model", substring = true).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(1, host.downloads)
+        assertEquals(ModelImportUi.NotAvailable(404), vm.importState.value)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("not published on GitHub yet", substring = true))
+    }
+
+    @Test
+    fun onMobileDataTheDownloadWaitsForAYes() {
+        val host = host(CapturedAnswers.FAS).apply { metered = true; downloadResult = ModelImport.Verified }
+        val vm = AiViewModel(host = host, io = Dispatchers.Unconfined)
+        show(vm, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download model", substring = true))
+        compose.onNodeWithText("Download model", substring = true).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        compose.onNodeWithText("Download over mobile data?").assertExists()
+        assertEquals(0, host.downloads)
+        compose.onNodeWithText("Download").performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(1, host.downloads)
+        assertEquals(ModelImportUi.Verified, vm.importState.value)
     }
 }

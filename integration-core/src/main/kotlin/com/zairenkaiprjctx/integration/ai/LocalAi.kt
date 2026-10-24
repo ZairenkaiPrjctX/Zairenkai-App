@@ -83,7 +83,12 @@ data class ModelManifest(
     val minMemoryBytes: Long,
     val weightsLicense: String,
 ) {
+    /** The release asset the app downloads (Intelligence-Engine `docs/MODEL_RELEASE.md`: tag `model-<model_id>`). */
+    val releaseUrl: String get() = "https://github.com/$MODEL_RELEASE_REPOSITORY/releases/download/model-$modelId/$fileName"
+
     companion object {
+        const val MODEL_RELEASE_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Intelligence-Engine"
+
         fun parse(text: String): ModelManifest {
             val o = runCatching { Json.parseToJsonElement(text) as JsonObject }.getOrElse { throw AiFormatException("model manifest is not a JSON object") }
             if (o["schema_version"]?.let { (it as? JsonPrimitive)?.longOrNull } != 1L) throw AiFormatException("unsupported model manifest")
@@ -94,6 +99,7 @@ data class ModelManifest(
             if (!name.matches(Regex("[A-Za-z0-9._-]{1,128}\\.gguf"))) throw AiFormatException("unsafe model file name $name")
             val sha = f.str("sha256")
             if (!sha.matches(Regex("[0-9a-f]{64}"))) throw AiFormatException("bad SHA-256")
+            if (!o.str("model_id").matches(Regex("[a-z0-9_]{1,64}"))) throw AiFormatException("unsafe model id")
             val source = o["source"] as? JsonObject ?: throw AiFormatException("source missing")
             val licenses = o["licenses"] as? JsonObject ?: throw AiFormatException("licenses missing")
             return ModelManifest(

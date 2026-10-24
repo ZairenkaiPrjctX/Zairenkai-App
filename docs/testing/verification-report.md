@@ -1,5 +1,17 @@
 # Verification report
 
+## Model download from the Intelligence-Engine release (2026-10-24)
+
+**Verdict: verified on an x86-64 Linux host (JVM and Robolectric).** No model release is
+published yet, so no real download ran, and nothing ran on a device.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| JVM tests | `./gradlew :integration-core:test` | 127 run, 126 passed, 1 skipped (real runner without `ZIE_RUN`/`ZIE_MODEL`); new: release URL, resume after an interruption, restart when ranges are ignored, cancel, 404, tampered and oversized downloads |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 74 passed, 0 skipped; 63 PNGs (`ai-model-*` shows Download and Import) |
+| Lint | `./gradlew lint` | 0 errors; 24 dependency-version warnings |
+| Release side | Intelligence-Engine `tools/model_release.py stage` on the real model file | the file matches its manifest (SHA-256 `7671c0c3…`) |
+
 ## Local AI, module 0.3.1, module update notices, signed dry run (2026-10-23)
 
 **Verdict: verified on an x86-64 Linux host (JVM, Robolectric, real runner and model on the

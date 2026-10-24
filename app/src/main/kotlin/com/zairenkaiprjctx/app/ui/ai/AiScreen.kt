@@ -77,6 +77,7 @@ import com.zairenkaiprjctx.app.design.ZairenkaiShapes
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.app.design.ZairenkaiTextStyles
 import androidx.compose.ui.platform.LocalContext
+import com.zairenkaiprjctx.app.design.ConfirmDialog
 import com.zairenkaiprjctx.app.design.Meter
 import com.zairenkaiprjctx.app.design.ProgressRow
 import com.zairenkaiprjctx.integration.ai.Fact
@@ -107,6 +108,19 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
     // The composer is enabled only when the registry reports a usable on-device runtime and model.
     val ready = record?.availability?.usable == true
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.importModel(uri) }
+    // On mobile data the 429 MB download waits for the user's explicit yes.
+    var askMetered by rememberSaveable { mutableStateOf(false) }
+    if (askMetered) {
+        val m = vm.manifest
+        val context = LocalContext.current
+        ConfirmDialog(
+            title = stringResource(R.string.ai_model_metered_title),
+            body = { Text(stringResource(R.string.ai_model_metered_body, android.text.format.Formatter.formatShortFileSize(context, m?.sizeBytes ?: 0))) },
+            confirmLabel = stringResource(R.string.ai_model_download_anyway),
+            onConfirm = { askMetered = false; vm.downloadModel() },
+            onDismiss = { askMetered = false },
+        )
+    }
     val dir = LocalLayoutDirection.current
     val start = padding.calculateStartPadding(dir)
     val end = padding.calculateEndPadding(dir)
@@ -131,7 +145,12 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
             item { Box(Modifier.entrance(entrance, 2)) { HowItWorks() } }
             item {
                 Box(Modifier.entrance(entrance, 3)) {
-                    ModelCard(record, vm.manifest, importState, onImport = { pick.launch(arrayOf("*/*")) }, onDelete = vm::deleteModel)
+                    ModelCard(
+                        record, vm.manifest, importState, partial = vm.partialBytes(),
+                        onDownload = { if (vm.meteredNetwork()) askMetered = true else vm.downloadModel() },
+                        onCancel = vm::cancelDownload,
+                        onImport = { pick.launch(arrayOf("*/*")) }, onDelete = vm::deleteModel,
+                    )
                 }
             }
             items(turns, key = { it.id }) { t -> AiTurnView(t, onDecide = vm::decide) }
@@ -194,14 +213,24 @@ private fun HowItWorks() {
 /** The model: what it is, whether it is imported, and the import or delete action. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ModelCard(record: CapabilityRecord?, manifest: ModelManifest?, import: ModelImportUi, onImport: () -> Unit, onDelete: () -> Unit) {
+private fun ModelCard(
+    record: CapabilityRecord?,
+    manifest: ModelManifest?,
+    import: ModelImportUi,
+    partial: Long,
+    onDownload: () -> Unit,
+    onCancel: () -> Unit,
+    onImport: () -> Unit,
+    onDelete: () -> Unit,
+) {
     val context = LocalContext.current
     fun size(bytes: Long) = android.text.format.Formatter.formatShortFileSize(context, bytes)
     val state = record?.availability?.state
     val installed = record?.availability?.usable == true
-    // Importing makes sense only where the runtime runs: not without zie-run or with too little memory.
-    val canImport = manifest != null && state != AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE && state != AvailabilityState.UNSUPPORTED_DEVICE &&
+    // Getting the model makes sense only where the runtime runs: not without zie-run or with too little memory.
+    val canGet = manifest != null && state != AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE && state != AvailabilityState.UNSUPPORTED_DEVICE &&
         state != AvailabilityState.INITIALIZATION_FAILED
+    val busy = import is ModelImportUi.Copying || import is ModelImportUi.Downloading
     SegmentedGroup(title = stringResource(R.string.ai_model), icon = ZairenkaiGlyphs.chip) {
         row {
             GroupRow(
@@ -217,14 +246,19 @@ private fun ModelCard(record: CapabilityRecord?, manifest: ModelManifest?, impor
                     InfoRow(stringResource(R.string.ai_model_size), size(manifest.sizeBytes))
                     InfoRow(stringResource(R.string.ai_model_license), manifest.weightsLicense)
                     InfoRow(stringResource(R.string.ai_model_digest), manifest.sha256, code = true)
-                    if (!installed && canImport) {
-                        Detail(stringResource(R.string.ai_model_how, manifest.fileName, manifest.sourceUrl.removePrefix("https://"), manifest.revision.take(12)), maxLines = 6)
-                    }
+                    if (!installed && canGet) Detail(stringResource(R.string.ai_model_download_body), maxLines = 6)
                     when (import) {
                         is ModelImportUi.Copying -> {
                             Meter(if (import.total > 0) import.done.toFloat() / import.total else 0f)
                             Supporting(stringResource(R.string.ai_model_copying, size(import.done), size(import.total)))
                         }
+                        is ModelImportUi.Downloading -> {
+                            Meter(if (import.total > 0) import.done.toFloat() / import.total else 0f)
+                            Supporting(stringResource(R.string.ai_model_downloading, size(import.done), size(import.total)))
+                        }
+                        is ModelImportUi.Paused -> Supporting(stringResource(R.string.ai_model_paused, size(import.done), size(import.total)))
+                        is ModelImportUi.NotAvailable ->
+                            Supporting(if (import.code == 404) stringResource(R.string.ai_model_not_released) else stringResource(R.string.ai_model_http, import.code))
                         ModelImportUi.Verified -> Supporting(stringResource(R.string.ai_model_verified))
                         is ModelImportUi.WrongSize -> Supporting(stringResource(R.string.ai_model_wrong_size, size(import.actual), size(manifest.sizeBytes)))
                         ModelImportUi.WrongDigest -> Supporting(stringResource(R.string.ai_model_wrong_digest))
@@ -232,10 +266,23 @@ private fun ModelCard(record: CapabilityRecord?, manifest: ModelManifest?, impor
                         ModelImportUi.Idle -> Unit
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                        if (canImport && !installed) {
-                            Button(onClick = onImport, enabled = import !is ModelImportUi.Copying) { Text(stringResource(R.string.ai_model_import)) }
+                        if (canGet && !installed) {
+                            if (import is ModelImportUi.Downloading) {
+                                OutlinedButton(onClick = onCancel) { Text(stringResource(R.string.ai_model_cancel)) }
+                            } else {
+                                Button(onClick = onDownload, enabled = !busy) {
+                                    Text(
+                                        if (partial > 0) stringResource(R.string.ai_model_resume, size(partial))
+                                        else stringResource(R.string.ai_model_download, size(manifest.sizeBytes)),
+                                    )
+                                }
+                            }
+                            OutlinedButton(onClick = onImport, enabled = !busy) { Text(stringResource(R.string.ai_model_import)) }
                         }
                         if (installed) OutlinedButton(onClick = onDelete) { Text(stringResource(R.string.ai_model_delete)) }
+                    }
+                    if (!installed && canGet) {
+                        Detail(stringResource(R.string.ai_model_how, manifest.fileName, manifest.sourceUrl.removePrefix("https://"), manifest.revision.take(12)), maxLines = 6)
                     }
                 }
             }
