@@ -65,7 +65,7 @@ Non-negotiables in this repo:
 
 | Purpose | Command | Status |
 |---|---|---|
-| Build components | `ANDROID_NDK_HOME=<ndk> [LLAMA_CPP_SRC=<llama.cpp b11500 checkout>] integration/scripts/build-components.sh` (needs cmake and ninja for zie-run) | Verified. Evidence: exit 0 with NDK r27d, module 0.3.1 at Modules `9175e1e`, zie-run at IE `af31fd7`, 2026-10-23 |
+| Build components | `ANDROID_NDK_HOME=<ndk> [LLAMA_CPP_SRC=<llama.cpp b11500 checkout>] integration/scripts/build-components.sh` (needs cmake and ninja for zie-run) | Verified. Evidence: exit 0 with NDK r27d, module 0.3.1 at Modules `dec38fa`, zie-run at IE `af31fd7`, 2026-10-24 |
 | Capture contracts | `integration/scripts/capture-contracts.sh` | Verified. Evidence: as root locally (2026-10-21, re-run at the merge-commit pins; 2026-10-23 with the new tuning captures, exit 0) and as uid 1001 in CI (run 39645071811; full integration 39827139485, 2026-10-22; with the tuning captures, run 39888821755, 2026-10-23) |
 | Test (JVM, Kotlin + Java) | `./gradlew :integration-core:test` (with `ZIE_RUN` and `ZIE_MODEL` also the real runner and model) | Verified. Evidence: 121 passed, 1 skipped (real runner without the variables), 2026-10-23; the real-runner test passed with them, 8 s |
 | Test (Robolectric UI + Java) | `./gradlew :app:testDebugUnitTest` | Verified. Evidence: 72 passed, 0 skipped with `ZAIRENKAI_SCREENSHOT_DIR` set (without it the gallery is skipped), 2026-10-23, on x86-64 with `ANDROID_HOME=/opt/android/sdk`. On aarch64 the NATIVE-graphics tests (`InfoRowNativeLayoutTest`, `ConnectedChoiceTouchTest`, `LongTextLayoutTest`, the gallery) are skipped: no Linux aarch64 runtime in Robolectric 4.14 |

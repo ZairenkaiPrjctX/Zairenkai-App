@@ -284,8 +284,8 @@
         "ccr-63f8aa87-1b0paj-release",
         "ccr-63f8aa87-1b0paj-kernelsu"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj-kernelsu",
-      "audited_commit": "9175e1e26a8c55fed23a8febd93ce5f34ab35747",
+      "audited_branch": "dev",
+      "audited_commit": "dec38fababb68471225f071c6e811c4a916c0988",
       "code_present": true,
       "languages": [
         "Shell",
@@ -305,7 +305,7 @@
       "integration_mechanism": "assets/system-modules/zairenkai.zip, installed with the root manager's own installer after the user confirms; catalog signed by a key in integration/module-trust.json",
       "runtime_requirements": "root manager (Magisk v20.4+, KernelSU/KernelSU-Next, APatch), arm64, API 29+",
       "license": "Apache-2.0 (LICENSE, NOTICE)",
-      "evidence": "Audited 2026-10-22 at ea138ef (Modules PR #1, topic branch, the first code): module/ scripts, components.lock.json (Core 4cdfe8e, FAS 99cfb18), scripts/assemble.py with 11 tests. Re-audited 2026-10-22 at 298311c (Modules PR #1): Tuning added to components.lock.json; assemble.py requires a GPL component's licence and Corresponding Source; CI checks out the public components without a token. Re-audited 2026-10-23 at 2d1f548 (Modules PR #3, topic branch): module 0.3.0 with SHA256SUMS checked by customize.sh and service.sh, module/common.sh guards (root-only data directories, own-process lookup, status line), a WebUI with a Content-Security-Policy that sends changes through Core; 38 tests, CI run 39960595283 green. Re-audited 2026-10-23 at 9175e1e (Modules PR #5 to dev, which also carries PRs #3 and #4: they were merged into their stacked base branches, not dev): module 0.3.1, the Release workflow (drafts only) and updateJson, and customize.sh checking for the binaries instead of their exec bit (a KernelSU-Next install of 0.3.0 failed on it); 45 tests."
+      "evidence": "Audited 2026-10-22 at ea138ef (Modules PR #1, topic branch, the first code): module/ scripts, components.lock.json (Core 4cdfe8e, FAS 99cfb18), scripts/assemble.py with 11 tests. Re-audited 2026-10-22 at 298311c (Modules PR #1): Tuning added to components.lock.json; assemble.py requires a GPL component's licence and Corresponding Source; CI checks out the public components without a token. Re-audited 2026-10-23 at 2d1f548 (Modules PR #3, topic branch): module 0.3.0 with SHA256SUMS checked by customize.sh and service.sh, module/common.sh guards (root-only data directories, own-process lookup, status line), a WebUI with a Content-Security-Policy that sends changes through Core; 38 tests, CI run 39960595283 green. Re-audited 2026-10-24 at dec38fa, the merge of Modules PR #5 into dev (tree identical to 9175e1e; PR #5 which also carries PRs #3 and #4: they were merged into their stacked base branches, not dev): module 0.3.1, the Release workflow (drafts only) and updateJson, and customize.sh checking for the binaries instead of their exec bit (a KernelSU-Next install of 0.3.0 failed on it); 45 tests."
     },
     {
       "name": "Zairenkai-Intelligence-Engine",
