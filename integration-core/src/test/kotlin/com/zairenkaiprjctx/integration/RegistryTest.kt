@@ -76,13 +76,13 @@ class RegistryTest {
         assertEquals(AvailabilityState.UNSUPPORTED_DEVICE, s.availability("art.patches").state)
         assertEquals(AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE, s.availability("thermaltools.snapshot").state)
         assertEquals(AvailabilityState.ROOT_REQUIRED, s.availability("thermaltools.snapshot_root").state)
-        for (id in listOf("thermaltools.control", "intelligence.analysis", "license.entitlement", "sdk.api", "graphics.control")) {
+        for (id in listOf("thermaltools.control", "license.entitlement", "sdk.api", "graphics.control")) {
             assertEquals(id, AvailabilityState.NO_UPSTREAM_IMPLEMENTATION, s.availability(id).state)
         }
-        // Sdk and Intelligence-Engine now have code, but nothing the app can call: the reason says so.
+        // Sdk has code, but nothing the app can call: the reason says so.
         assertTrue(s.availability("sdk.api").reason, s.availability("sdk.api").reason.contains("nothing for the app to call"))
         assertTrue(s.availability("sdk.api").reason.contains("contracts only"))
-        assertTrue(s.availability("intelligence.analysis").reason.contains("host-only Local AI"))
+        // Intelligence-Engine is integrated (zie-run); its own subsystem reports it, not the gap list.
         assertTrue(s.availability("license.entitlement").reason.contains("has no implementation"))
         // Zairenkai-Modules is implemented (the zairenkai module); it is no longer a planned gap.
         assertNull(s.byId("modules.packages"))

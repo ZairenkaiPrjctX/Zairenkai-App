@@ -32,8 +32,8 @@ class CoreContractTest {
     fun installedModuleVersionIsCoresVersionStruct() {
         val mods = (core("modules", contract("core/modules-installed.json")).modules() as CoreCall.Ok).value
         val m = mods.single { it.id == com.zairenkaiprjctx.integration.core.CorePaths.MODULE_ID }
-        assertEquals(CoreVersion(0, 2, 0), m.version) // module 0.2.0: zcored, zfasd and ztune
-        assertEquals("0.2.0", m.version.toString())
+        assertEquals(CoreVersion(0, 3, 1), m.version) // module 0.3.1: zcored, zfasd and ztune, with SHA256SUMS
+        assertEquals("0.3.1", m.version.toString())
         assertTrue(m.compatible)
     }
 

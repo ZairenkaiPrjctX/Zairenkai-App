@@ -24,8 +24,42 @@ import androidx.compose.ui.unit.dp
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+/**
+ * Everything the user chose about the app's look. [dynamicColor] (wallpaper colours, Android 12+)
+ * wins over [palette]; [customId] selects one of [customThemes] instead of a palette.
+ */
 @Immutable
-data class ThemeSettings(val mode: ThemeMode = ThemeMode.SYSTEM, val dynamicColor: Boolean = true)
+data class ThemeSettings(
+    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val dynamicColor: Boolean = true,
+    val palette: Palette = Palette.ZAIRENKAI,
+    val customThemes: List<CustomTheme> = emptyList(),
+    val customId: String? = null,
+    val amoled: Boolean = false,
+    val animation: BackgroundAnimation = BackgroundAnimation.NONE,
+    val wallpaper: WallpaperSettings = WallpaperSettings(),
+    val font: FontSettings = FontSettings(),
+    val uiScale: Float = 1f,
+    val glass: GlassSettings = GlassSettings(),
+) {
+    /** The custom theme in use, if one is selected and still exists. */
+    val custom: CustomTheme? get() = customId?.let { id -> customThemes.firstOrNull { it.id == id } }
+}
+
+/** The colour scheme [settings] describe, for light or [dark]. */
+@Composable
+fun colorSchemeFor(settings: ThemeSettings, dark: Boolean): androidx.compose.material3.ColorScheme {
+    val context = LocalContext.current
+    val custom = settings.custom
+    val base = when {
+        settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        custom != null -> schemeFromSeed(androidx.compose.ui.graphics.Color(custom.seed), dark)
+        settings.palette == Palette.ZAIRENKAI -> if (dark) ZairenkaiColorScheme.dark else ZairenkaiColorScheme.light
+        else -> schemeFromSeed(androidx.compose.ui.graphics.Color(settings.palette.seed), dark)
+    }
+    return if (dark && settings.amoled) base.amoled() else base
+}
 
 /** Spacing scale (dp): every padding and gap in the app comes from here. */
 object ZairenkaiSpacing {
@@ -40,8 +74,8 @@ object ZairenkaiSpacing {
 
 /**
  * Shapes. The Material scale is rounder than the baseline, and there are role shapes so that
- * emphasis follows importance: the system hero is the most distinctive, metrics are compact,
- * and dialogs of destructive actions are squarer than ordinary sheets.
+ * emphasis follows importance: heroes are the roundest, lists are segmented groups, and dialogs of
+ * destructive actions are squarer than ordinary sheets.
  */
 object ZairenkaiShapes {
     val material = Shapes(
@@ -51,11 +85,20 @@ object ZairenkaiShapes {
         large = RoundedCornerShape(28.dp),
         extraLarge = RoundedCornerShape(36.dp),
     )
-    val hero = RoundedCornerShape(topStart = 36.dp, topEnd = 12.dp, bottomEnd = 36.dp, bottomStart = 12.dp)
-    val metric = RoundedCornerShape(20.dp)
+    val hero = RoundedCornerShape(32.dp)
+    val metric = RoundedCornerShape(24.dp)
     val section = RoundedCornerShape(28.dp)
     val pill = RoundedCornerShape(50)
     val destructive = RoundedCornerShape(16.dp)
+
+    /** Segmented groups: large outer corners, small inner ones, 2 dp between rows. */
+    val segmentOuter = 24.dp
+    val segmentInner = 6.dp
+    val segmentGap = 2.dp
+
+    /** Chat bubbles: round, with the corner nearest the speaker tightened. */
+    val bubbleUser = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp, bottomEnd = 6.dp, bottomStart = 22.dp)
+    val bubbleAssistant = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp, bottomEnd = 22.dp, bottomStart = 6.dp)
 }
 
 /** True when the user turned animations off (Settings › Accessibility › Remove animations). */
@@ -94,13 +137,8 @@ private fun systemAnimationsOff(): Boolean {
 @Composable
 fun ZairenkaiTheme(settings: ThemeSettings = ThemeSettings(), content: @Composable () -> Unit) {
     val dark = isDark(settings)
-    val context = LocalContext.current
-    val colors = when {
-        settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        dark -> ZairenkaiColorScheme.dark
-        else -> ZairenkaiColorScheme.light
-    }
+    val colors = colorSchemeFor(settings, dark)
+    val typography = rememberTypography(settings.font)
     CompositionLocalProvider(
         LocalStatusColors provides if (dark) ZairenkaiStatusColors.dark else ZairenkaiStatusColors.light,
         LocalReducedMotion provides systemAnimationsOff(),
@@ -108,7 +146,7 @@ fun ZairenkaiTheme(settings: ThemeSettings = ThemeSettings(), content: @Composab
         MaterialExpressiveTheme(
             colorScheme = colors,
             shapes = ZairenkaiShapes.material,
-            typography = ZairenkaiTypography,
+            typography = typography,
             content = content,
         )
     }

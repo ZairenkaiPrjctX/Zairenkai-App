@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Lint configuration. Kept narrow: each entry names one file and why.
+-->
+<lint>
+    <!-- Base64 certificate data in AOSP's file, copied unchanged (integration/third-party-assets.json). -->
+    <issue id="Typos">
+        <ignore path="src/main/res/values/font_certs.xml" />
+    </issue>
+</lint>

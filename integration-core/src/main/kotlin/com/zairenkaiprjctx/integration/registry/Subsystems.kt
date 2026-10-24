@@ -310,7 +310,6 @@ class UpstreamGapSubsystem(private val inventory: () -> OrganizationInventory?) 
     override val provider = Provider("ZairenkaiPrjctX", null, "organization inventory")
 
     private val planned = listOf(
-        Triple("Zairenkai-Intelligence-Engine", "intelligence.analysis", "Analysis and recommendations"),
         Triple("Zairenkai-License-Server", "license.entitlement", "Licence and entitlement"),
         Triple("Zairenkai-Sdk", "sdk.api", "SDK"),
         Triple("Zairenkai-Graphics-Platform", "graphics.control", "GPU controls"),

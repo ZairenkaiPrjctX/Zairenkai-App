@@ -44,6 +44,9 @@ class SystemModuleViewModel(private val c: AppContainer) : ViewModel() {
                 busyFlow.value = true
                 try {
                     ctl.step()
+                    // The update check compares module releases with what is installed.
+                    val st = ctl.state.value
+                    if (st.decision != null) c.updates.recordInstalledModule(st.installedVersionCode)
                 } finally {
                     busyFlow.value = false
                 }
@@ -65,6 +68,9 @@ class SystemModuleViewModel(private val c: AppContainer) : ViewModel() {
     fun cancel(id: String) = run(id) { cancel() }
     fun uninstall(id: String) = run(id) { uninstall() }
     fun enable(id: String) = run(id) { enable() }
+
+    /** The newest module release, as the last update check read it. */
+    val moduleUpdate get() = c.updates.module
 
     /** The catalog's signature verdict (the release identity shown on the screen). */
     val signature: SignatureVerdict? get() = c.moduleRelease?.signature

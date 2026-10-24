@@ -28,8 +28,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "8931cbb6aa3e70dc0197c2840b61842039b03626",
+      "audited_branch": "dev",
+      "audited_commit": "345fc7f8c9e192c6a5b7d4e4f923f3b2b3cf33fb",
       "code_present": true,
       "languages": [
         "Rust",
@@ -51,7 +51,7 @@
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai/bin/zcored ctl (protocol v1 JSON)",
       "runtime_requirements": "root (Magisk/KernelSU/APatch) and the zairenkai module installed and running; ADR-0005 limits the socket to root clients",
       "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
-      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev. Re-audited 2026-10-21 at 11e9742 (dev): Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21. Re-audited 2026-10-22 at 4cdfe8e (Core PR #3, topic branch): data under /data/adb/zairenkai/core, zfasd found as bin/zfasd of the zairenkai module, module inventory reports zairenkai itself; module/ moved to Zairenkai-Modules, build-android.sh emits a component. Re-audited 2026-10-22 at 8931cbb (Core PR #3): tuning adapter running ztune as a separate process; tuning resources read-only unless ztune authorizes a write."
+      "evidence": "crates/zcored, crates/zcore-domain/src/protocol.rs, module/, docs/adr/0005-root-only-socket.md at the audited commit; dev contains only foundation files (topic branch not merged) Re-audited 2026-10-21 at 34e93e3: adds the read-only ThermalTools adapter (thermaltools.diagnostics, thermaltools.sensors) and Apache-2.0; not merged into dev. Re-audited 2026-10-21 at 11e9742 (dev): Merge commit of Core PR #2 (parents 455368f and 34e93e3; tree identical to 34e93e3), verified 2026-10-21. Re-audited 2026-10-22 at 4cdfe8e (Core PR #3, topic branch): data under /data/adb/zairenkai/core, zfasd found as bin/zfasd of the zairenkai module, module inventory reports zairenkai itself; module/ moved to Zairenkai-Modules, build-android.sh emits a component. Re-audited 2026-10-22 at 8931cbb (Core PR #3): tuning adapter running ztune as a separate process; tuning resources read-only unless ztune authorizes a write. Re-audited 2026-10-23 at 345fc7f (dev, the merge of Core #3): same tree as 8931cbb except AGENT/PROJECT_CONTEXT.md (git diff --stat); the commit Zairenkai-Modules 0.3.0 packages."
     },
     {
       "name": "Zairenkai-FAS",
@@ -63,8 +63,8 @@
         "dev",
         "ccr-63f8aa87-1b0paj"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "99cfb18ba7f04753b3cda5534b8fa844d86db9d5",
+      "audited_branch": "dev",
+      "audited_commit": "1c453db5b2ac6a49b18627408928d30ba51e063f",
       "code_present": true,
       "languages": [
         "Rust",
@@ -83,7 +83,7 @@
       "integration_mechanism": "root bridge: su -c with a fixed argv to /data/adb/modules/zairenkai/bin/zfasd ctl (docs/INTEGRATION.md)",
       "runtime_requirements": "root and the zairenkai module (with bin/zfasd); telemetry needs SurfaceFlinger; never validated on a device (docs/TESTING.md)",
       "license": "Apache-2.0 (LICENSE, NOTICE) on dev",
-      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md. Re-audited 2026-10-21 at be08b2d (dev): Merge commit of FAS PR #3 (parents 3c83f0e and 333365e; tree identical to 333365e), verified 2026-10-21. Re-audited 2026-10-22 at 99cfb18 (FAS PR #4, topic branch): data under /data/adb/zairenkai/fas; module/ and WebUI moved to Zairenkai-Modules, build-android.sh emits a component."
+      "evidence": "dev 3f0daaefa317 = merged PR #1; audited topic commit adds enabled/default_profile to status Re-audited 2026-10-21 at 333365e: the licence commits 9d87236, f6de6ee and 333365e on top of dev 3c83f0e (LICENSE, NOTICE, SPDX headers, LICENSE and NOTICE in the module zip, no code change); not merged into dev. Provenance: docs/integration/fas-provenance.md. Re-audited 2026-10-21 at be08b2d (dev): Merge commit of FAS PR #3 (parents 3c83f0e and 333365e; tree identical to 333365e), verified 2026-10-21. Re-audited 2026-10-22 at 99cfb18 (FAS PR #4, topic branch): data under /data/adb/zairenkai/fas; module/ and WebUI moved to Zairenkai-Modules, build-android.sh emits a component. Re-audited 2026-10-23 at 1c453db (dev, the merge of FAS #4): same tree as 99cfb18 except AGENT/PROJECT_CONTEXT.md and docs/INTEGRATION.md (git diff --stat); the commit Zairenkai-Modules 0.3.0 packages."
     },
     {
       "name": "Zairenkai-ART",
@@ -279,15 +279,20 @@
       "default_branch": "dev",
       "branches": [
         "dev",
-        "ccr-63f8aa87-1b0paj"
+        "ccr-63f8aa87-1b0paj",
+        "ccr-63f8aa87-1b0paj-secure",
+        "ccr-63f8aa87-1b0paj-release",
+        "ccr-63f8aa87-1b0paj-kernelsu"
       ],
-      "audited_branch": "ccr-63f8aa87-1b0paj",
-      "audited_commit": "298311ce44e4c2b3457db4831b92a48e9ee03a1d",
+      "audited_branch": "ccr-63f8aa87-1b0paj-kernelsu",
+      "audited_commit": "9175e1e26a8c55fed23a8febd93ce5f34ab35747",
       "code_present": true,
       "languages": [
         "Shell",
         "Python",
-        "HTML"
+        "HTML",
+        "JavaScript",
+        "CSS"
       ],
       "categories": [
         "root_module"
@@ -300,7 +305,7 @@
       "integration_mechanism": "assets/system-modules/zairenkai.zip, installed with the root manager's own installer after the user confirms; catalog signed by a key in integration/module-trust.json",
       "runtime_requirements": "root manager (Magisk v20.4+, KernelSU/KernelSU-Next, APatch), arm64, API 29+",
       "license": "Apache-2.0 (LICENSE, NOTICE)",
-      "evidence": "Audited 2026-10-22 at ea138ef (Modules PR #1, topic branch, the first code): module/ scripts, components.lock.json (Core 4cdfe8e, FAS 99cfb18), scripts/assemble.py with 11 tests. Re-audited 2026-10-22 at 298311c (Modules PR #1): Tuning added to components.lock.json; assemble.py requires a GPL component's licence and Corresponding Source; CI checks out the public components without a token."
+      "evidence": "Audited 2026-10-22 at ea138ef (Modules PR #1, topic branch, the first code): module/ scripts, components.lock.json (Core 4cdfe8e, FAS 99cfb18), scripts/assemble.py with 11 tests. Re-audited 2026-10-22 at 298311c (Modules PR #1): Tuning added to components.lock.json; assemble.py requires a GPL component's licence and Corresponding Source; CI checks out the public components without a token. Re-audited 2026-10-23 at 2d1f548 (Modules PR #3, topic branch): module 0.3.0 with SHA256SUMS checked by customize.sh and service.sh, module/common.sh guards (root-only data directories, own-process lookup, status line), a WebUI with a Content-Security-Policy that sends changes through Core; 38 tests, CI run 39960595283 green. Re-audited 2026-10-23 at 9175e1e (Modules PR #5 to dev, which also carries PRs #3 and #4: they were merged into their stacked base branches, not dev): module 0.3.1, the Release workflow (drafts only) and updateJson, and customize.sh checking for the binaries instead of their exec bit (a KernelSU-Next install of 0.3.0 failed on it); 45 tests."
     },
     {
       "name": "Zairenkai-Intelligence-Engine",
@@ -309,25 +314,29 @@
       "visibility": "public",
       "default_branch": "dev",
       "branches": [
-        "dev"
+        "dev",
+        "ccr-63f8aa87-1b0paj-android"
       ],
-      "audited_branch": "dev",
-      "audited_commit": "cc3d48cf4e343791ecd37e8835c6ecfe42f1cc4c",
+      "audited_branch": "ccr-63f8aa87-1b0paj-android",
+      "audited_commit": "af31fd730a42263dfc74c1a7e4573f2d51573709",
       "code_present": true,
       "languages": [
         "Python",
+        "C++",
         "Shell"
       ],
       "categories": [
-        "local_ai_spike"
+        "local_ai"
       ],
-      "disposition": "not_applicable: host-only Local AI Phase A spike (llama.cpp on a Linux host, closed typed tool registry, system actions stop at a preview awaiting approval); nothing runs on Android, so there is nothing for the app to call. Privileged actions stay with Core",
-      "integration_status": "not_applicable",
-      "app_capabilities": [],
-      "integration_mechanism": null,
-      "runtime_requirements": null,
+      "disposition": "integrated: zie-run (llama.cpp core, grammar-constrained to the closed tool registry) packaged as a native executable; the app runs read-only tools and sends system tools to Core as dry runs the user approves",
+      "integration_status": "implemented",
+      "app_capabilities": [
+        "intelligence.analysis (ask, import_model, delete_model)"
+      ],
+      "integration_mechanism": "lib/<abi>/libzierun.so run as the app's uid with a fixed argv; assets/intelligence/{tools.json,output.gbnf,model.json}; the model file is imported by the user and checked against the manifest's SHA-256",
+      "runtime_requirements": "arm64-v8a or x86_64, API 29+, the manifest's min_memory_bytes (1 GiB), the imported model file",
       "license": "Apache-2.0 (LICENSE, NOTICE); maintainer confirmation pending",
-      "evidence": "Re-audited 2026-10-23: dev @ cc3d48cf4e34 (merge of IE PR #1) contains zie/, registry/tools.json, models/ (manifest only, no weights), eval/, tests/ and docs/adr/0001-local-runtime-spike.md (git ls-tree); docs/SPIKE_REPORT.md: no Android build. Earlier: dev @ 0191e36365b8 held only agent foundation files (2026-10-21)."
+      "evidence": "Re-audited 2026-10-23 at af31fd7 (IE PR #3, topic branch): runtime/zie_run.cpp and runtime/CMakeLists.txt (llama.cpp b11500 core libraries only), zie/grammar.py and registry/output.gbnf, scripts/build-android.sh (arm64-v8a and x86_64, refuses networking imports, NEEDED only libc/libm/libdl/liblog), docs/adr/0002-on-device-runner.md; 21 tests (20 passed, 1 skipped). Re-audited 2026-10-23: dev @ cc3d48cf4e34 (merge of IE PR #1) contains zie/, registry/tools.json, models/ (manifest only, no weights), eval/, tests/ and docs/adr/0001-local-runtime-spike.md (git ls-tree); docs/SPIKE_REPORT.md: no Android build. Earlier: dev @ 0191e36365b8 held only agent foundation files (2026-10-21)."
     },
     {
       "name": "Zairenkai-License-Server",

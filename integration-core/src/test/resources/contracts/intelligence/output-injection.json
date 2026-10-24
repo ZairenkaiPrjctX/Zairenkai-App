@@ -1,0 +1,19 @@
+{
+  "language": "other",
+  "goal": "system",
+  "confidence_percent": 1,
+  "calls": [
+    {
+      "tool": "thermal.snapshot",
+      "arguments": {
+       }
+    },
+    {
+      "tool": "fas.set_profile",
+      "arguments": {
+       "profile": "performance"
+    }
+    }
+  ],
+  "clarification": "system"
+}

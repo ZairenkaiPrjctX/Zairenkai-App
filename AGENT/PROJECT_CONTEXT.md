@@ -12,7 +12,7 @@
 | Visibility | public | Verified. Evidence: `list_repos`, 2026-10-22 (earlier entries said private) |
 | Default branch | `dev` | Verified. Evidence: `git ls-remote`, 2026-10-19 |
 | Purpose | Unified Android app for the Zairenkai components | Verified. Evidence: `app/`, `integration-core/`, `docs/architecture/overview.md` |
-| Application id | `com.zairenkaiprjctx.app`, version 0.1.0 (1), minSdk 29, targetSdk 35 | Verified. Evidence: `aapt2 dump badging`, 2026-10-19 |
+| Application id | `com.zairenkaiprjctx.app`, minSdk 29, targetSdk 35; version 0.2.0-beta.1 (20001) since 2026-10-23 (0.1.0 (1) before), versionCode derived from the version (`docs/build/releases.md`) | Verified. Evidence: `aapt2 dump badging`, 2026-10-19; `UpdateUiTest`, 2026-10-23 |
 | Licence | Apache-2.0 (`LICENSE`, `NOTICE`, SPDX headers); bundled font OFL-1.1, device data CC BY-SA 3.0 | Verified. Evidence: maintainer decision 2026-10-21; repository tree; `docs/integration/license-inventory.md` |
 
 ## Contents
@@ -20,8 +20,8 @@
 | Area | Location | Status |
 |---|---|---|
 | Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
-| JVM integration layer (Kotlin + Java), incl. root-manager adapters and the module installer | `integration-core/` | Verified. Evidence: 99 tests, 2026-10-23 |
-| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 29 Robolectric tests, 2026-10-23. **Unverified** on a device |
+| JVM integration layer (Kotlin + Java), incl. root-manager adapters, the module installer and the update client | `integration-core/` | Verified. Evidence: 107 tests, 2026-10-23 |
+| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 51 Robolectric tests (+14 screenshot renders), 2026-10-23. **Unverified** on a device |
 | Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
 | CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration failed there at "Require the CI GitHub App"; since 2026-10-22 it fetches the public locked repositories without a token (`docs/build/ci.md`). **Unverified** on GitHub: no run of that version yet |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
@@ -63,15 +63,46 @@
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
-- Every locked commit is in its repository's `dev`: Core `8931cbb`, FAS `99cfb18` and Modules
-  `298311c` since the merges of Core #3, FAS #4 and Modules #1 (`"merged": true`); ART,
-  ThermalTools and Database-Source on `dev` merge commits. Zairenkai-Tuning has no `dev`; it is
-  pinned through Modules' `components.lock.json` (`0c226b2`). Verified. Evidence: `git merge-base
-  --is-ancestor <pin> origin/dev` in each repository, `verify_integration.py lock`, 2026-10-23.
+- Every locked commit but one is in its repository's `dev`: Core `345fc7f` and FAS `1c453db` (the
+  merge commits of Core #3 and FAS #4); ART, ThermalTools and Database-Source on `dev` merge
+  commits. Modules is pinned at `9175e1e` on its PR #5 branch (`"merged": false`) until that PR
+  merges. Zairenkai-Tuning has no `dev`; it is pinned through Modules' `components.lock.json`
+  (`0c226b2`). Verified. Evidence: `verify_integration.py lock`, 2026-10-23.
 - The full-integration CI job passed for the first time on `d0db6b7` (run 39827139485: every
   component built at its locked commit, contracts re-captured, tests, lint, APKs with native
   components required, integration report), fetching the public sources without a token.
   Verified. Evidence: CI run 39827139485, 2026-10-22.
+- The UI was redesigned on 2026-10-23 (Material 3 Expressive wavy indicators, segmented groups,
+  five destinations with an AI tab; `docs/design/design-system.md`). Verified. Evidence:
+  `RedesignTest`, screenshot gallery, 2026-10-23. **Unverified** on a device.
+- Local AI (2026-10-23, `docs/integration/local-ai.md`): Intelligence-Engine's `zie-run`
+  (`af31fd7`, llama.cpp b11500) is packaged as `libzierun.so` for arm64-v8a and x86_64 with the
+  tool registry, grammar and model manifest. The model file is not packaged and never downloaded
+  by the app: the user imports it and it is kept only if size and SHA-256 match. Read-only tools
+  run; `fas.set_profile` becomes a Core dry run the user approves. Verified on the host. Evidence:
+  `AiTest` (prompt identical to the engine's; parser on the real model's captured answers; the
+  real runner and model through the Kotlin agent, 8 s), `AiUiTest`, both APK binaries without
+  networking imports (`llvm-nm`), 2026-10-23. **Unverified** on a device (speed, memory, SELinux).
+- Settings › Appearance (palettes, custom themes, AMOLED, wallpaper, launcher icon variants,
+  background animation, app font, UI scale, experimental glass bar) was added on 2026-10-23,
+  modelled on mpvRx's behaviour (AGPL-3.0, no code copied). New dependencies: Haze 1.6.10 and
+  `ui-text-google-fonts` (both Apache-2.0); Google Fonts come through Play services' font
+  provider, never the app's own network access. Verified. Evidence: `AppearanceTest`, `aapt2 dump
+  permissions`, generated NOTICES, 2026-10-23. **Unverified** on a device (blur, icon switching
+  on real launchers, font download).
+
+- In-app updates (2026-10-23): Settings › Updates checks GitHub Releases of this repository
+  (Release or Beta channel, daily via JobScheduler or on request), notifies once per version,
+  downloads only on request, and installs through Android's installer after the SHA-256 file,
+  package, exact version, newer versionCode and same signing certificate check out. This added
+  the app's first permissions: INTERNET, ACCESS_NETWORK_STATE, RECEIVE_BOOT_COMPLETED,
+  POST_NOTIFICATIONS, REQUEST_INSTALL_PACKAGES. `release.yml` can create a draft release; the
+  maintainer publishes it. Verified on the JVM. Evidence: `UpdateTest` (integration-core),
+  `UpdateUiTest`, `test_app_release.py`, 2026-10-23. **Unverified**: no release exists yet (the
+  releases API returned `[]`), and nothing ran on a device.
+- Settings › About (version, commit, signing certificate, components, privacy, licences) and a
+  redesigned System Module screen (installation journey, programs with digests, security) were
+  added on 2026-10-23. Verified. Evidence: `UpdateUiTest`, screenshot gallery, 2026-10-23.
 
 ## Authoritative sources
 
@@ -87,19 +118,22 @@
 
 - Zairenkai-ART (`0d8cd72`), Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source
   (`d9c4290`), on `dev`, are integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
-- Zairenkai-Modules (`298311c`) is integrated as the module source; Core (`8931cbb`) and FAS
-  (`99cfb18`) are pinned with it. All three commits are in `dev` (`"merged": true`). Verified.
-  Evidence: `integration/repository-lock.json`, `git merge-base --is-ancestor`, 2026-10-23.
+- Zairenkai-Modules is pinned at `9175e1e` (PR #5, module 0.3.1, not merged yet: `"merged": false`;
+  re-pin to the merge commit). Core (`345fc7f`) and FAS (`1c453db`), the `dev` merge commits of
+  Core #3 and FAS #4, are pinned with it. Verified. Evidence: `integration/repository-lock.json`,
+  `verify_integration.py lock`, `build-components.sh`, 2026-10-23.
 - Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) ships in
   the module the app packages, with its source, and is run only by Core. The app reads ztune's
   telemetry through Core's `tuning` method (`core/Tuning.kt`, record `tuning.telemetry`, read
   only) and shows Core's `tuning.*` capabilities generically. Verified on the host. Evidence:
   `TuningContractTest` on fixtures from Core's adapter running the real ztune and from the live
   daemon, 2026-10-23. **Unverified** on a device.
-- The other 8 Zairenkai repositories have no runtime capability for the app. Zairenkai-Sdk
-  (contracts only, `ed44c90`) and Zairenkai-Intelligence-Engine (host-only Local AI spike,
-  `cc3d48c`) now have code; the registry reports them `NO_UPSTREAM_IMPLEMENTATION` with that
-  reason. anime-extensions is a separate product and is excluded from the ecosystem audit
+- Zairenkai-Intelligence-Engine is integrated at `af31fd7` (IE PR #3, topic branch,
+  `"merged": false`; re-pin to the merge commit). Verified. Evidence: `verify_integration.py lock`
+  and `build`, 2026-10-23.
+- The other 7 Zairenkai repositories have no runtime capability for the app. Zairenkai-Sdk
+  (contracts only, `ed44c90`) has code; the registry reports it `NO_UPSTREAM_IMPLEMENTATION` with
+  that reason. anime-extensions is a separate product and is excluded from the ecosystem audit
   (maintainer, 2026-10-22). Verified. Evidence: `integration/repository-audit.md` (re-audit
   2026-10-21), `integration/organization-repositories.json` (re-audit 2026-10-23), `RegistryTest`.
 

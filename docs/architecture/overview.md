@@ -8,7 +8,7 @@ reaches each one through the interface that component actually exposes. Reposito
 
 | Gradle module | Languages | Responsibility |
 |---|---|---|
-| `:integration-core` | Kotlin + Java | Pure JVM, no Android dependency. Integration facade and capability registry; typed clients for Core, FAS, zart, zthermal and AFID; root-manager adapters and the module installer (`systemmodule/`); the root shell; models and parsers. Unit-tested on the JVM. |
+| `:integration-core` | Kotlin + Java | Pure JVM, no Android dependency. Integration facade and capability registry; typed clients for Core, FAS, zart, zthermal and AFID; the Local AI agent (`ai/`); root-manager adapters and the module installer (`systemmodule/`); the root shell; models and parsers. Unit-tested on the JVM. |
 | `:app` | Kotlin + Java | Android application. Compose UI and the design system (Kotlin). Android platform adapters (Java). Dependency container, packaged components and assets. |
 
 **Why only two modules.** No other repository provides Android or JVM source to include. Each
@@ -23,11 +23,11 @@ Presentation (Kotlin, Compose)        app/.../ui/*Screen.kt, MainActivity.kt
 State (Kotlin, coroutines + Flow)     app/.../ui/ViewModels.kt
 Android platform adapters (Java)      app/src/main/java/.../platform/AndroidPlatformInfo, ThermalStatusMonitor
 Integration facade (Kotlin)           integration-core/.../registry/ (IntegrationRegistry, subsystems)
-Typed clients (Kotlin)                integration-core/.../core, fas, zart, thermaltools, afid
+Typed clients (Kotlin)                integration-core/.../core, fas, zart, thermaltools, afid, ai
 Process execution (Java)              integration-core/src/main/java/.../exec/ProcessCommandRunner
 Root bridge (Kotlin)                  integration-core/.../exec/RootShell
 ──────────────── process boundary ────────────────
-zart, zthermal (Rust, packaged)  ·  zcored / zfasd (installed modules, via su)  ·  AFID asset (packaged JSON)
+zart, zthermal (Rust), zie-run (C++, llama.cpp) packaged  ·  zcored / zfasd (installed modules, via su)  ·  AFID asset (packaged JSON)
 ```
 
 The UI never builds commands. It calls a client method such as `CoreClient.submit(op, dryRun)`,
@@ -75,7 +75,7 @@ The UI renders availability only from this snapshot.
 | `NO_UPSTREAM_IMPLEMENTATION` | The owning repository has no code (with its audited commit), or no validated implementation of that feature (thermal controls) |
 
 `NETWORK_UNAVAILABLE` and `LICENSE_REQUIRED` exist in the model but nothing produces them: the
-app has no network access, and no licence server exists. `PERMISSION_REQUIRED` means an OS
+app uses the network only for its own updates (`docs/build/releases.md`), and no licence server exists. `PERMISSION_REQUIRED` means an OS
 access denial, not a runtime permission the app could request.
 
 The ecosystem prompt's state names map onto these:
@@ -100,6 +100,7 @@ The ecosystem prompt's state names map onto these:
 | Performance | FAS status, Core health; profile, enable/disable and battery-saver actions with Core's dry-run preview |
 | Thermal | Android thermal service (listener plus headroom), zthermal sensors (read only), Core telemetry, FAS thermal cap |
 | Runtime | ART APEX version, zart inspection, dexopt status |
+| AI | On-device model (zie-run) over the closed tool registry: read-only tools, FAS profile changes through Core's dry run and the user's approval; model import (`docs/integration/local-ai.md`) |
 | System | Root access, module inventory, device search, ecosystem, diagnostics, licences |
 | Settings (from the app bar) | Theme, dynamic colour, motion, language, the Zairenkai System Module entry |
 | Zairenkai System Module (from Home, System or Settings) | Root-manager detection, preflight, verified install, state after reboot, removal (`docs/integration/system-module.md`) |

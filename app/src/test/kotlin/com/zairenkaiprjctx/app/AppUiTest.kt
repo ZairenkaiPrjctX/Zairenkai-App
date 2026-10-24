@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -63,15 +64,25 @@ class AppUiTest {
     @Test
     fun navigationReachesEveryDestinationAndSettings() {
         launch()
-        compose.onNodeWithText("Runtime").performClick()
+        for (tab in listOf("performance", "thermal", "ai", "system", "home")) {
+            compose.onNodeWithTag("nav-$tab").performClick()
+            compose.waitForIdle()
+        }
+        compose.onNodeWithText("This device").assertIsDisplayed()
+        // Runtime (ART) is a page of System.
+        compose.onNodeWithTag("nav-system").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Runtime"))
+        // The row can sit under the bottom bar on this 470 dp screen: invoke its click action.
+        compose.onNodeWithText("Runtime").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         compose.onNodeWithText("ART module").assertIsDisplayed()
-        compose.onNodeWithText("System").performClick()
+        compose.onNodeWithContentDescription("Back").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Root access").assertIsDisplayed()
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Appearance").assertIsDisplayed()
+        compose.onNodeWithText("Search settings…").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Root access").assertIsDisplayed()
@@ -80,7 +91,7 @@ class AppUiTest {
     @Test
     fun thermalScreenSaysWhyZthermalCannotRunAndOffersNoControl() {
         launch()
-        compose.onNodeWithText("Thermal").performClick()
+        compose.onNodeWithTag("nav-thermal").performClick()
         compose.waitForIdle()
         val snap = container.registry.snapshot.value
         // The Robolectric APK has no packaged zthermal: the state says so instead of showing data.
@@ -118,7 +129,13 @@ class AppUiTest {
         launch()
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Dark").performClick() // a real touch, not a semantics shortcut
+        // The theme choice is on Settings › Appearance.
+        compose.onNodeWithText("Theme, palette, wallpaper, app icon, font and size").performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        // It is a connected button group: its end segments have path outlines that LEGACY graphics
+        // cannot hit-test, so this invokes the click action; ConnectedChoiceTouchTest covers real
+        // touches with NATIVE graphics.
+        compose.onNodeWithText("Dark").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(com.zairenkaiprjctx.app.design.ThemeMode.DARK, container.theme.settings.value.mode)
         val prefs = ApplicationProvider.getApplicationContext<ZairenkaiApplication>().getSharedPreferences("zairenkai", 0)
@@ -130,7 +147,7 @@ class AppUiTest {
     fun wideScreensUseTheNavigationRail() {
         launch()
         // Same destinations, now in the rail instead of the bottom bar.
-        compose.onNodeWithText("Thermal").performClick()
+        compose.onNodeWithTag("nav-thermal").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Android thermal service").assertIsDisplayed()
     }

@@ -54,6 +54,7 @@
       "validated_on": [],
       "risks": [
         "zcored and zfasd start at boot from service.sh; each restarts at most 5 times in 10 minutes.",
+        "service.sh first checks the module's binaries, scripts and WebUI against SHA256SUMS; when a file changed after install it starts nothing, writes /data/adb/zairenkai/integrity.log and shows \"Blocked\" in the root manager until the module is reinstalled.",
         "While running, zfasd raises cpufreq scaling_min_freq floors within [cpuinfo_min, scaling_max] and restores them when it stops (FAS docs/CAPABILITIES.md); service.sh runs zfasd restore after every exit.",
         "Vendor performance agents may write the same cpufreq nodes; FAS backs off on contention but does not disable them.",
         "Removing the module restores what zfasd changed, stops zcored (which restores any temporary override it made) and deletes /data/adb/zairenkai.",
@@ -63,38 +64,42 @@
         "destinations": {
           "staged": "/data/adb/modules_update/zairenkai (by the root manager)",
           "active": "/data/adb/modules/zairenkai (after reboot)",
-          "data": "/data/adb/zairenkai/core, /data/adb/zairenkai/fas and /data/adb/zairenkai/tuning (customize.sh creates them 0700; config.toml in core and fas is kept across installs)"
+          "data": "/data/adb/zairenkai/core, /data/adb/zairenkai/fas and /data/adb/zairenkai/tuning (customize.sh creates them root-owned, 0700, and refuses a symlink in their place; config.toml in core and fas is kept across installs)"
         },
-        "startup": "service.sh waits for sys.boot_completed, then supervises bin/zcored run --dir /data/adb/zairenkai/core and bin/zfasd run --dir /data/adb/zairenkai/fas, each with exponential backoff and at most 5 starts in 10 minutes, then writes <data>/failed; after every zfasd exit it runs zfasd restore",
+        "startup": "service.sh checks the module's files against SHA256SUMS (nothing starts if one changed), waits for sys.boot_completed, then supervises bin/zcored run --dir /data/adb/zairenkai/core and bin/zfasd run --dir /data/adb/zairenkai/fas, each with exponential backoff and at most 5 starts in 10 minutes, then writes <data>/failed; after every zfasd exit it runs zfasd restore; the module description shows the live state",
         "shutdown": "the supervisors stop when the manager's disable or remove marker exists; zcored restores temporary overrides on SIGTERM; zfasd restores every floor it raised",
-        "uninstall": "uninstall.sh runs ztune restore (I/O scheduler, GPU governor changed this boot), stops zfasd and runs zfasd restore, stops zcored (waits up to 30 s), then deletes /data/adb/zairenkai; if the FAS restore fails it keeps /data/adb/zairenkai/fas and logs to /cache",
-        "recovery": "disable or remove the module in the root manager (or its safe mode); <data>/failed and the daemon logs record start failures; zfasd restore restores recorded floors",
+        "uninstall": "uninstall.sh runs ztune restore (I/O scheduler, GPU governor changed this boot), stops this module's zfasd (matched by /proc/<pid>/exe) and runs zfasd restore, stops zcored (waits up to 30 s), then deletes /data/adb/zairenkai (a symlink there is removed, never followed); if the FAS restore fails it keeps /data/adb/zairenkai/fas and logs to /data/adb/zairenkai-uninstall.log",
+        "recovery": "disable or remove the module in the root manager (or its safe mode); <data>/failed, integrity.log and the daemon logs record why something did not start; verify.sh lists changed files; zfasd restore restores recorded floors",
         "kernel": "Android 10+ arm64 (customize.sh checks ARCH and API); cpufreq policy directories for FAS (required_paths)",
-        "action": "action.sh prints zcored ctl health, zfasd ctl status and ztune capabilities (read-only); KernelSU's WebUI serves webroot/ (FAS)"
+        "action": "action.sh prints the file check, zcored ctl health, zfasd ctl status and ztune capabilities (read-only); KernelSU's and APatch's WebUI serves webroot/ (status, and FAS changes through Core)"
       },
       "distribution": "distributable",
       "distribution_reason": "Aggregate. Zairenkai-Modules, Core and FAS are Apache-2.0: LICENSE and NOTICE of Zairenkai-Modules, plus each component's LICENSE, NOTICE and THIRD_PARTY.md under licenses/<component>/ in the zip. ztune is GPL-3.0-only (Zairenkai-Tuning 0c226b2): its licence is under licenses/zairenkai-tuning/ and its Corresponding Source under source/zairenkai-tuning/, and assemble.py refuses the zip without them. ztune is a separate program; no GPL code is linked into zcored, zfasd or the app. FAS is distributed in this module by the maintainer's decision of 2026-10-22 (docs/integration/fas-provenance.md); its hardware validation is still pending.",
       "file": "system-modules/zairenkai.zip",
-      "version": "v0.2.0",
-      "version_code": 200,
-      "size": 4399697,
-      "sha256": "f4ad8d649071c6a168e846803662c5cd7976b174ee8dccb44da765693478400d",
+      "version": "v0.3.1",
+      "version_code": 301,
+      "size": 4417423,
+      "sha256": "d228a45c331deeb359357d2338659fcba8e1bc91b91cd0f816d94097e8b76492",
       "source": {
         "repository": "ZairenkaiPrjctX/Zairenkai-Modules",
-        "commit": "298311ce44e4c2b3457db4831b92a48e9ee03a1d"
+        "commit": "9175e1e26a8c55fed23a8febd93ce5f34ab35747"
       },
       "entries": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "META-INF/com/google/android/update-binary": "a3cd18357728f186eb4950a822b2d8cd175c846064daa65d40755c29ed56ffcd",
         "META-INF/com/google/android/updater-script": "d2b8203193a083e43ad076fde01b9c7821e0aa521e1f8077b8628fb1cdb70c60",
         "NOTICE": "aaa2182bb52729c2ec7230714919c12357e06d6a893158fd4efa8eda9f3168a0",
-        "action.sh": "a06a9022abe339fe78fda6794aa2d8fea06401dffc28bb2e9bf354bb2a27a407",
+        "SHA256SUMS": "84ae540868d09f388391a4af3f62cf4ad3cbea56215a5b2302bfedf5f7591329",
+        "action.sh": "19883bf8b0e4f787b8925a0d004d48402bbd428f468b9e928f47222361226f79",
         "bin/zcored": "a0b2747e914207445914772dca28e3de4fbfce5d4a7a0e8d2e496699648c58ca",
         "bin/zfasd": "2475c22e0dcd505fa14ecd38be7eebd576457936290aceb45167d323194429ac",
         "bin/ztune": "91af22c5bf713ec9e10dfc37c3393a7f460c1996464b906ccd1458d55fc84f87",
-        "components.json": "edda480f5c12ff5489af82ad83d6c8aee8165243fca5c7667fe5c2195cce1926",
-        "customize.sh": "c5d0b674463ad11f70682e2609be477b8dae98506225661958742e6e21f26e51",
+        "common.sh": "0adbe42abe0065f7119205a94422dc369b1b53be5bc54ba6e77362cf1c38ded9",
+        "components.json": "912175cfb93d3ea2c4179df1f9ba1f430f7af707f0d374b72c39a200ee5b3d16",
+        "customize.sh": "5855ec6839d2334f71363df336a85e2ad6c516e9c0ac6574c27a15da5799c52e",
         "defaults/fas-config.toml": "258ad87eb2c37c157f4035ff804e3da23a908d9d8fa4ecd83ed4f8b048b7d39e",
+        "docs/CHANGELOG.md": "58fd0e87a390b2e454d35ff589e1e4f5c489880bdc39d1cc839b9698b99daa9c",
+        "docs/README.md": "c70d5b65219ef491b44ffdd6546e48816a065a8a5119e7a4eb9668890ee1da67",
         "licenses/zairenkai-core/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "licenses/zairenkai-core/NOTICE": "217d7ee16694298d4936ff8e668d1fc8e67bf3e33a88f0a74d3d584c3efe5f70",
         "licenses/zairenkai-core/THIRD_PARTY.md": "46d892d7376771cd62a1c791204c67c9604282c7dd74fa562ada14fad82d6137",
@@ -105,21 +110,30 @@
         "licenses/zairenkai-tuning/NOTICE": "ebf8f479ec0bd600c2dec91149201d27d48ab8f7ede17f349f20da002300665b",
         "licenses/zairenkai-tuning/SOURCE.md": "2b0bb74c3fa382cecf257bde8169289159b629595565bc881ade78c5ef08eff7",
         "licenses/zairenkai-tuning/THIRD_PARTY.md": "00e7bb78656e235d320d9fdcccd4d420fc82e2ce1fe061d4217c3bf2f78b91fb",
-        "module.prop": "0f498473c51c2d466617073b060a04909bab22544b5fa87524473788b7d138ba",
-        "service.sh": "ac0ecff777d7e4b14a37173e1c4fbb79b6665148869bc5068a0e0da37bf554ac",
+        "module.prop": "d2643a8224bd8608d61c2a6c3c599a2daca1a5f3d1eeeedc3734078bf29abe00",
+        "service.sh": "f9f499e148691eb7edc0a8c7cccaf9c67a900179fdef5472c7d3305b95156806",
         "source/zairenkai-tuning/zairenkai-tuning-0c226b27771c0e0274feb6435b36c8d90487a814-src.tar.gz": "dce07d4e62acb9d9780fb66e9974892dd5576eeba1cb4d92e4ac9fb89df84248",
-        "uninstall.sh": "e16dab8a68524a2b14ea7d87a729fd8b414b42c87f897270558089e902eeb482",
-        "webroot/index.html": "b878ee3ef98f5d28ceb56f70410ca5ce0906ab41c7eb8da91e7fa024819745bc"
+        "uninstall.sh": "7925b1a97421f467c68bf77a7f6f55295f5e1b50a8e8eee1e97a88645f03b3dd",
+        "verify.sh": "8add46f6607873c14baaff6945abddaa352681d9221fca08d758203f264fc2a7",
+        "webroot/app.js": "a526ace88768a5939bb7be57023ade049e84b75504268d402d047764e449a460",
+        "webroot/index.html": "103ec19d292919a86cea61bd76874564dd37b2bb7f13950bde84eeab572d34f6",
+        "webroot/logo.svg": "ae3aaa533583e6f81441326aebb589a7993863947a3997cb7fcb9505eea92b10",
+        "webroot/style.css": "8c8a1bddbd9937f5a1612ceb97ac1e01bec4ec1c5ff6d9a52e4b7df546738c44"
       },
       "source_matched": [
         "META-INF/com/google/android/update-binary",
         "META-INF/com/google/android/updater-script",
         "action.sh",
+        "common.sh",
         "customize.sh",
         "defaults/fas-config.toml",
         "service.sh",
         "uninstall.sh",
-        "webroot/index.html"
+        "verify.sh",
+        "webroot/app.js",
+        "webroot/index.html",
+        "webroot/logo.svg",
+        "webroot/style.css"
       ]
     }
   ]

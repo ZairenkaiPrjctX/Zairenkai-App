@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -35,79 +37,164 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zairenkaiprjctx.app.AppLanguage
 import com.zairenkaiprjctx.app.R
 import com.zairenkaiprjctx.app.design.LocalReducedMotion
-import com.zairenkaiprjctx.app.design.SectionCard
-import com.zairenkaiprjctx.app.design.Supporting
+import com.zairenkaiprjctx.app.design.ConnectedChoice
+import com.zairenkaiprjctx.app.design.GroupContent
+import com.zairenkaiprjctx.app.design.GroupRow
+import com.zairenkaiprjctx.app.design.SegmentedGroup
+import com.zairenkaiprjctx.app.design.Detail
 import com.zairenkaiprjctx.app.design.ThemeMode
+import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
+import com.zairenkaiprjctx.app.design.ZairenkaiShapes
+import com.zairenkaiprjctx.app.design.InfoChip
+import com.zairenkaiprjctx.app.Overlay
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+/** One searchable setting: where it lives and the words it is found by. */
+private data class SettingEntry(@androidx.annotation.StringRes val title: Int, @androidx.annotation.StringRes val place: Int, val target: Overlay, val keywords: String)
+
+private val SETTING_ENTRIES = listOf(
+    SettingEntry(R.string.settings_theme, R.string.appearance_title, Overlay.APPEARANCE, "theme dark light system mode tema gelap terang"),
+    SettingEntry(R.string.app_theme, R.string.appearance_title, Overlay.APPEARANCE, "palette colour color dynamic material you warna"),
+    SettingEntry(R.string.theme_new, R.string.appearance_title, Overlay.THEME_EDITOR, "custom theme colour wheel picker kustom"),
+    SettingEntry(R.string.amoled_title, R.string.appearance_title, Overlay.APPEARANCE, "amoled black oled hitam"),
+    SettingEntry(R.string.wallpaper_title, R.string.appearance_title, Overlay.WALLPAPER, "wallpaper background photo image latar foto"),
+    SettingEntry(R.string.icon_title, R.string.appearance_title, Overlay.APP_ICON, "icon launcher ikon"),
+    SettingEntry(R.string.anim_title, R.string.appearance_title, Overlay.APPEARANCE, "animation rings waves orbs animasi"),
+    SettingEntry(R.string.font_title, R.string.appearance_title, Overlay.FONTS, "font typeface google fonts huruf"),
+    SettingEntry(R.string.ui_scale_title, R.string.appearance_title, Overlay.APPEARANCE, "scale size density zoom skala ukuran"),
+    SettingEntry(R.string.glass_title, R.string.nav_settings, Overlay.GLASS, "glass blur frost liquid kaca"),
+    SettingEntry(R.string.settings_language, R.string.nav_settings, Overlay.SETTINGS, "language english indonesia bahasa"),
+    SettingEntry(R.string.module_title, R.string.nav_settings, Overlay.SYSTEM_MODULE, "module root magisk kernelsu apatch modul"),
+    SettingEntry(R.string.update_title, R.string.nav_settings, Overlay.UPDATES, "update upgrade release beta version download install pembaruan perbarui rilis versi unduh pasang"),
+    SettingEntry(R.string.about_title, R.string.nav_settings, Overlay.ABOUT, "about version build licence license changelog tentang versi lisensi perubahan"),
+)
+
 @Composable
-fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, padding: PaddingValues, openModule: () -> Unit) {
+fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, padding: PaddingValues, openModule: () -> Unit, open: (Overlay) -> Unit) {
     val declined by modules.declined.collectAsStateWithLifecycle()
     val theme by vm.theme.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val dynamicSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+    val resources = androidx.compose.ui.platform.LocalResources.current
+    var query by rememberSaveable { mutableStateOf("") }
+    LazyColumn(contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
         item {
-            SectionCard(stringResource(R.string.settings_appearance)) {
-                Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.labelLarge)
-                val modes = listOf(ThemeMode.SYSTEM to R.string.theme_system, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark)
-                // Expressive toggle buttons as a single-choice group: the chosen one morphs shape.
-                Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                    modes.forEach { (mode, label) ->
-                        ToggleButton(
-                            checked = theme.mode == mode,
-                            onCheckedChange = { vm.setMode(mode) },
-                            modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
-                        ) { Text(stringResource(label), maxLines = 1) }
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.l)) {
+                com.zairenkaiprjctx.app.design.ZairenkaiLogo(56.dp, label = stringResource(R.string.brand_logo))
+                Column {
+                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(R.string.brand_tagline), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        item {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                placeholder = { Text(stringResource(R.string.settings_search)) },
+                leadingIcon = { androidx.compose.material3.Icon(Icons.Filled.Search, contentDescription = null) },
+                singleLine = true,
+                shape = ZairenkaiShapes.pill,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (query.isNotBlank()) {
+            val q = query.trim()
+            val hits = SETTING_ENTRIES.filter { e -> resources.getString(e.title).contains(q, true) || e.keywords.contains(q, true) }
+            item {
+                SegmentedGroup(title = stringResource(R.string.settings_results), icon = Icons.Filled.Search) {
+                    if (hits.isEmpty()) row { GroupContent { Detail(stringResource(R.string.settings_no_results)) } }
+                    hits.forEach { e ->
+                        row { GroupRow(stringResource(e.title), supporting = stringResource(e.place), onClick = { query = ""; open(e.target) }, chevron = true) }
                     }
                 }
-                val dynamicLabel = stringResource(R.string.settings_dynamic)
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(dynamicLabel, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                    Switch(
-                        checked = theme.dynamicColor && dynamicSupported,
-                        onCheckedChange = vm::setDynamic,
-                        enabled = dynamicSupported,
-                        modifier = Modifier.semantics { contentDescription = dynamicLabel },
+            }
+            return@LazyColumn
+        }
+        item {
+            SegmentedGroup(title = stringResource(R.string.settings_appearance), icon = ZairenkaiGlyphs.sliders) {
+                row {
+                    GroupRow(
+                        stringResource(R.string.appearance_title),
+                        supporting = stringResource(R.string.appearance_row),
+                        icon = ZairenkaiGlyphs.spark,
+                        onClick = { open(Overlay.APPEARANCE) },
+                        chevron = true,
                     )
                 }
-                Supporting(stringResource(if (dynamicSupported) R.string.settings_dynamic_on else R.string.settings_dynamic_unsupported))
-            }
-        }
-        item {
-            SectionCard(stringResource(R.string.module_title)) {
-                Supporting(stringResource(if (declined) R.string.module_settings_declined else R.string.module_settings_note))
-                Row(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                    OutlinedButton(onClick = openModule) { Text(stringResource(R.string.module_settings_open)) }
-                    if (declined) OutlinedButton(onClick = modules::reconsider) { Text(stringResource(R.string.module_settings_reoffer)) }
+                row {
+                    GroupRow(
+                        stringResource(R.string.glass_title),
+                        supporting = stringResource(if (theme.glass.enabled) R.string.glass_row_on else R.string.glass_row_off),
+                        icon = ZairenkaiGlyphs.tiles,
+                        onClick = { open(Overlay.GLASS) },
+                        chevron = true,
+                        action = { InfoChip(stringResource(R.string.experimental), color = MaterialTheme.colorScheme.tertiaryContainer) },
+                    )
                 }
+                row { GroupRow(stringResource(R.string.settings_motion), supporting = stringResource(if (LocalReducedMotion.current) R.string.settings_motion_reduced else R.string.settings_motion_full)) }
             }
         }
         item {
-            SectionCard(stringResource(R.string.settings_motion)) {
-                Supporting(stringResource(if (LocalReducedMotion.current) R.string.settings_motion_reduced else R.string.settings_motion_full))
-            }
-        }
-        item {
-            SectionCard(stringResource(R.string.settings_language)) {
-                val activity = context.findActivity()
-                val current = AppLanguage.current(context)
-                Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
-                    AppLanguage.entries.forEach { language ->
-                        ToggleButton(
-                            checked = current == language,
-                            onCheckedChange = { if (language != current && activity != null) AppLanguage.set(activity, language) },
+            SegmentedGroup(title = stringResource(R.string.settings_language), icon = ZairenkaiGlyphs.document) {
+                row {
+                    GroupContent {
+                        val activity = context.findActivity()
+                        val current = AppLanguage.current(context)
+                        val languages = AppLanguage.entries
+                        ConnectedChoice(
+                            options = languages.map { stringResource(it.label) },
+                            selected = languages.indexOf(current),
+                            onSelect = { i -> if (languages[i] != current && activity != null) AppLanguage.set(activity, languages[i]) },
                             enabled = activity != null,
-                            modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
-                        ) { Text(stringResource(language.label), maxLines = 1) }
+                        )
+                        Detail(stringResource(R.string.settings_language_note))
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            OutlinedButton(onClick = {
+                                context.startActivity(Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null)))
+                            }) { Text(stringResource(R.string.settings_language_open)) }
+                        }
                     }
                 }
-                Supporting(stringResource(R.string.settings_language_note))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    OutlinedButton(onClick = {
-                        context.startActivity(Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null)))
-                    }) { Text(stringResource(R.string.settings_language_open)) }
+            }
+        }
+        item {
+            SegmentedGroup(title = stringResource(R.string.settings_app), icon = ZairenkaiGlyphs.phone) {
+                row {
+                    GroupRow(
+                        stringResource(R.string.update_title),
+                        supporting = stringResource(R.string.settings_updates_row, com.zairenkaiprjctx.app.BuildConfig.VERSION_NAME),
+                        icon = ZairenkaiGlyphs.loop,
+                        onClick = { open(Overlay.UPDATES) },
+                        chevron = true,
+                    )
+                }
+                row {
+                    GroupRow(
+                        stringResource(R.string.about_title),
+                        supporting = stringResource(R.string.settings_about_row),
+                        icon = ZairenkaiGlyphs.spark,
+                        onClick = { open(Overlay.ABOUT) },
+                        chevron = true,
+                    )
+                }
+            }
+        }
+        item {
+            SegmentedGroup(title = stringResource(R.string.module_title), icon = ZairenkaiGlyphs.box) {
+                row {
+                    GroupContent {
+                        Detail(stringResource(if (declined) R.string.module_settings_declined else R.string.module_settings_note))
+                        Row(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
+                            OutlinedButton(onClick = openModule) { Text(stringResource(R.string.module_settings_open)) }
+                            if (declined) OutlinedButton(onClick = modules::reconsider) { Text(stringResource(R.string.module_settings_reoffer)) }
+                        }
+                    }
                 }
             }
         }

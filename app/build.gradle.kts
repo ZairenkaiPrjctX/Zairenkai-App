@@ -8,6 +8,28 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// The app version: MAJOR.MINOR.PATCH for a release, MAJOR.MINOR.PATCH-beta.N for a beta (a GitHub
+// pre-release). The versionCode grows with it (integration-core update/AppVersion.kt):
+// 0.2.0-beta.1 -> 20001, 0.2.0 -> 20099. CHANGELOG.md has an entry for every version.
+val appVersion = "0.2.0-beta.1"
+fun versionCodeOf(name: String): Int {
+    val m = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$""").matchEntire(name) ?: throw GradleException("bad app version $name")
+    val (major, minor, patch) = m.groupValues.drop(1).take(3).map { it.toInt() }
+    val beta = m.groupValues[4].ifEmpty { null }?.toInt()
+    require(minor < 100 && patch < 100 && (beta == null || beta in 1..98)) { "app version $name out of range" }
+    return major * 1_000_000 + minor * 10_000 + patch * 100 + (beta ?: 99)
+}
+
+// The commit and its date, shown in Settings > About. From git when the source is a checkout;
+// "unknown" otherwise (a source archive). The commit date, not the build time, keeps builds
+// reproducible.
+fun git(vararg args: String): String = providers.exec {
+    commandLine("git", *args)
+    isIgnoreExitValue = true
+}.standardOutput.asText.get().trim().ifEmpty { "unknown" }
+val gitCommit = git("rev-parse", "HEAD")
+val gitDate = git("log", "-1", "--format=%cs")
+
 // Integration metadata (inventory, lock) is copied into the APK's assets so the app can show
 // every repository's disposition and the revisions it was built from, together with the app's
 // own licence and notice.
@@ -22,6 +44,8 @@ val copyIntegrationMeta = tasks.register<Copy>("copyIntegrationMeta") {
         ),
     ) { into("integration") }
     from(files(rootProject.file("LICENSE"), rootProject.file("NOTICE"))) { into("licenses/zairenkai-app") }
+    // What changed in each version (Settings > About).
+    from(rootProject.file("CHANGELOG.md")) { into("about") }
     into(integrationMeta)
 }
 
@@ -91,6 +115,10 @@ val verifyIntegrationComponents = tasks.register("verifyIntegrationComponents") 
             "assets/licenses/zart/LICENSE", "assets/licenses/zart/NOTICE",
             // The single root module (Zairenkai-Modules): zcored and zfasd.
             "assets/system-modules.json", "assets/system-modules/zairenkai.zip",
+            // Local AI (Zairenkai-Intelligence-Engine): zie-run for two ABIs, its registry, grammar and model manifest.
+            "jniLibs/arm64-v8a/libzierun.so", "jniLibs/x86_64/libzierun.so",
+            "assets/intelligence/tools.json", "assets/intelligence/output.gbnf", "assets/intelligence/model.json",
+            "assets/licenses/zie-run/LICENSE", "assets/licenses/llama.cpp/LICENSE",
         )
     val allow = allowMissingComponents
     doLast {
@@ -112,8 +140,10 @@ android {
         applicationId = "com.zairenkaiprjctx.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = versionCodeOf(appVersion)
+        versionName = appVersion
+        buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
+        buildConfigField("String", "GIT_DATE", "\"$gitDate\"")
         ndk {
             // The ABIs zart and zthermal are built for (integration/repository-lock.json).
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
@@ -130,11 +160,28 @@ android {
             storePassword = System.getenv("ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD")
             keyAlias = System.getenv("ZAIRENKAI_RELEASE_KEY_ALIAS")
             keyPassword = System.getenv("ZAIRENKAI_RELEASE_KEY_PASSWORD")
+            // minSdk 29: APK Signature Scheme v2 and v3 (v3 allows key rotation); the JAR (v1)
+            // signature would only serve Android 6 and older.
+            enableV1Signing = false
+            enableV2Signing = true
+            enableV3Signing = true
         }
+    }
+
+    // No encrypted dependency report in the APK or bundle: the dependencies are in the generated
+    // NOTICES, and the APK stays reproducible from source.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     buildTypes {
         release {
+            isDebuggable = false
+            isJniDebuggable = false
+            // R8 stays off until a release has been exercised on a device: shrinking can remove
+            // code reached only through reflection (kotlinx.serialization, Compose), and no
+            // instrumented test covers the release APK yet.
             isMinifyEnabled = false
             if (releaseKeystore != null) signingConfig = signingConfigs.getByName("release")
         }
@@ -147,6 +194,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -183,6 +231,8 @@ android {
                 // Robolectric downloads its android-all jars itself; Maven Central rate-limits this
                 // build environment, so allow overriding the repository from the environment.
                 System.getenv("ROBOLECTRIC_REPO_URL")?.let { url -> it.systemProperty("robolectric.dependency.repo.url", url) }
+                // Screenshot gallery (app/src/test/.../ScreenshotGallery.kt): skipped unless set.
+                System.getenv("ZAIRENKAI_SCREENSHOT_DIR")?.let { dir -> it.systemProperty("zairenkai.screenshotDir", dir) }
             }
         }
     }
@@ -218,6 +268,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
+    implementation(libs.compose.ui.text.google.fonts)
+    implementation(libs.haze)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.core)
     implementation(libs.compose.animation)

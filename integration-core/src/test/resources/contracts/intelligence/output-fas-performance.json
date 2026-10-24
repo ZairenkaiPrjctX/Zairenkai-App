@@ -1,0 +1,14 @@
+{
+  "language": "other",
+  "goal": "Switch FAS to the performance profile",
+  "confidence_percent": 1,
+  "calls": [
+    {
+      "tool": "fas.set_profile",
+      "arguments": {
+       "profile": "performance"
+      }
+    }
+  ],
+  "clarification": "Please note that this tool requires a device to be in the 'zcored' state."
+}

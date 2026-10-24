@@ -1,5 +1,112 @@
 # Verification report
 
+## Local AI, module 0.3.1, module update notices, signed dry run (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host (JVM, Robolectric, real runner and model on the
+host).** Nothing ran on a device.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| Components | `LLAMA_CPP_SRC=<b11500 checkout> ANDROID_NDK_HOME=/opt/android/android-ndk-r27d integration/scripts/build-components.sh` | exit 0; zie-run for arm64-v8a and x86_64 ("no network imports; needs: libc.so libdl.so libm.so"); module 0.3.1 from Modules `9175e1e` |
+| Module install on KernelSU-Next (simulated) | the real 0.3.1 zip extracted at mode 0644, `customize.sh` sourced with stub `ui_print`/`set_perm` up to step 3 | steps 1–2 pass ("31 files match SHA256SUMS"); 0.3.0 stopped there on the device |
+| Contracts | `integration/scripts/capture-contracts.sh` | exit 0; Core reports module 0.3.1 |
+| JVM tests | `./gradlew :integration-core:test` | 122 run, 121 passed, 1 skipped (the real-runner test without `ZIE_RUN`/`ZIE_MODEL`) |
+| Real runner through the agent | `ZIE_RUN=<host zie-run> ZIE_MODEL=<gguf> ./gradlew :integration-core:test --tests '*AiTest.theRealRunner*'` | passed, 8.0 s |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 72 passed, 0 skipped; 63 PNGs (new: `preview-ai-chat-*` over the real agent, `ai-model-*`) |
+| Lint | `./gradlew lint` | 0 errors; 24 dependency-version warnings |
+| Build | `./gradlew assembleDebug assembleRelease` | both APKs; `lib/{arm64-v8a,x86_64}/libzierun.so` and `assets/intelligence/` present |
+| APK binaries | `llvm-nm -D --undefined-only`, `llvm-readelf -d` on the APK's `libzierun.so` | no networking import; NEEDED libm, libdl, libc |
+| Integration | `verify_integration.py lock`, `build`, `apk`, `report` | ok |
+| Signed dry run | throwaway key, `apksigner verify`, `verify_integration.py report --release` | v3 verified, 16 KB zipalign ok; one blocker: module catalog unsigned (maintainer key) |
+| Scripts | `python3 -m unittest discover -s integration/scripts/tests`; `shellcheck`; `actionlint` | 24 run, 23 passed, 1 skipped; clean; clean |
+
+## Updates, About, System Module redesign, module 0.3.0 (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host (JVM and Robolectric).** No release exists yet (the
+GitHub releases API returned `[]`), so no real check, download or install ran, and nothing ran on
+a device.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| JVM tests | `./gradlew :integration-core:test` | 107 passed (new `UpdateTest`: versions, feed, channels, checksum, APK checks, notes, download) |
+| App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 51 passed, 14 skipped (screenshot gallery); new `UpdateUiTest` (8) |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 65 passed; 61 PNGs |
+| Lint | `./gradlew lint` | 0 errors; 24 warnings, all dependency versions |
+| Components | `ANDROID_NDK_HOME=/opt/android/android-ndk-r27d integration/scripts/build-components.sh` | exit 0; module 0.3.1 from Modules `9175e1e` (Core `345fc7f`, FAS `1c453db`, Tuning `0c226b2`) |
+| Contracts | `integration/scripts/capture-contracts.sh` | exit 0; catalog: 32 entries incl. `SHA256SUMS`, 13 files matched to `module/` sources |
+| Build | `./gradlew assembleDebug assembleRelease` | both APKs; release `0.2.0-beta.1` (20001) |
+| Integration | `verify_integration.py lock`, `build`, `apk`, `report` | ok |
+| Permissions | `aapt2 dump badging` | INTERNET, ACCESS_NETWORK_STATE, RECEIVE_BOOT_COMPLETED, POST_NOTIFICATIONS, REQUEST_INSTALL_PACKAGES (+ AndroidX receiver) |
+| Scripts | `python3 -m unittest discover -s integration/scripts/tests`; `shellcheck`; `actionlint` | 20 passed; clean; clean |
+
+## Long text, richer screens, Settings › Appearance (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host under Robolectric.** Nothing ran on a device: blur,
+launcher icon switching on real launchers, Google Fonts download and the photo picker are
+**Unverified** on hardware.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 43 passed, 11 skipped (screenshot gallery) |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 54 passed, 0 skipped; 57 PNGs |
+| JVM tests | `./gradlew :integration-core:test` | 99 passed (unchanged) |
+| Lint | `./gradlew lint` | 0 errors; 24 warnings, all `GradleDependency` / `AndroidGradlePluginVersion` |
+| Build | `./gradlew assembleDebug assembleRelease -Pzairenkai.allowMissingComponents=true` | both APKs built |
+| Permissions | `aapt2 dump permissions app-release-unsigned.apk` | no INTERNET; only the AndroidX receiver permission |
+| Notices | `assets/licenses/android/NOTICES.txt` in the APK | `haze` 1.6.10 and `ui-text-google-fonts` 1.11.4 listed, Apache-2.0 |
+
+New tests:
+- `LongTextLayoutTest` (NATIVE): every component with oversized text on a 320 dp screen at 1.5×
+  font keeps its text on screen and never squeezed below 64 dp; checked to fail on a deliberately
+  squeezed row.
+- `AppearanceTest`: contrast of every generated scheme (see `docs/design/design-system.md`), hex
+  parsing, settings round trip (a broken stored list is dropped), launcher alias switching with
+  exactly one alias enabled, settings search opening the wallpaper page.
+
+The mpvRx repository (AGPL-3.0, `Riteshp2001/mpvRx` at `f5f616b`) was read for behaviour only:
+the app is Apache-2.0, so no code was copied. The Google Play services font-provider certificates
+come from `android/user-interface-samples` at `2c0b04e` (Apache-2.0), unchanged
+(`integration/third-party-assets.json`).
+
+## UI/UX redesign: Material 3 Expressive, Zairenkai AI screen (2026-10-23)
+
+**Verdict: verified on an x86-64 Linux host under Robolectric.** Nothing ran on a device or an
+emulator: touch feel, frame rate of the wavy indicators and the AI orb, and TalkBack order are
+**Unverified** on hardware.
+
+| Check | Command / evidence | Result |
+|---|---|---|
+| App tests | `ANDROID_HOME=/opt/android/sdk ./gradlew :app:testDebugUnitTest` | 36 passed, 6 skipped (the screenshot gallery, which runs only with `ZAIRENKAI_SCREENSHOT_DIR`) |
+| App tests with screenshots | `ZAIRENKAI_SCREENSHOT_DIR=<dir> ./gradlew :app:testDebugUnitTest` | 42 passed, 0 skipped; 34 PNGs |
+| JVM tests | `./gradlew :integration-core:test` | 99 passed, 0 failed, 0 skipped (unchanged) |
+| Lint | `./gradlew lint` | 0 errors; 24 warnings, all `GradleDependency` / `AndroidGradlePluginVersion` |
+| Build | `./gradlew assembleDebug assembleRelease -Pzairenkai.allowMissingComponents=true` | both APKs built, without the native components (the flag) |
+
+New tests: `RedesignTest` (Home's next steps and capability groups, the AI transcript and
+approval rules, the AI screen in the real app: unavailable badge, disabled composer, a prompt
+opening Thermal) and `ConnectedChoiceTouchTest` (real touches on every segment of a connected
+button group, NATIVE graphics). `AppUiTest` and `LanguageTest` follow the new navigation
+(Runtime is a page of System; destinations are found by their `nav-*` test tags).
+
+**Robolectric hit-testing.** A real touch on the first or last segment of a connected button
+group never arrived under LEGACY graphics, even a 60 ms press, while the middle segment and the
+semantics action worked. The end segments have path outlines, which LEGACY graphics cannot
+hit-test; under NATIVE graphics all three take the touch. This also explains the segmented-button
+finding recorded below under "Defects found and fixed during verification".
+
+**Screenshots** (`app/src/test/kotlin/.../screenshots/ScreenshotGallery.kt`, 411 × 891 dp,
+xxhdpi, light and dark):
+- `host-*`: the real `AppContainer` on this JVM, so states are what the registry probed here (no
+  root, no packaged native components);
+- `captured-*`: root granted and every su command answered with output captured from the real
+  zcored, zfasd and ztune binaries (`integration-core/src/test/resources/contracts`); anything
+  not captured fails as on a device without the component;
+- `preview-ai-chat-*`: the AI components with sample turns, labelled as samples. The app itself
+  never shows a transcript until an on-device runtime exists.
+
+One gallery run timed out waiting for the registry while lint ran in parallel; three later runs
+without lint passed.
+
 ## Typed tuning telemetry; every pin in `dev` (2026-10-23)
 
 **Verdict: verified on an x86-64 Linux host and in CI** (run 39888821755 at `fbe9e44`: all three

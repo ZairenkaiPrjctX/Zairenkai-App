@@ -358,7 +358,11 @@ class SystemModuleTest {
         assertEquals(Verdict.ALREADY_INSTALLED, decide(installed = InstalledState(rec(100), null)).verdict)
         assertEquals(Verdict.PENDING_REBOOT, decide(installed = InstalledState(null, rec(100, update = true))).verdict)
         assertEquals(Verdict.INCOMPATIBLE, decide(installed = InstalledState(null, rec(90, update = true))).verdict)
-        assertEquals(Verdict.INCOMPATIBLE, decide(installed = InstalledState(rec(200), null)).verdict) // downgrade
+        // Newer than packaged (updated from a module release): kept and checked, never downgraded.
+        val newer = decide(installed = InstalledState(rec(200), null))
+        assertEquals(Verdict.ALREADY_INSTALLED, newer.verdict)
+        assertNull(newer.upgradeFrom)
+        assertTrue(newer.checks.any { it.id == "existing" && "downgrades are refused" in it.detail })
         assertEquals(Verdict.INCOMPATIBLE, decide(installed = InstalledState(rec(90, remove = true), null)).verdict)
         // Disabled: reported as installed, so the screen can offer the manager's enable command.
         val disabled = decide(installed = InstalledState(rec(100, enabled = false), null))

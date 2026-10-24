@@ -10,6 +10,8 @@
 #   integration/out/assets/licenses/zart/         zart's LICENSE and NOTICE (Apache-2.0, with the AOSP attribution)
 #   integration/out/assets/licenses/<component>/THIRD_PARTY_NOTICES.txt  licences of every Rust
 #                                                   crate compiled into each binary (rust_notices.py)
+#   integration/out/jniLibs/{arm64-v8a,x86_64}/libzierun.so  zie-run from Zairenkai-Intelligence-Engine
+#   integration/out/assets/intelligence/          its tool registry, grammar and model manifest
 #   integration/out/assets/afid/device-candidates.json   AFID asset (integration/scripts/afid_asset.py)
 #   integration/out/assets/system-modules/zairenkai.zip  the single root module: Zairenkai-Modules'
 #                                                   assemble.py over the Core and FAS components
@@ -18,7 +20,7 @@
 #   integration/out/components.json               what was built, from which commit, with SHA-256
 #
 # Requires: git (the locked ZairenkaiPrjctX repositories are public), Rust with the
-# aarch64/armv7/x86_64 Android targets, ANDROID_NDK_HOME (NDK r27d is what the component repos
+# aarch64/armv7/x86_64 Android targets, cmake and ninja (zie-run), ANDROID_NDK_HOME (NDK r27d is what the component repos
 # use), python3 >= 3.11. Sources are fetched by commit into integration/out/src; nothing is
 # pushed. The fetched build script is the one reviewed at that commit; a different commit fails.
 set -euo pipefail
@@ -87,6 +89,36 @@ mkdir -p "$OUT/assets/licenses/zthermal"
 install -m 0644 "$OUT/src/zthermal/LICENSE" "$OUT/src/zthermal/NOTICE" "$OUT/assets/licenses/zthermal/"
 notices "$OUT/src/zthermal" zthermal zthermal
 
+# --- zie-run (Zairenkai-Intelligence-Engine) -----------------------------------------------
+# The Local AI runner, built by the engine's own script against the llama.cpp commit it pins
+# (LLAMA_CPP_SRC, if set, names a checkout of that commit). The script refuses networking imports.
+# Only arm64-v8a and x86_64 are built. The model file is never packaged: the user imports it.
+ZIE_COMMIT=$(field zie-run commit)
+ZIE="$OUT/src/zie"
+fetch "$ZIE" "$(field zie-run url)" "$ZIE_COMMIT"
+(cd "$ZIE" && rm -rf dist && scripts/build-android.sh)
+ZIE_DIST="$ZIE/dist/zairenkai-intelligence"
+python3 - "$ZIE_DIST" "$ZIE_COMMIT" <<'PY'
+import hashlib, json, pathlib, sys
+d, commit = pathlib.Path(sys.argv[1]), sys.argv[2]
+c = json.loads((d / "component.json").read_text())
+if c["commit"] != commit:
+    sys.exit(f"zie-run was built from {c['commit']}, expected {commit}")
+for name, digest in c["files"].items():
+    if hashlib.sha256((d / name).read_bytes()).hexdigest() != digest:
+        sys.exit(f"zie-run component: {name} does not match component.json")
+PY
+ZIE_LLAMA=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["llama_cpp"]["tag"])' "$ZIE_DIST/component.json")
+for abi in arm64-v8a x86_64; do
+  mkdir -p "$OUT/jniLibs/$abi"
+  install -m 0755 "$ZIE_DIST/bin/$abi/zie-run" "$OUT/jniLibs/$abi/libzierun.so"
+done
+mkdir -p "$OUT/assets/intelligence" "$OUT/assets/licenses/zie-run" "$OUT/assets/licenses/llama.cpp"
+install -m 0644 "$ZIE_DIST/registry/tools.json" "$ZIE_DIST/registry/output.gbnf" "$OUT/assets/intelligence/"
+install -m 0644 "$ZIE_DIST/models/qwen2.5-0.5b-instruct-q4_0.json" "$OUT/assets/intelligence/model.json"
+install -m 0644 "$ZIE_DIST/LICENSE" "$ZIE_DIST/NOTICE" "$OUT/assets/licenses/zie-run/"
+install -m 0644 "$ZIE_DIST/licenses/llama.cpp/LICENSE" "$OUT/assets/licenses/llama.cpp/LICENSE"
+
 # --- the zairenkai root module (Zairenkai-Modules, with Core, FAS and Tuning) ---------------
 # One module. Zairenkai-Modules at its locked commit names the Core, FAS and Tuning commits it packages
 # (components.lock.json); each is built by its own scripts/build-android.sh, then assembled by
@@ -148,9 +180,9 @@ python3 "$ROOT/integration/scripts/afid_asset.py" --source "$OUT/src/afid" --com
   --out "$OUT/assets/afid/device-candidates.json"
 
 # --- record what was built ----------------------------------------------------------------
-python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$ZT_COMMIT" "$ZT_VERSION" "$AFID_COMMIT" "$PROFILE" <<'PY'
+python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$ZT_COMMIT" "$ZT_VERSION" "$AFID_COMMIT" "$PROFILE" "$ZIE_COMMIT" "$ZIE_LLAMA" <<'PY'
 import hashlib, json, pathlib, sys
-out, zart_commit, zart_version, zt_commit, zt_version, afid_commit, profile = pathlib.Path(sys.argv[1]), *sys.argv[2:]
+out, zart_commit, zart_version, zt_commit, zt_version, afid_commit, profile, zie_commit, zie_llama = pathlib.Path(sys.argv[1]), *sys.argv[2:]
 files = sorted(p for p in (out / "jniLibs").rglob("*") if p.is_file()) + \
         sorted(p for p in (out / "assets").rglob("*") if p.is_file())
 rec = {
@@ -159,6 +191,7 @@ rec = {
     "zart": {"commit": zart_commit, "version": zart_version},
     "zthermal": {"commit": zt_commit, "version": zt_version},
     "afid": {"commit": afid_commit},
+    "intelligence": {"commit": zie_commit, "llama_cpp": zie_llama},
     "files": {str(p.relative_to(out)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
 }
 (out / "components.json").write_text(json.dumps(rec, indent=2) + "\n")

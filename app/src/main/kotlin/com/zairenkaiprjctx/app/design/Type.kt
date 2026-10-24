@@ -3,6 +3,9 @@
 package com.zairenkaiprjctx.app.design
 
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -48,28 +51,63 @@ object ZairenkaiFonts {
 }
 
 /** Material 3 type scale set entirely in Google Sans Flex. */
-val ZairenkaiTypography: Typography = Typography(
-    displayLarge = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(500), fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.02).em),
-    displayMedium = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(500), fontSize = 45.sp, lineHeight = 52.sp),
-    displaySmall = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(500), fontSize = 36.sp, lineHeight = 44.sp),
-    headlineLarge = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(600), fontSize = 32.sp, lineHeight = 40.sp),
-    headlineMedium = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(600), fontSize = 28.sp, lineHeight = 36.sp),
-    headlineSmall = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(600), fontSize = 24.sp, lineHeight = 32.sp),
-    titleLarge = TextStyle(fontFamily = ZairenkaiFonts.text, fontWeight = FontWeight(600), fontSize = 22.sp, lineHeight = 28.sp),
-    titleMedium = TextStyle(fontFamily = ZairenkaiFonts.text, fontWeight = FontWeight(600), fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.01.em),
-    titleSmall = TextStyle(fontFamily = ZairenkaiFonts.text, fontWeight = FontWeight(600), fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.01.em),
-    bodyLarge = TextStyle(fontFamily = ZairenkaiFonts.text, fontWeight = FontWeight(400), fontSize = 16.sp, lineHeight = 24.sp),
-    bodyMedium = TextStyle(fontFamily = ZairenkaiFonts.text, fontWeight = FontWeight(400), fontSize = 14.sp, lineHeight = 20.sp),
-    bodySmall = TextStyle(fontFamily = ZairenkaiFonts.small, fontWeight = FontWeight(400), fontSize = 12.sp, lineHeight = 16.sp),
-    labelLarge = TextStyle(fontFamily = ZairenkaiFonts.small, fontWeight = FontWeight(600), fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.01.em),
-    labelMedium = TextStyle(fontFamily = ZairenkaiFonts.small, fontWeight = FontWeight(600), fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.03.em),
-    labelSmall = TextStyle(fontFamily = ZairenkaiFonts.small, fontWeight = FontWeight(600), fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.03.em),
+val ZairenkaiTypography: Typography = typography(ZairenkaiFonts.display, ZairenkaiFonts.text, ZairenkaiFonts.small)
+
+/**
+ * The type scale for the user's font choice: Google Sans Flex (bundled), the system font, or a
+ * Google Font fetched by Google Play services' font provider (the app itself has no network
+ * access; until the font arrives, or without Play services, text falls back to the system font).
+ */
+@Composable
+fun rememberTypography(font: FontSettings): Typography = remember(font) {
+    when (font.source) {
+        FontSource.BUILT_IN -> ZairenkaiTypography
+        FontSource.SYSTEM -> typography(FontFamily.Default, FontFamily.Default, FontFamily.Default)
+        FontSource.GOOGLE -> font.googleFamily?.let { name ->
+            val family = googleFontFamily(name)
+            typography(family, family, family)
+        } ?: ZairenkaiTypography
+    }
+}
+
+private val googleFontsProvider = GoogleFont.Provider(
+    providerAuthority = "com.google.android.gms.fonts",
+    providerPackage = "com.google.android.gms",
+    certificates = R.array.com_google_android_gms_fonts_certs,
+)
+
+/** A Google Font family in the weights the type scale uses. */
+fun googleFontFamily(name: String): FontFamily = FontFamily(
+    listOf(FontWeight(400), FontWeight(500), FontWeight(600), FontWeight(700)).map { w ->
+        androidx.compose.ui.text.googlefonts.Font(googleFont = GoogleFont(name), fontProvider = googleFontsProvider, weight = w)
+    },
+)
+
+private fun typography(display: FontFamily, text: FontFamily, small: FontFamily): Typography = Typography(
+    displayLarge = TextStyle(fontFamily = display, fontWeight = FontWeight(500), fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.02).em),
+    displayMedium = TextStyle(fontFamily = display, fontWeight = FontWeight(500), fontSize = 45.sp, lineHeight = 52.sp),
+    displaySmall = TextStyle(fontFamily = display, fontWeight = FontWeight(500), fontSize = 36.sp, lineHeight = 44.sp),
+    headlineLarge = TextStyle(fontFamily = display, fontWeight = FontWeight(600), fontSize = 32.sp, lineHeight = 40.sp),
+    headlineMedium = TextStyle(fontFamily = display, fontWeight = FontWeight(600), fontSize = 28.sp, lineHeight = 36.sp),
+    headlineSmall = TextStyle(fontFamily = display, fontWeight = FontWeight(600), fontSize = 24.sp, lineHeight = 32.sp),
+    titleLarge = TextStyle(fontFamily = text, fontWeight = FontWeight(600), fontSize = 22.sp, lineHeight = 28.sp),
+    titleMedium = TextStyle(fontFamily = text, fontWeight = FontWeight(600), fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.01.em),
+    titleSmall = TextStyle(fontFamily = text, fontWeight = FontWeight(600), fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.01.em),
+    bodyLarge = TextStyle(fontFamily = text, fontWeight = FontWeight(400), fontSize = 16.sp, lineHeight = 24.sp),
+    bodyMedium = TextStyle(fontFamily = text, fontWeight = FontWeight(400), fontSize = 14.sp, lineHeight = 20.sp),
+    bodySmall = TextStyle(fontFamily = small, fontWeight = FontWeight(400), fontSize = 12.sp, lineHeight = 16.sp),
+    labelLarge = TextStyle(fontFamily = small, fontWeight = FontWeight(600), fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.01.em),
+    labelMedium = TextStyle(fontFamily = small, fontWeight = FontWeight(600), fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.03.em),
+    labelSmall = TextStyle(fontFamily = small, fontWeight = FontWeight(600), fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.03.em),
 )
 
 /** Roles beyond the Material scale, for technical data. */
 object ZairenkaiTextStyles {
     /** Large primary values (FPS, thermal state): tabular figures so digits do not jump. */
     val metric = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(700), fontSize = 34.sp, lineHeight = 40.sp, fontFeatureSettings = "tnum")
+
+    /** The value inside a ring gauge. */
+    val ringValue = TextStyle(fontFamily = ZairenkaiFonts.display, fontWeight = FontWeight(600), fontSize = 26.sp, lineHeight = 30.sp, fontFeatureSettings = "tnum")
 
     /** Inline numbers in rows (versions, sizes, percentages). */
     val numeric = TextStyle(fontFamily = ZairenkaiFonts.text, fontWeight = FontWeight(500), fontSize = 14.sp, lineHeight = 20.sp, fontFeatureSettings = "tnum")
