@@ -15,6 +15,7 @@
     <string name="state_permission">Perlu izin</string>
     <string name="state_root">Perlu root</string>
     <string name="state_not_installed">Komponen belum terpasang</string>
+    <string name="state_model_not_imported">Model belum diimpor</string>
     <string name="state_native">Komponen native tidak tersedia</string>
     <string name="state_network">Jaringan tidak tersedia</string>
     <string name="state_license">Perlu lisensi</string>
@@ -680,6 +681,10 @@
     <string name="update_permission_open">Izinkan pemasangan</string>
     <string name="update_installing">Installer Android terbuka: konfirmasi di sana untuk memperbarui.</string>
     <string name="update_check_now">Cek sekarang</string>
+    <string name="update_no_releases">Belum ada rilis aplikasi yang diterbitkan</string>
+    <string name="update_no_releases_body">Feed rilis belum berisi rilis aplikasi yang diterbitkan. Ini bukan berarti versi ini adalah versi terbaru; periksa kembali setelah rilis diterbitkan.</string>
+    <string name="update_no_compatible_releases">Tidak ditemukan rilis yang kompatibel</string>
+    <string name="update_no_compatible_releases_body">Rilis yang diterbitkan tidak memiliki APK yang valid dan aset SHA-256 yang cocok untuk kanal pembaruan yang dipilih. Buka Semua rilis untuk memeriksa artefak yang diterbitkan.</string>
     <string name="update_download">Unduh dan pasang</string>
     <string name="update_later">Nanti</string>
     <string name="update_install">Pasang</string>
