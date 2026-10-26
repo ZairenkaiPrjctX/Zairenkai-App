@@ -10,6 +10,7 @@ import com.zairenkaiprjctx.integration.update.AppVersion
 import com.zairenkaiprjctx.integration.update.HttpResponse
 import com.zairenkaiprjctx.integration.update.NoteBlock
 import com.zairenkaiprjctx.integration.update.Notes
+import com.zairenkaiprjctx.integration.update.ReleaseCheckResult
 import com.zairenkaiprjctx.integration.update.ReleaseClient
 import com.zairenkaiprjctx.integration.update.ReleaseFeed
 import com.zairenkaiprjctx.integration.update.Transport
@@ -81,6 +82,23 @@ class UpdateTest {
         release("v0.2.1", prerelease = false, assets = listOf("app-release.apk")),
         release("v0.2.2", prerelease = false, url = "http://github.com/x"),
     ).joinToString(",") + "]"
+
+    @Test
+    fun updateCheckDoesNotTreatAnEmptyOrMalformedFeedAsUpToDate() {
+        val stableCurrent = v("0.2.0")
+        val empty = ReleaseFeed.parse("[]")
+        assertEquals(ReleaseCheckResult.NoReleasesPublished, ReleaseFeed.evaluate(empty, UpdateChannel.STABLE, stableCurrent))
+
+        val incomplete = ReleaseFeed.parse("[" + release("v0.3.0", prerelease = false, assets = listOf("app-release.apk")) + "]")
+        assertEquals(1, incomplete.publishedCount)
+        assertEquals(ReleaseCheckResult.NoCompatibleReleases, ReleaseFeed.evaluate(incomplete, UpdateChannel.STABLE, stableCurrent))
+
+        val currentPublished = ReleaseFeed.parse("[" + release("v0.2.0", prerelease = false) + "]")
+        assertEquals(ReleaseCheckResult.UpToDate, ReleaseFeed.evaluate(currentPublished, UpdateChannel.STABLE, stableCurrent))
+
+        val newer = ReleaseFeed.parse("[" + release("v0.3.0", prerelease = false) + "]")
+        assertEquals(v("0.3.0"), (ReleaseFeed.evaluate(newer, UpdateChannel.STABLE, stableCurrent) as ReleaseCheckResult.Available).release.version)
+    }
 
     @Test
     fun channelsOfferOnlyPublishedCompleteNewerReleases() {

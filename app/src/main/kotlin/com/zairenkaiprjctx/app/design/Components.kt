@@ -125,6 +125,7 @@ fun AvailabilityState.visual(): StatusVisual = when (this) {
     AvailabilityState.PERMISSION_REQUIRED -> StatusVisual(R.string.state_permission, Icons.Filled.Lock) { it.warning }
     AvailabilityState.LICENSE_REQUIRED -> StatusVisual(R.string.state_license, Icons.Filled.Lock) { it.warning }
     AvailabilityState.COMPONENT_NOT_INSTALLED -> StatusVisual(R.string.state_not_installed, Icons.Filled.Build) { it.warning }
+    AvailabilityState.MODEL_NOT_IMPORTED -> StatusVisual(R.string.state_model_not_imported, Icons.Filled.Info) { it.warning }
     AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE -> StatusVisual(R.string.state_native, Icons.Filled.Build) { it.error }
     AvailabilityState.NETWORK_UNAVAILABLE -> StatusVisual(R.string.state_network, Icons.Filled.Warning) { it.warning }
     AvailabilityState.INITIALIZATION_FAILED -> StatusVisual(R.string.state_failed, Icons.Filled.Warning) { it.error }

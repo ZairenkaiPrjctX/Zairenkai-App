@@ -19,6 +19,7 @@
     <string name="state_permission">Permission required</string>
     <string name="state_root">Root required</string>
     <string name="state_not_installed">Component not installed</string>
+    <string name="state_model_not_imported">Model not imported</string>
     <string name="state_native">Native component unavailable</string>
     <string name="state_network">Network unavailable</string>
     <string name="state_license">Licence required</string>
@@ -703,6 +704,10 @@
     <string name="update_permission_open">Allow installs</string>
     <string name="update_installing">Android\'s installer is open: confirm there to update.</string>
     <string name="update_check_now">Check now</string>
+    <string name="update_no_releases">No app release has been published yet</string>
+    <string name="update_no_releases_body">The release feed has no published app releases. This does not mean this build is the latest version; check again after a release is published.</string>
+    <string name="update_no_compatible_releases">No compatible release found</string>
+    <string name="update_no_compatible_releases_body">Published releases do not contain a valid APK and matching SHA-256 asset for the selected update channel. Open All releases to inspect the published artifacts.</string>
     <string name="update_download">Download and install</string>
     <string name="update_later">Later</string>
     <string name="update_install">Install</string>

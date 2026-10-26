@@ -329,7 +329,7 @@ class AiTest {
         assertEquals(AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE, state(ZieRuntime({ null }, version, work)).state)
         val rt = ZieRuntime({ "/z" }, version, work)
         assertEquals(AvailabilityState.UNSUPPORTED_DEVICE, state(rt, mem = 512L shl 20).state)
-        assertEquals(AvailabilityState.COMPONENT_NOT_INSTALLED, state(rt).state)
+        assertEquals(AvailabilityState.MODEL_NOT_IMPORTED, state(rt).state)
         store.import(good.inputStream())
         val ready = state(rt)
         assertEquals(AvailabilityState.NOT_VERIFIED, ready.state)

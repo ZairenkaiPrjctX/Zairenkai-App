@@ -3,7 +3,7 @@
 package com.zairenkaiprjctx.integration.ai
 
 import com.zairenkaiprjctx.integration.model.Availability
-import com.zairenkaiprjctx.integration.model.AvailabilityState.COMPONENT_NOT_INSTALLED
+import com.zairenkaiprjctx.integration.model.AvailabilityState.MODEL_NOT_IMPORTED
 import com.zairenkaiprjctx.integration.model.AvailabilityState.INITIALIZATION_FAILED
 import com.zairenkaiprjctx.integration.model.AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE
 import com.zairenkaiprjctx.integration.model.AvailabilityState.NOT_VERIFIED
@@ -43,7 +43,7 @@ class IntelligenceSubsystem(
                     when {
                         mem != null && mem < ai.store.manifest.minMemoryBytes ->
                             Availability(UNSUPPORTED_DEVICE, "The model needs ${ai.store.manifest.minMemoryBytes / MIB} MiB of memory; this device has ${mem / MIB} MiB.")
-                        !ai.store.installed() -> Availability(COMPONENT_NOT_INSTALLED, "${v.value} is ready; the model file (${ai.store.manifest.displayName}) has not been imported.")
+                        !ai.store.installed() -> Availability(MODEL_NOT_IMPORTED, "${v.value} is ready; the model file (${ai.store.manifest.displayName}) has not been imported.")
                         else -> Availability(NOT_VERIFIED, "${v.value}; ${ai.store.manifest.displayName} matches its SHA-256. Not validated on hardware yet.")
                     }
                 },

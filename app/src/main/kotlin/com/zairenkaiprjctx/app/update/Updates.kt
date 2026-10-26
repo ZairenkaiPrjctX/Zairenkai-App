@@ -103,6 +103,8 @@ sealed interface UpdateState {
     data object Idle : UpdateState
     data object Checking : UpdateState
     data class UpToDate(val checkedAt: Long) : UpdateState
+    data object NoReleasesPublished : UpdateState
+    data object NoCompatibleReleases : UpdateState
     data class Available(val release: AppRelease) : UpdateState
     data class Downloading(val release: AppRelease, val bytes: Long, val total: Long) : UpdateState
     /** Downloaded, SHA-256 and APK checks passed. */
@@ -195,9 +197,14 @@ class UpdateController(private val context: Context, val prefs: UpdatePreference
             val s = prefs.settings.value
             checkModule()
             val result = try {
-                val r = client.check(s.channel, v)
+                val checked = client.checkDetailed(s.channel, v)
                 prefs.update(s.copy(lastCheck = System.currentTimeMillis()))
-                if (r == null) UpdateState.UpToDate(System.currentTimeMillis()) else UpdateState.Available(r)
+                when (checked) {
+                    is com.zairenkaiprjctx.integration.update.ReleaseCheckResult.Available -> UpdateState.Available(checked.release)
+                    com.zairenkaiprjctx.integration.update.ReleaseCheckResult.UpToDate -> UpdateState.UpToDate(System.currentTimeMillis())
+                    com.zairenkaiprjctx.integration.update.ReleaseCheckResult.NoReleasesPublished -> UpdateState.NoReleasesPublished
+                    com.zairenkaiprjctx.integration.update.ReleaseCheckResult.NoCompatibleReleases -> UpdateState.NoCompatibleReleases
+                }
             } catch (e: Exception) {
                 UpdateState.Failed(context.getString(R.string.update_err_check, e.message ?: e.javaClass.simpleName))
             }

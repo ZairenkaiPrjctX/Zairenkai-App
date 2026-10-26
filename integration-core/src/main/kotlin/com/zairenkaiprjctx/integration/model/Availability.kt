@@ -14,6 +14,9 @@ enum class AvailabilityState {
     /** The Magisk/KernelSU module that provides it is not installed (or its daemon is down). */
     COMPONENT_NOT_INSTALLED,
 
+    /** The Local AI runtime is present, but its verified model has not been imported yet. */
+    MODEL_NOT_IMPORTED,
+
     /** The native component was not packaged for this ABI, or cannot run. */
     NATIVE_COMPONENT_UNAVAILABLE,
     NETWORK_UNAVAILABLE,

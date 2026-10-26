@@ -103,7 +103,7 @@ class AiUiTest {
     fun withoutAModelNothingIsAskedAndAWrongFileIsRefused() {
         val host = host(CapturedAnswers.FAS)
         val vm = AiViewModel(host = host, io = Dispatchers.Unconfined)
-        show(vm, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        show(vm, AvailabilityState.MODEL_NOT_IMPORTED)
         compose.onNodeWithContentDescription("Send").assertExists()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Import model file"))
         compose.onNodeWithText("qwen2.5-0.5b-instruct-q4_0.gguf", substring = true).assertExists()
@@ -119,7 +119,7 @@ class AiUiTest {
     fun theModelIsDownloadedOnlyOnRequestAndAMissingReleaseIsSaid() {
         val host = host(CapturedAnswers.FAS)
         val vm = AiViewModel(host = host, io = Dispatchers.Unconfined)
-        show(vm, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        show(vm, AvailabilityState.MODEL_NOT_IMPORTED)
         assertEquals("nothing is downloaded until the user asks", 0, host.downloads)
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download model", substring = true))
         compose.onNodeWithText("Download model", substring = true).performSemanticsAction(SemanticsActions.OnClick)
@@ -133,7 +133,7 @@ class AiUiTest {
     fun onMobileDataTheDownloadWaitsForAYes() {
         val host = host(CapturedAnswers.FAS).apply { metered = true; downloadResult = ModelImport.Verified }
         val vm = AiViewModel(host = host, io = Dispatchers.Unconfined)
-        show(vm, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        show(vm, AvailabilityState.MODEL_NOT_IMPORTED)
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download model", substring = true))
         compose.onNodeWithText("Download model", substring = true).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()

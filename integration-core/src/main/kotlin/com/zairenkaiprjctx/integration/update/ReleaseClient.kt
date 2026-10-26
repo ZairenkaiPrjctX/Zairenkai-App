@@ -97,8 +97,12 @@ class ReleaseClient(private val transport: Transport) {
         }
     }
 
-    /** The newest release on [channel] newer than [current], or null when up to date. */
+    /** Backwards-compatible helper for callers that only need a newer release candidate. */
     fun check(channel: UpdateChannel, current: AppVersion): AppRelease? = ReleaseFeed.newest(releases().releases, channel, current)
+
+    /** A full check result that does not mislabel an empty/malformed feed as up-to-date. */
+    fun checkDetailed(channel: UpdateChannel, current: AppVersion): ReleaseCheckResult =
+        ReleaseFeed.evaluate(releases(), channel, current)
 
     /** Downloads and checks [release]'s APK into [dir]; [progress] gets (bytes, total). */
     fun download(release: AppRelease, dir: File, progress: (Long, Long) -> Unit = { _, _ -> }): DownloadedApk {

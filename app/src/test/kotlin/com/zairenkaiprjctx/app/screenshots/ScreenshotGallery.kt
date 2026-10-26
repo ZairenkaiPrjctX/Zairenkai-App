@@ -157,7 +157,7 @@ class ScreenshotGallery {
     }
 
     private fun aiModel(mode: ThemeMode, name: String) {
-        aiScreen(AiViewModel(host = com.zairenkaiprjctx.app.CapturedAiHost({ "" })), mode, AvailabilityState.COMPONENT_NOT_INSTALLED)
+        aiScreen(AiViewModel(host = com.zairenkaiprjctx.app.CapturedAiHost({ "" })), mode, AvailabilityState.MODEL_NOT_IMPORTED)
         compose.onNode(hasScrollAction()).performScrollToNode(hasText(app.getString(R.string.ai_model_import)))
         shoot(name)
     }

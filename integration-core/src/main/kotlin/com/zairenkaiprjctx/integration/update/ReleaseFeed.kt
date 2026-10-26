@@ -60,7 +60,20 @@ data class AppRelease(
 /** Why a release in the feed cannot be offered (shown nowhere but tests and logs). */
 data class SkippedRelease(val tag: String, val reason: String)
 
-data class ReleaseFeedResult(val releases: List<AppRelease>, val skipped: List<SkippedRelease>)
+data class ReleaseFeedResult(
+    val releases: List<AppRelease>,
+    val skipped: List<SkippedRelease>,
+    /** Number of GitHub releases that are actually published, including malformed/incomplete ones. */
+    val publishedCount: Int = releases.size + skipped.size,
+)
+
+/** Explicit result of an update check. An empty feed is not evidence that this build is current. */
+sealed interface ReleaseCheckResult {
+    data class Available(val release: AppRelease) : ReleaseCheckResult
+    data object UpToDate : ReleaseCheckResult
+    data object NoReleasesPublished : ReleaseCheckResult
+    data object NoCompatibleReleases : ReleaseCheckResult
+}
 
 object ReleaseFeed {
     private val json = Json { ignoreUnknownKeys = true }
@@ -118,7 +131,11 @@ object ReleaseFeed {
                 checksum = ReleaseAsset(sum.name, sum.url, sum.size),
             )
         }
-        return ReleaseFeedResult(ok.sortedByDescending { it.version }, skipped)
+        return ReleaseFeedResult(
+            releases = ok.sortedByDescending { it.version },
+            skipped = skipped,
+            publishedCount = all.count { !it.draft && it.publishedAt != null },
+        )
     }
 
     /**
@@ -142,6 +159,15 @@ object ReleaseFeed {
         releases.filter { channel == UpdateChannel.BETA || !it.version.isBeta }
             .filter { it.version > current }
             .maxByOrNull { it.version }
+
+    /** Keep "no published release" distinct from "this build is current" and malformed feeds. */
+    fun evaluate(feed: ReleaseFeedResult, channel: UpdateChannel, current: AppVersion): ReleaseCheckResult {
+        if (feed.publishedCount == 0) return ReleaseCheckResult.NoReleasesPublished
+        val channelReleases = feed.releases.filter { channel == UpdateChannel.BETA || !it.version.isBeta }
+        if (channelReleases.isEmpty()) return ReleaseCheckResult.NoCompatibleReleases
+        val newer = newest(channelReleases, channel, current)
+        return if (newer == null) ReleaseCheckResult.UpToDate else ReleaseCheckResult.Available(newer)
+    }
 }
 
 /** The SHA-256 a `.sha256` file names for [fileName] (`<hex>  <name>` or a bare hex digest), or null. */

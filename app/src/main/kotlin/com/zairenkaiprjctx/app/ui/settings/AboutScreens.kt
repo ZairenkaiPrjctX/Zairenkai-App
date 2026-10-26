@@ -205,6 +205,8 @@ internal fun UpdateHero(state: UpdateState, lastCheck: Long, modifier: Modifier)
         is UpdateState.Available, is UpdateState.Downloading, is UpdateState.Ready, is UpdateState.NeedsInstallPermission, is UpdateState.Installing ->
             stringResource(R.string.update_available) to HeroDefaults.tertiary()
         is UpdateState.UpToDate -> stringResource(R.string.update_up_to_date) to HeroDefaults.primary()
+        UpdateState.NoReleasesPublished -> stringResource(R.string.update_no_releases) to HeroDefaults.secondary()
+        UpdateState.NoCompatibleReleases -> stringResource(R.string.update_no_compatible_releases) to HeroDefaults.status(status.warning)
         is UpdateState.Checking -> stringResource(R.string.update_checking) to HeroDefaults.secondary()
         is UpdateState.Failed -> stringResource(R.string.update_failed) to HeroDefaults.status(status.warning)
         UpdateState.Idle -> stringResource(R.string.update_idle) to HeroDefaults.primary()
@@ -241,6 +243,8 @@ internal fun UpdateActions(updates: UpdateController, state: UpdateState, modifi
     SectionCard(stringResource(R.string.update_next), modifier) {
         when (state) {
             UpdateState.Idle, is UpdateState.UpToDate -> Detail(stringResource(R.string.update_next_check))
+            UpdateState.NoReleasesPublished -> Detail(stringResource(R.string.update_no_releases_body))
+            UpdateState.NoCompatibleReleases -> Detail(stringResource(R.string.update_no_compatible_releases_body))
             UpdateState.Checking -> Detail(stringResource(R.string.update_checking_body))
             is UpdateState.Available -> Detail(
                 stringResource(R.string.update_next_download, state.release.version.toString(), Formatter.formatShortFileSize(context, state.release.apk.size)),
@@ -261,7 +265,8 @@ internal fun UpdateActions(updates: UpdateController, state: UpdateState, modifi
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s)) {
             when (state) {
-                UpdateState.Idle, is UpdateState.UpToDate -> Button(onClick = { updates.check() }) { Text(stringResource(R.string.update_check_now)) }
+                UpdateState.Idle, is UpdateState.UpToDate, UpdateState.NoReleasesPublished, UpdateState.NoCompatibleReleases ->
+                    Button(onClick = { updates.check() }) { Text(stringResource(R.string.update_check_now)) }
                 is UpdateState.Available -> {
                     Button(onClick = updates::download) { Text(stringResource(R.string.update_download)) }
                     TextButton(onClick = updates::dismiss) { Text(stringResource(R.string.update_later)) }
@@ -370,6 +375,8 @@ fun AboutScreen(c: AppContainer, padding: PaddingValues, openUpdates: () -> Unit
                         supporting = when (val s = state) {
                             is UpdateState.Available -> stringResource(R.string.about_update_available, s.release.version.toString())
                             is UpdateState.UpToDate -> stringResource(R.string.update_up_to_date)
+                            UpdateState.NoReleasesPublished -> stringResource(R.string.update_no_releases)
+                            UpdateState.NoCompatibleReleases -> stringResource(R.string.update_no_compatible_releases)
                             is UpdateState.Checking -> stringResource(R.string.update_checking)
                             else -> stringResource(R.string.about_update_row)
                         },
