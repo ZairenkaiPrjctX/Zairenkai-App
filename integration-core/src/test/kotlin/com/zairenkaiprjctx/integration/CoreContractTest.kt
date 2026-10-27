@@ -32,8 +32,13 @@ class CoreContractTest {
     fun installedModuleVersionIsCoresVersionStruct() {
         val mods = (core("modules", contract("core/modules-installed.json")).modules() as CoreCall.Ok).value
         val m = mods.single { it.id == com.zairenkaiprjctx.integration.core.CorePaths.MODULE_ID }
-        assertEquals(CoreVersion(0, 3, 1), m.version) // module 0.3.1: zcored, zfasd and ztune, with SHA256SUMS
-        assertEquals("0.3.1", m.version.toString())
+        val catalogModule = com.zairenkaiprjctx.integration.systemmodule.ModuleCatalog
+            .parse(contract("system-modules/catalog.json")).byId("zairenkai")
+            ?: error("captured module catalog has no zairenkai entry")
+        val expectedVersion = catalogModule.version.removePrefix("v").split(".").map(String::toInt)
+        assertEquals(3, expectedVersion.size)
+        assertEquals(CoreVersion(expectedVersion[0], expectedVersion[1], expectedVersion[2]), m.version)
+        assertEquals(expectedVersion.joinToString("."), m.version.toString())
         assertTrue(m.compatible)
     }
 

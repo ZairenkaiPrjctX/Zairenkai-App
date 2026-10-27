@@ -60,7 +60,15 @@ rm -rf "$OUT/jniLibs" "$OUT/assets"
 # --- zart (Zairenkai-ART) ---------------------------------------------------------------
 ZART_COMMIT=$(field zart commit)
 fetch "$OUT/src/zart" "$(field zart url)" "$ZART_COMMIT"
-(cd "$OUT/src/zart" && rm -rf dist && scripts/build-android.sh)
+ZART_DIST="$OUT/src/zart/dist"
+if python3 "$ROOT/integration/scripts/fetch_runtime_artifact.py" --lock "$LOCK" --component zart --key id --out "$ZART_DIST"; then
+  echo "zart: consuming checksum-verified immutable artifact for $ZART_COMMIT"
+else
+  rc=$?
+  [ "$rc" -eq 3 ] || { echo "zart artifact pin exists but verification failed; refusing source fallback" >&2; exit "$rc"; }
+  echo "zart: no pinned artifact; building from the exact locked source commit"
+  (cd "$OUT/src/zart" && rm -rf dist && scripts/build-android.sh)
+fi
 ZART_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' "$OUT/src/zart/Cargo.toml" | head -n1)
 for abi in arm64-v8a armeabi-v7a x86_64; do
   mkdir -p "$OUT/jniLibs/$abi"
@@ -78,7 +86,15 @@ install -m 0644 "$ROOT/integration/notices/zart-aosp-attribution.txt" "$OUT/asse
 # --- zthermal (Zairenkai-ThermalTools) ---------------------------------------------------
 ZT_COMMIT=$(field zthermal commit)
 fetch "$OUT/src/zthermal" "$(field zthermal url)" "$ZT_COMMIT"
-(cd "$OUT/src/zthermal" && rm -rf dist && scripts/build-android.sh)
+ZT_DIST="$OUT/src/zthermal/dist"
+if python3 "$ROOT/integration/scripts/fetch_runtime_artifact.py" --lock "$LOCK" --component zthermal --key id --out "$ZT_DIST"; then
+  echo "zthermal: consuming checksum-verified immutable artifact for $ZT_COMMIT"
+else
+  rc=$?
+  [ "$rc" -eq 3 ] || { echo "zthermal artifact pin exists but verification failed; refusing source fallback" >&2; exit "$rc"; }
+  echo "zthermal: no pinned artifact; building from the exact locked source commit"
+  (cd "$OUT/src/zthermal" && rm -rf dist && scripts/build-android.sh)
+fi
 ZT_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' "$OUT/src/zthermal/Cargo.toml" | head -n1)
 (cd "$OUT/src/zthermal/dist" && sha256sum -c --quiet SHA256SUMS)
 for abi in arm64-v8a armeabi-v7a x86_64; do
@@ -96,8 +112,15 @@ notices "$OUT/src/zthermal" zthermal zthermal
 ZIE_COMMIT=$(field zie-run commit)
 ZIE="$OUT/src/zie"
 fetch "$ZIE" "$(field zie-run url)" "$ZIE_COMMIT"
-(cd "$ZIE" && rm -rf dist && scripts/build-android.sh)
 ZIE_DIST="$ZIE/dist/zairenkai-intelligence"
+if python3 "$ROOT/integration/scripts/fetch_runtime_artifact.py" --lock "$LOCK" --component zie-run --key id --out "$ZIE_DIST"; then
+  echo "zie-run: consuming checksum-verified immutable artifact for $ZIE_COMMIT"
+else
+  rc=$?
+  [ "$rc" -eq 3 ] || { echo "zie-run artifact pin exists but verification failed; refusing source fallback" >&2; exit "$rc"; }
+  echo "zie-run: no pinned artifact; building runtime from the exact locked source commit"
+  (cd "$ZIE" && rm -rf dist && scripts/build-android.sh)
+fi
 python3 - "$ZIE_DIST" "$ZIE_COMMIT" <<'PY'
 import hashlib, json, pathlib, sys
 d, commit = pathlib.Path(sys.argv[1]), sys.argv[2]
@@ -141,26 +164,53 @@ done
 rm -f "$OUT/assets/system-modules.json"
 rm -rf "$OUT/assets/system-modules" "$OUT/assets/licenses/zairenkai-core" "$OUT/assets/licenses/zairenkai-fas" \
   "$OUT/assets/licenses/zairenkai-tuning"
-mkdir -p "$OUT/assets/system-modules"
+mkdir -p "$OUT/assets/system-modules" "$OUT/artifacts"
+MODULE_ARTIFACT_MODE=source
+MODULE_ARTIFACT_TAG=""
+ARTIFACT_ZIP=""
+# Exit 3 means no release pin is configured yet; any other verification error fails the build.
+if python3 "$ROOT/integration/scripts/fetch_module_artifact.py" "$LOCK" "$MOD_DIR" "$OUT/artifacts"; then
+  MODULE_ARTIFACT_MODE=release
+  MODULE_ARTIFACT_TAG=$(python3 - "$LOCK" <<'PYTAG'
+import json, sys
+m = next(c for c in json.load(open(sys.argv[1]))["components"] if c["id"] == "zairenkai-module")
+print(m["release_artifact"]["release_tag"])
+PYTAG
+)
+  ARTIFACT_ZIP="$OUT/artifacts/zairenkai-${MODULE_ARTIFACT_TAG}.zip"
+else
+  rc=$?
+  [ "$rc" -eq 3 ] || exit "$rc"
+  echo "No locked release artifact; using the existing source-build fallback."
+fi
 components=()
-# ztune (Zairenkai-Tuning) is GPL-3.0-only: its build also writes the Corresponding Source archive,
-# and assemble.py refuses the component without it. The app never runs ztune; Core does.
+# Fetch all pinned sources in both modes for protocol contract capture, provenance and license checks.
+# In artifact mode, the already-built Android binaries are consumed from the release instead of being
+# rebuilt independently; source trees are still fetched and hash/commit checked.
 for spec in zairenkai-core:zcored zairenkai-fas:zfasd zairenkai-tuning:ztune; do
   name=${spec%%:*}
   dir="$OUT/src/$name"
   fetch "$dir" "https://github.com/$(pinned "$name" repository).git" "$(pinned "$name" commit)"
-  (cd "$dir" && rm -rf dist && scripts/build-android.sh >/dev/null)
-  components+=(--component "$dir/dist/$name")
+  if [ "$MODULE_ARTIFACT_MODE" = source ]; then
+    (cd "$dir" && rm -rf dist && scripts/build-android.sh >/dev/null)
+    components+=(--component "$dir/dist/$name")
+  fi
   notices "$dir" "${spec#*:}" "$name"
 done
-rm -rf "$MOD_DIR/dist"
-python3 "$MOD_DIR/scripts/assemble.py" --lock "$MOD_DIR/components.lock.json" "${components[@]}" --out "$MOD_DIR/dist"
-zip=$(ls "$MOD_DIR"/dist/zairenkai-v*.zip)
-(cd "$MOD_DIR/dist" && sha256sum -c --quiet "$(basename "$zip").sha256")
+if [ "$MODULE_ARTIFACT_MODE" = source ]; then
+  rm -rf "$MOD_DIR/dist"
+  python3 "$MOD_DIR/scripts/assemble.py" --lock "$MOD_DIR/components.lock.json" "${components[@]}" --out "$MOD_DIR/dist"
+  zip=$(ls "$MOD_DIR"/dist/zairenkai-v*.zip)
+  (cd "$MOD_DIR/dist" && sha256sum -c --quiet "$(basename "$zip").sha256")
+else
+  zip="$ARTIFACT_ZIP"
+  [ -f "$zip" ] || { echo "verified module artifact disappeared: $zip" >&2; exit 1; }
+fi
 python3 "$ROOT/integration/scripts/module_asset.py" --spec "$ROOT/integration/system-modules.json" \
   --id zairenkai --zip "$zip" --source "$MOD_DIR" --commit "$MOD_COMMIT" \
   --repository "$(field zairenkai-module repository)" --out "$OUT/assets/system-modules.json"
 install -m 0644 "$zip" "$OUT/assets/system-modules/zairenkai.zip"
+
 PROFILE=distributable
 # The catalog is signed only when the module-signing key is provided (release builds); the
 # key's public half must be in integration/module-trust.json. Without it the catalog stays
@@ -174,15 +224,41 @@ fi
 
 # --- AFID device candidates (Zairenkai-Database-Source) ----------------------------------
 AFID_COMMIT=$(field afid-device-candidates commit)
-fetch "$OUT/src/afid" "$(field afid-device-candidates url)" "$AFID_COMMIT" \
-  /database/staging/unresolved/lineageos_wiki/ /NOTICE /LICENSE
-python3 "$ROOT/integration/scripts/afid_asset.py" --source "$OUT/src/afid" --commit "$AFID_COMMIT" \
-  --out "$OUT/assets/afid/device-candidates.json"
+mkdir -p "$OUT/assets/afid" "$OUT/artifacts"
+if python3 "$ROOT/integration/scripts/fetch_runtime_artifact.py" --lock "$LOCK" --component afid-device-candidates --key id --out "$OUT/artifacts/afid-device-candidates"; then
+  AFID_ASSET="$OUT/artifacts/afid-device-candidates/afid-device-candidates.json"
+  python3 - "$AFID_ASSET" "$AFID_COMMIT" <<'PYAFID'
+import json, pathlib, sys
+p, commit = pathlib.Path(sys.argv[1]), sys.argv[2]
+if not p.is_file(): raise SystemExit('verified AFID artifact lacks afid-device-candidates.json')
+d = json.loads(p.read_text())
+if d.get('generated_from', {}).get('commit') != commit: raise SystemExit('AFID artifact was generated from a different database commit')
+if d.get('license', {}).get('spdx') != 'CC-BY-SA-3.0' or d.get('verification') != 'unverified':
+    raise SystemExit('AFID artifact attribution/license is missing or unexpected')
+if not d.get('devices'): raise SystemExit('AFID artifact has no candidates')
+PYAFID
+  install -m 0644 "$AFID_ASSET" "$OUT/assets/afid/device-candidates.json"
+else
+  rc=$?
+  [ "$rc" -eq 3 ] || { echo "AFID artifact pin exists but verification failed; refusing generated-source fallback" >&2; exit "$rc"; }
+  fetch "$OUT/src/afid" "$(field afid-device-candidates url)" "$AFID_COMMIT" \
+    /database/staging/unresolved/lineageos_wiki/ /NOTICE /LICENSE
+  python3 "$ROOT/integration/scripts/afid_asset.py" --source "$OUT/src/afid" --commit "$AFID_COMMIT" \
+    --out "$OUT/assets/afid/device-candidates.json"
+fi
 
 # --- record what was built ----------------------------------------------------------------
-python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$ZT_COMMIT" "$ZT_VERSION" "$AFID_COMMIT" "$PROFILE" "$ZIE_COMMIT" "$ZIE_LLAMA" <<'PY'
+python3 - "$OUT" "$ZART_COMMIT" "$ZART_VERSION" "$ZT_COMMIT" "$ZT_VERSION" "$AFID_COMMIT" "$PROFILE" "$ZIE_COMMIT" "$ZIE_LLAMA" "$MOD_COMMIT" "$MODULE_ARTIFACT_TAG" "$LOCK" <<'PY'
 import hashlib, json, pathlib, sys
-out, zart_commit, zart_version, zt_commit, zt_version, afid_commit, profile, zie_commit, zie_llama = pathlib.Path(sys.argv[1]), *sys.argv[2:]
+out, zart_commit, zart_version, zt_commit, zt_version, afid_commit, profile, zie_commit, zie_llama, module_commit, module_artifact_tag, lock_path = pathlib.Path(sys.argv[1]), *sys.argv[2:]
+lock = json.loads(pathlib.Path(lock_path).read_text())
+rows = {c["id"]: c for c in lock["components"]}
+def provenance(cid, mode):
+    pin = rows.get(cid, {}).get("release_artifact")
+    return {"mode": mode, "release_tag": pin.get("release_tag") if pin else None,
+            "source_commit": pin.get("source_commit") if pin else rows.get(cid, {}).get("commit"),
+            "asset_sha256": pin.get("asset_sha256") if pin else None,
+            "manifest_sha256": pin.get("manifest_sha256") if pin else None}
 files = sorted(p for p in (out / "jniLibs").rglob("*") if p.is_file()) + \
         sorted(p for p in (out / "assets").rglob("*") if p.is_file())
 rec = {
@@ -192,6 +268,16 @@ rec = {
     "zthermal": {"commit": zt_commit, "version": zt_version},
     "afid": {"commit": afid_commit},
     "intelligence": {"commit": zie_commit, "llama_cpp": zie_llama},
+    "zairenkai_module": {"commit": module_commit, "artifact_release_tag": module_artifact_tag or None},
+    "artifact_provenance": {
+        "zart": provenance("zart", "release" if rows.get("zart", {}).get("release_artifact") else "source"),
+        "zthermal": provenance("zthermal", "release" if rows.get("zthermal", {}).get("release_artifact") else "source"),
+        "afid-device-candidates": provenance("afid-device-candidates", "release" if rows.get("afid-device-candidates", {}).get("release_artifact") else "source"),
+        "zie-run": provenance("zie-run", "release" if rows.get("zie-run", {}).get("release_artifact") else "source"),
+        "zairenkai-module": {"mode": "release" if module_artifact_tag else "source", "release_tag": module_artifact_tag or None,
+                              "source_commit": module_commit,
+                              "asset_sha256": (rows.get("zairenkai-module", {}).get("release_artifact") or {}).get("asset_sha256") if module_artifact_tag else None},
+    },
     "files": {str(p.relative_to(out)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
 }
 (out / "components.json").write_text(json.dumps(rec, indent=2) + "\n")

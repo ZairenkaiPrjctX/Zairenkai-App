@@ -138,9 +138,11 @@ class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
     private val action = MutableStateFlow<ActionState>(ActionState.Idle)
     val actionState: StateFlow<ActionState> = action.asStateFlow()
     private val tuningState = MutableStateFlow<CoreCall<TuningTelemetry>?>(null)
+    private val capabilityState = MutableStateFlow<CoreCall<List<com.zairenkaiprjctx.integration.core.CoreCapability>>?>(null)
 
-    /** ztune telemetry through Core's `tuning` method; asked only while Core answers. */
+    /** ztune telemetry and its capability gate, both sourced from Core. */
     val tuning: StateFlow<CoreCall<TuningTelemetry>?> = tuningState.asStateFlow()
+    val coreCapabilities: StateFlow<CoreCall<List<com.zairenkaiprjctx.integration.core.CoreCapability>>?> = capabilityState.asStateFlow()
 
     /** Battery saver as Android reports it now (PowerManager.isPowerSaveMode). */
     val powerSave: Boolean get() = c.platform.powerSaveMode()
@@ -150,7 +152,13 @@ class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
             val h = c.core.health()
             health.value = h
             fasState.value = c.fas.status()
-            tuningState.value = if (h is CoreCall.Ok) c.core.tuning() else null
+            if (h is CoreCall.Ok) {
+                capabilityState.value = c.core.capabilities()
+                tuningState.value = c.core.tuning()
+            } else {
+                capabilityState.value = null
+                tuningState.value = null
+            }
         }
     }
 
@@ -161,6 +169,8 @@ class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
         is CoreOperation.FasSetProfile -> UiText(R.string.action_profile, listOf(op.profile.wire))
         is CoreOperation.FasSetEnabled -> UiText(if (op.enabled) R.string.fas_enable else R.string.fas_disable)
         is CoreOperation.SetLowPowerMode -> UiText(if (op.enabled) R.string.battery_saver_on else R.string.battery_saver_off)
+        is CoreOperation.TuningSetIoScheduler -> UiText(R.string.tuning_action_io, listOf(op.scheduler.wire))
+        is CoreOperation.TuningSetGpuGovernor -> UiText(R.string.tuning_action_gpu, listOf(op.governor.wire))
     }
 
     /** One operation at a time: a request while another is running is ignored. */
@@ -186,18 +196,26 @@ class PerformanceViewModel(private val c: AppContainer) : ViewModel() {
         action.value = ActionState.Working(l)
         viewModelScope.launch(Dispatchers.IO) {
             val r = c.core.submit(op, dryRun = false)
-            // Read the provider back before reporting, so the result shows what zfasd now says.
-            val status = c.fas.status()
-            fasState.value = status
-            health.value = c.core.health()
+            // Re-read the owning surface. Tuning writes must never be reported as FAS results.
+            val status = if (op is CoreOperation.FasSetProfile || op is CoreOperation.FasSetEnabled) c.fas.status() else null
+            if (status != null) fasState.value = status
+            val h = c.core.health()
+            health.value = h
+            if (h is CoreCall.Ok) {
+                capabilityState.value = c.core.capabilities()
+                tuningState.value = c.core.tuning()
+            } else {
+                capabilityState.value = null
+                tuningState.value = null
+            }
             action.value = when (r) {
                 is CoreCall.Ok -> ActionState.Done(
                     l, "${r.value.outcome}: ${r.value.message}", r.value.outcome in setOf("applied", "already_applied"),
-                    profileCheck(requestedProfile(op), status),
+                    requestedProfile(op)?.let { profileCheck(it, status) },
                 )
                 else -> ActionState.Error(l, r.describeFailure())
             }
-            c.registry.refresh("fas")
+            c.registry.refresh(if (status != null) "fas" else "core")
         }
     }
 

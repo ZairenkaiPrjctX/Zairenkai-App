@@ -6,6 +6,10 @@ import com.zairenkaiprjctx.integration.core.CoreCall
 import com.zairenkaiprjctx.integration.core.CoreClient
 import com.zairenkaiprjctx.integration.core.CoreOperation
 import com.zairenkaiprjctx.integration.core.FasProfileName
+import com.zairenkaiprjctx.integration.core.TuningGpuGovernor
+import com.zairenkaiprjctx.integration.core.TuningIoScheduler
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -54,6 +58,19 @@ class CoreClientTest {
         assertEquals("deny", r.decision!!.verdict)
         assertEquals(4, r.decision!!.rules.size)
         assertTrue(r.decision!!.rules.any { it.rule == "builtin.thermal" && it.verdict == "deny" })
+    }
+
+    @Test
+    fun tuningWritesUseOnlyClosedCoreProtocolValues() {
+        val io = CoreOperation.TuningSetIoScheduler(TuningIoScheduler.KYBER).toJson()
+        assertEquals("tuning_set_io_scheduler", io["op"]?.jsonPrimitive?.contentOrNull)
+        assertEquals("kyber", io["scheduler"]?.jsonPrimitive?.contentOrNull)
+        assertTrue(TuningIoScheduler.fromWire("some_free_form_value") == null)
+
+        val gpu = CoreOperation.TuningSetGpuGovernor(TuningGpuGovernor.POWERSAVE).toJson()
+        assertEquals("tuning_set_gpu_governor", gpu["op"]?.jsonPrimitive?.contentOrNull)
+        assertEquals("powersave", gpu["governor"]?.jsonPrimitive?.contentOrNull)
+        assertTrue(TuningGpuGovernor.fromWire("root-shell-command") == null)
     }
 
     @Test

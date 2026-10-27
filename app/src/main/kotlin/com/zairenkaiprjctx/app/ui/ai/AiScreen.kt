@@ -107,12 +107,17 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
     val record = snapshot.byId(AI_CAPABILITY)
     // The composer is enabled only when the registry reports a usable on-device runtime and model.
     val ready = record?.availability?.usable == true
+    // Core-backed known questions (heat, FAS status, capabilities and Tuning telemetry) do not
+    // require generation. Keep those available when the runner is ready but the optional weights
+    // have not been imported yet.
+    val toolsReady = ready || record?.availability?.state == AvailabilityState.MODEL_NOT_IMPORTED
+    val modelManifest = vm.manifest
+    val context = LocalContext.current
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) vm.importModel(uri) }
     // On mobile data the 429 MB download waits for the user's explicit yes.
     var askMetered by rememberSaveable { mutableStateOf(false) }
     if (askMetered) {
-        val m = vm.manifest
-        val context = LocalContext.current
+        val m = modelManifest
         ConfirmDialog(
             title = stringResource(R.string.ai_model_metered_title),
             body = { Text(stringResource(R.string.ai_model_metered_body, android.text.format.Formatter.formatShortFileSize(context, m?.sizeBytes ?: 0))) },
@@ -131,20 +136,18 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
             contentPadding = PaddingValues(start = start, end = end, top = padding.calculateTopPadding(), bottom = ZairenkaiSpacing.l),
             verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
         ) {
-            item { Box(Modifier.entrance(entrance, 0)) { AiIntro(record?.availability?.state, thinking = busy) } }
             item {
-                Column(Modifier.entrance(entrance, 1), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
-                    GroupHeader(stringResource(R.string.ai_try), icon = ZairenkaiGlyphs.spark)
-                    TileGrid(AiPrompt.entries) { p, m ->
-                        val question = stringResource(p.text)
-                        PromptCard(p, m) { if (ready && !busy) vm.send(question) else open(p.opens) }
-                    }
-                    Detail(stringResource(if (ready) R.string.ai_try_note_ready else R.string.ai_try_note), Modifier.padding(horizontal = ZairenkaiSpacing.xs))
+                Box(Modifier.entrance(entrance, 0)) {
+                    AiIntro(
+                        state = record?.availability?.state,
+                        thinking = busy,
+                    )
                 }
             }
-            item { Box(Modifier.entrance(entrance, 2)) { HowItWorks() } }
             item {
-                Box(Modifier.entrance(entrance, 3)) {
+                Box(Modifier.entrance(entrance, 1)) {
+                    // The model's setup and import controls are visible immediately, not below
+                    // several sections. This makes a missing model a guided setup state, not a dead chat.
                     ModelCard(
                         record, vm.manifest, importState, partial = vm.partialBytes(),
                         onDownload = { if (vm.meteredNetwork()) askMetered = true else vm.downloadModel() },
@@ -153,11 +156,22 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
                     )
                 }
             }
+            item {
+                Column(Modifier.entrance(entrance, 2), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m)) {
+                    GroupHeader(stringResource(R.string.ai_try), icon = ZairenkaiGlyphs.spark)
+                    TileGrid(AiPrompt.entries) { p, m ->
+                        val question = stringResource(p.text)
+                        PromptCard(p, m) { if (toolsReady && !busy) vm.send(question) else open(p.opens) }
+                    }
+                    Detail(stringResource(when { ready -> R.string.ai_try_note_ready; toolsReady -> R.string.ai_try_note_tools_only; else -> R.string.ai_try_note }), Modifier.padding(horizontal = ZairenkaiSpacing.xs))
+                }
+            }
+            item { Box(Modifier.entrance(entrance, 3)) { HowItWorks() } }
             items(turns, key = { it.id }) { t -> AiTurnView(t, onDecide = vm::decide) }
             if (busy) item { ProgressRow(stringResource(R.string.ai_thinking)) }
         }
         AiComposer(
-            enabled = ready && !busy,
+            enabled = toolsReady && !busy,
             onSend = vm::send,
             modifier = Modifier.padding(start = start, end = end, bottom = (padding.calculateBottomPadding() - ZairenkaiSpacing.l).coerceAtLeast(ZairenkaiSpacing.s)),
         )
@@ -165,17 +179,21 @@ fun AiScreen(vm: AiViewModel, snapshot: RegistrySnapshot, padding: PaddingValues
 }
 
 @Composable
-private fun AiIntro(state: AvailabilityState?, thinking: Boolean = false) {
+private fun AiIntro(
+    state: AvailabilityState?,
+    thinking: Boolean = false,
+) {
     val cs = MaterialTheme.colorScheme
     Column(
-        Modifier.fillMaxWidth().padding(top = ZairenkaiSpacing.s),
+        Modifier.fillMaxWidth().padding(top = ZairenkaiSpacing.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.m),
+        verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.s),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            // A soft halo behind the mark; the mark moves only while the model is actually working.
-            Box(Modifier.size(196.dp).background(Brush.radialGradient(listOf(cs.primary.copy(alpha = 0.24f), cs.primary.copy(alpha = 0.06f), Color.Transparent))))
-            AiOrb(size = 112.dp, active = thinking)
+            // Compact branded mark: reserve the vertical space for model setup and actual answers,
+            // not a large empty hero that pushes the actionable controls below the fold.
+            Box(Modifier.size(112.dp).background(Brush.radialGradient(listOf(cs.primary.copy(alpha = 0.22f), cs.primary.copy(alpha = 0.05f), Color.Transparent))))
+            AiOrb(size = 64.dp, active = thinking)
         }
         Text(
             stringResource(R.string.ai_tagline),
@@ -393,6 +411,11 @@ private fun Fact.label(): Int = when (key) {
     FactKey.ENABLED -> R.string.ai_fact_enabled
     FactKey.PROFILE -> R.string.ai_fact_profile
     FactKey.FPS -> R.string.ai_fact_fps
+    FactKey.TUNING_SOC -> R.string.ai_fact_tuning_soc
+    FactKey.TUNING_CPU -> R.string.ai_fact_tuning_cpu
+    FactKey.TUNING_GPU -> R.string.ai_fact_tuning_gpu
+    FactKey.TUNING_MEMORY -> R.string.ai_fact_tuning_memory
+    FactKey.TUNING_STORAGE -> R.string.ai_fact_tuning_storage
 }
 
 /** An answer that did not pass the checks, or a model that could not run: shown, never acted on. */

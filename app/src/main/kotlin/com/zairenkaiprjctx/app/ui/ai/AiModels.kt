@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zairenkaiprjctx.integration.ai.AgentReply
+import com.zairenkaiprjctx.integration.ai.AiAnswerComposer
 import com.zairenkaiprjctx.integration.ai.ChangeResult
 import com.zairenkaiprjctx.integration.ai.Fact
 import com.zairenkaiprjctx.integration.ai.LocalAgent
@@ -136,37 +137,40 @@ class AiViewModel(
         working.value = true
         turns.update { it + AiTurn.User(nextId("u"), question) }
         viewModelScope.launch(io) {
-            val added: List<AiTurn> = try {
-                when (val r = agent.handle(question)) {
-                    is AgentReply.Rejected -> listOf(AiTurn.Refusal(nextId("x"), r.reason))
-                    is AgentReply.Planned -> buildList<AiTurn> {
-                        add(AiTurn.Assistant(nextId("a"), r.plan.goal, r.plan.clarification))
-                        r.reads.forEach { (call, outcome) ->
-                            add(
-                                when (outcome) {
-                                    is ToolOutcome.Completed -> AiTurn.Tool(nextId("t"), call.tool, call.arguments, ToolStatus.COMPLETED, outcome.facts)
-                                    is ToolOutcome.Failed -> AiTurn.Tool(nextId("t"), call.tool, call.arguments, ToolStatus.FAILED, detail = outcome.detail)
-                                },
-                            )
-                        }
-                        r.refused.forEach { (call, why) -> add(AiTurn.Tool(nextId("t"), call.tool, call.arguments, ToolStatus.REJECTED, detail = why)) }
-                        r.changes.forEach { c ->
-                            val id = nextId("c")
-                            changes[id] = agent to c
-                            add(
-                                AiTurn.Approval(
-                                    id, c.call.tool, c.call.arguments.entries.joinToString(", ") { "${it.key}: ${it.value}" },
-                                    c.verdict, c.rules + listOfNotNull(c.detail.takeIf { it.isNotBlank() && it != "ok" }), ApprovalState.PENDING,
-                                ),
-                            )
+            try {
+                val added: List<AiTurn> = try {
+                    when (val r = agent.handle(question)) {
+                        is AgentReply.Rejected -> listOf(AiTurn.Refusal(nextId("x"), r.reason))
+                        is AgentReply.Planned -> buildList<AiTurn> {
+                            add(AiTurn.Assistant(nextId("a"), AiAnswerComposer.compose(question, r), r.plan.clarification))
+                            r.reads.forEach { (call, outcome) ->
+                                add(
+                                    when (outcome) {
+                                        is ToolOutcome.Completed -> AiTurn.Tool(nextId("t"), call.tool, call.arguments, ToolStatus.COMPLETED, outcome.facts)
+                                        is ToolOutcome.Failed -> AiTurn.Tool(nextId("t"), call.tool, call.arguments, ToolStatus.FAILED, detail = outcome.detail)
+                                    },
+                                )
+                            }
+                            r.refused.forEach { (call, why) -> add(AiTurn.Tool(nextId("t"), call.tool, call.arguments, ToolStatus.REJECTED, detail = why)) }
+                            r.changes.forEach { c ->
+                                val id = nextId("c")
+                                changes[id] = agent to c
+                                add(
+                                    AiTurn.Approval(
+                                        id, c.call.tool, c.call.arguments.entries.joinToString(", ") { "${it.key}: ${it.value}" },
+                                        c.verdict, c.rules + listOfNotNull(c.detail.takeIf { it.isNotBlank() && it != "ok" }), ApprovalState.PENDING,
+                                    ),
+                                )
+                            }
                         }
                     }
+                } catch (e: Exception) {
+                    listOf(AiTurn.Refusal(nextId("x"), e.message ?: e.javaClass.simpleName))
                 }
-            } catch (e: Exception) {
-                listOf(AiTurn.Refusal(nextId("x"), e.message ?: e.javaClass.simpleName))
+                turns.update { it + added }
+            } finally {
+                working.value = false
             }
-            turns.update { it + added }
-            working.value = false
         }
     }
 

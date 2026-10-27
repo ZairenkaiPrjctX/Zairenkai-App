@@ -63,8 +63,11 @@ import com.zairenkaiprjctx.app.design.UnavailableCard
 import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
 import com.zairenkaiprjctx.integration.core.CoreCall
+import com.zairenkaiprjctx.integration.core.CoreCapability
 import com.zairenkaiprjctx.integration.core.CoreOperation
 import com.zairenkaiprjctx.integration.core.FasProfileName
+import com.zairenkaiprjctx.integration.core.TuningGpuGovernor
+import com.zairenkaiprjctx.integration.core.TuningIoScheduler
 import com.zairenkaiprjctx.integration.core.TuningReading
 import com.zairenkaiprjctx.integration.core.TuningTelemetry
 import com.zairenkaiprjctx.integration.core.tuningNotInstalled
@@ -114,6 +117,7 @@ fun PerformanceScreen(vm: PerformanceViewModel, snapshot: RegistrySnapshot, padd
     val fas by vm.fasStatus.collectAsStateWithLifecycle()
     val action by vm.actionState.collectAsStateWithLifecycle()
     val tuning by vm.tuning.collectAsStateWithLifecycle()
+    val capabilities by vm.coreCapabilities.collectAsStateWithLifecycle()
     val coreReady = health is CoreCall.Ok
     val current = (fas as? FasCall.Ok)?.value
     val entrance = rememberEntrance()
@@ -158,7 +162,7 @@ fun PerformanceScreen(vm: PerformanceViewModel, snapshot: RegistrySnapshot, padd
             }
         }
         // Tuning telemetry exists only through Core: nothing to show while Core does not answer.
-        if (coreReady) item { TuningSection(tuning, snapshot) }
+        if (coreReady) item { TuningSection(tuning, capabilities, snapshot, vm, action is ActionState.Working) }
     }
     ActionDialog(action, vm)
 }
@@ -313,7 +317,13 @@ private fun ServiceControls(vm: PerformanceViewModel, coreReady: Boolean, curren
 
 /** ztune telemetry as Core returns it: only readings ztune marked `ok` show a value. */
 @Composable
-private fun TuningSection(result: CoreCall<TuningTelemetry>?, snapshot: RegistrySnapshot) {
+private fun TuningSection(
+    result: CoreCall<TuningTelemetry>?,
+    capabilities: CoreCall<List<CoreCapability>>?,
+    snapshot: RegistrySnapshot,
+    vm: PerformanceViewModel,
+    busy: Boolean,
+) {
     val record = snapshot.byId("tuning.telemetry")
     when (result) {
         null -> SectionCard(stringResource(R.string.tuning_title)) { ProgressRow(stringResource(R.string.loading)) }
@@ -355,11 +365,81 @@ private fun TuningSection(result: CoreCall<TuningTelemetry>?, snapshot: Registry
                         }
                     }
                 }
+                TuningControls(capabilities, t, vm, busy)
             }
         }
         is CoreCall.Error -> UnavailableCard(record, if (result.tuningNotInstalled) stringResource(R.string.tuning_not_installed) else result.describeFailure())
         else -> UnavailableCard(record, result.describeFailure())
     }
+}
+
+/**
+ * The App exposes only Core's closed operation set. Buttons stay disabled unless Core reports the
+ * individual capability as read_write; Core then performs a dry-run and a separate confirmation
+ * before applying. No app-side path bypasses Tuning's exact-device authorization.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TuningControls(
+    capabilities: CoreCall<List<CoreCapability>>?,
+    telemetry: TuningTelemetry,
+    vm: PerformanceViewModel,
+    busy: Boolean,
+) {
+    val reported: List<CoreCapability> = when (val call = capabilities) {
+        is CoreCall.Ok -> call.value
+        else -> emptyList()
+    }
+    val io = reported.firstOrNull { it.id == "tuning.io_scheduler" }
+    val gpu = reported.firstOrNull { it.id == "tuning.gpu_governor" }
+    val ioWritable = io?.status == "read_write"
+    val gpuWritable = gpu?.status == "read_write"
+
+    SegmentedGroup(title = stringResource(R.string.tuning_controls), icon = ZairenkaiGlyphs.sliders) {
+        row {
+            GroupContent {
+                Text(stringResource(R.string.tuning_controls_note), style = MaterialTheme.typography.bodySmall)
+                InfoRow(stringResource(R.string.tuning_gpu_governor), stringResource(tuningCapabilityLabel(gpu?.status)), code = true)
+                if (!gpuWritable) Detail(gpu?.evidence?.joinToString("; ")?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.tuning_control_locked), maxLines = 3)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
+                    TuningGpuGovernor.entries.forEach { governor ->
+                        OutlinedButton(
+                            onClick = { vm.preview(CoreOperation.TuningSetGpuGovernor(governor)) },
+                            enabled = gpuWritable && !busy,
+                        ) { Text(governor.wire) }
+                    }
+                }
+            }
+        }
+        row {
+            GroupContent {
+                val current = telemetry.storage.firstOrNull()?.scheduler?.text ?: stringResource(R.string.not_reported)
+                InfoRow(stringResource(R.string.tuning_scheduler_current), current, code = true)
+                InfoRow(stringResource(R.string.tuning_scheduler_access), stringResource(tuningCapabilityLabel(io?.status)), code = true)
+                if (!ioWritable) Detail(io?.evidence?.joinToString("; ")?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.tuning_control_locked), maxLines = 3)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs), verticalArrangement = Arrangement.spacedBy(ZairenkaiSpacing.xs)) {
+                    TuningIoScheduler.entries.forEach { scheduler ->
+                        OutlinedButton(
+                            onClick = { vm.preview(CoreOperation.TuningSetIoScheduler(scheduler)) },
+                            enabled = ioWritable && !busy,
+                        ) { Text(scheduler.wire) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@StringRes
+private fun tuningCapabilityLabel(status: String?): Int = when (status) {
+    "read_write" -> R.string.tuning_access_writable
+    "read_only" -> R.string.tuning_access_read_only
+    "permission_restricted" -> R.string.tuning_access_permission
+    "unsupported" -> R.string.tuning_access_unsupported
+    "temporarily_unavailable" -> R.string.tuning_access_unavailable
+    else -> R.string.tuning_access_unknown
 }
 
 private fun gib(bytes: Long): String = "%.1f GiB".format(bytes / 1_073_741_824.0)

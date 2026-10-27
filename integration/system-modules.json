@@ -12,7 +12,8 @@
         "core.actions",
         "core.modules",
         "fas.status",
-        "fas.control"
+        "fas.control",
+        "tuning.telemetry"
       ],
       "requirements": {
         "arch": "arm64",

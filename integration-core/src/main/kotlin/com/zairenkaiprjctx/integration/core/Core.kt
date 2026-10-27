@@ -115,14 +115,31 @@ sealed interface CoreOperation {
     data class FasSetProfile(val profile: FasProfileName) : CoreOperation
     data class FasSetEnabled(val enabled: Boolean) : CoreOperation
     data class SetLowPowerMode(val enabled: Boolean) : CoreOperation
+    data class TuningSetIoScheduler(val scheduler: TuningIoScheduler) : CoreOperation
+    data class TuningSetGpuGovernor(val governor: TuningGpuGovernor) : CoreOperation
 
     fun toJson(): JsonObject = buildJsonObject {
         when (val op = this@CoreOperation) {
             is FasSetProfile -> { put("op", "fas_set_profile"); put("profile", op.profile.wire) }
             is FasSetEnabled -> { put("op", "fas_set_enabled"); put("enabled", op.enabled) }
             is SetLowPowerMode -> { put("op", "set_low_power_mode"); put("enabled", op.enabled) }
+            is TuningSetIoScheduler -> { put("op", "tuning_set_io_scheduler"); put("scheduler", op.scheduler.wire) }
+            is TuningSetGpuGovernor -> { put("op", "tuning_set_gpu_governor"); put("governor", op.governor.wire) }
         }
     }
+}
+
+/** Values permitted by Core's closed protocol; target support and policy are still decided by Core. */
+enum class TuningIoScheduler(val wire: String) {
+    MQ_DEADLINE("mq-deadline"), KYBER("kyber"), BFQ("bfq"), NONE("none"), CFQ("cfq"), DEADLINE("deadline"), NOOP("noop");
+
+    companion object { fun fromWire(value: String?): TuningIoScheduler? = entries.firstOrNull { it.wire == value } }
+}
+
+enum class TuningGpuGovernor(val wire: String) {
+    MSM_ADRENO_TZ("msm-adreno-tz"), SIMPLE_ONDEMAND("simple_ondemand"), PERFORMANCE("performance"), POWERSAVE("powersave");
+
+    companion object { fun fromWire(value: String?): TuningGpuGovernor? = entries.firstOrNull { it.wire == value } }
 }
 
 /** FAS profiles as both Core and zfasd name them. */

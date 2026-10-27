@@ -1,5 +1,32 @@
 # Organization repository audit
 
+## Re-audit, 2026-10-27 (live organization state)
+
+The current organization has eleven device/app ecosystem repositories in this hand-off. The live
+App full-integration CI (run 40434765619) succeeded on 2026-10-27: its reduced tests, source-lock
+validation, native builds, binary/schema checks, APK inspection and artifact upload all passed.
+The Modules release build (run 40483942101) also succeeded and produced the published `v0.3.1`
+module ZIP. The Intelligence Engine model-release pipeline has now published the model release
+`model-qwen2_5_0_5b_instruct_q4_0`, including the 428,730,208-byte GGUF, manifest, licence and
+SHA-256 file.
+
+| Area | Current observed state | Integration consequence |
+|---|---|---|
+| App → source components | Builds from exact commits in `repository-lock.json`, then records file hashes in `components.json` | Reproducible build, but source pins must be re-audited; `zie-run` had been pinned to a PR topic commit even after the merge |
+| App → root module | Rebuilds Modules' locked Core/FAS/Tuning components and checks module scripts against the pinned Modules source | It does **not** yet consume the published Module ZIP asset directly; it rebuilds the exact locked source to re-verify it |
+| Modules → Core/FAS/Tuning | Published v0.3.1 pins Core `345fc7f`, FAS `1c453db`, Tuning `0c226b2`; the accompanying patch proposes Core `377ba45` and module v0.3.2 | Version numbers are intentionally component-specific; compatibility is the tuple of full commits, schema versions and hashes, not one shared semver. The App lock must be re-pinned to the actual Modules merge SHA after that merge |
+| Local AI | Runtime `zie-run` is packaged for arm64-v8a/x86_64; Qwen GGUF weights are a separate user download/import and SHA-256 is checked | The screenshot's “Model not imported” state means the AI composer is intentionally disabled until that 428 MB model is obtained and verified. This patch adds a first-run download action directly under the status badge |
+| Tuning | Core rejects unsafe/untrusted executable paths before calling `ztune`; separately, Tuning denies real writes unless a device-exact, hardware-validated Tier D profile authorizes them | `PermissionRestricted` is currently a binary/path trust-gate failure, not proof that sysfs writes are allowed or that the underlying nodes themselves denied access. Exact device metadata from `zcored discover` is needed before changing the guard |
+| Device validation | Component repositories document host/fixture CI and no physical-device validation for these components yet | Green CI proves build/fixture behaviour, not runtime compatibility on the user's ROM/kernel |
+
+In the App patch, the machine-readable lock is re-pinned from the unmerged Intelligence Engine topic
+commit to the current merged `dev` commit and to the exact Modules source commit that built the published
+`v0.3.1` release. The companion Modules patch advances Core to `377ba45` and prepares v0.3.2; because
+the merge SHA is not known yet, `integration/scripts/sync_pins.py` re-pins the App lock after the Modules
+change is merged. The changes do not relax Tuning's fail-closed write policy or silently install modules.
+
+---
+
 ## Re-survey, 2026-10-22
 
 `list_repos` returns 17 repositories in `ZairenkaiPrjctX`, **all public** (earlier surveys
@@ -85,7 +112,7 @@ No repository was inaccessible.
 | Zairenkai-Modules | dev @ `f226502613e6` | none | No module packages. The installed-module inventory comes from Core's `modules` method. |
 | Zairenkai-Intelligence-Engine | dev @ `0191e36365b8` | none | No implementation; no analysis feature is shown. |
 | Zairenkai-License-Server | dev @ `d563033d4e06` | none | No implementation; no licence check exists. The app has no network permission. |
-| Zairenkai-Graphics-Platform | dev @ `b3dcca4457f3` | none | No implementation. |
+| Zairenkai-Graphics-Platform | dev @ `32a1c689ef69` | Rust `zgfx`, read-only Vulkan/OpenGL ES probe | Implemented upstream, but not packaged or exposed in App; inventory marks it not applicable until an App adapter/UI exists. License still needs maintainer confirmation before distribution. |
 | Zairenkai-Release | dev @ `0d804278b742` | none | Not applicable. |
 | Zairenkai-Docs | dev @ `068bf87d02d0` | none | Not applicable. |
 | ZairenkaiPrjctX.github.io | dev @ `27362a46141c` | none | Not applicable. |

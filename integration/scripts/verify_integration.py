@@ -96,6 +96,29 @@ def load_lock(errors: list) -> dict:
         for abi in c.get("abis", []):
             if abi not in ABIS:
                 errors.append(f"lock: {cid}: unsupported ABI {abi}")
+        pin = c.get("release_artifact")
+        # The single root module consumes a versioned zip with its own richer manifest contract;
+        # direct native/data components use the generic artifact-${source_commit} contract.
+        if pin is not None and cid != "zairenkai-module":
+            if not isinstance(pin, dict):
+                errors.append(f"lock: {cid}: release_artifact must be an object")
+            else:
+                if pin.get("repository") != c.get("repository"):
+                    errors.append(f"lock: {cid}: artifact repository does not match source repository")
+                if pin.get("source_commit") != c.get("commit"):
+                    errors.append(f"lock: {cid}: artifact source_commit does not match locked source commit")
+                if pin.get("release_tag") != f"artifact-{c.get('commit')}":
+                    errors.append(f"lock: {cid}: artifact release tag is not pinned to the exact commit")
+                if not SHA256.match(str(pin.get("asset_sha256", ""))):
+                    errors.append(f"lock: {cid}: artifact asset SHA-256 is malformed")
+                if not SHA256.match(str(pin.get("manifest_sha256", ""))):
+                    errors.append(f"lock: {cid}: artifact manifest SHA-256 is malformed")
+                if not isinstance(pin.get("asset_size_bytes"), int) or pin.get("asset_size_bytes", 0) <= 0:
+                    errors.append(f"lock: {cid}: artifact size must be a positive integer")
+                for key in ("asset_name", "manifest_name", "component"):
+                    value = pin.get(key)
+                    if not isinstance(value, str) or not value or "/" in value or "\\" in value or value in (".", ".."):
+                        errors.append(f"lock: {cid}: artifact {key} is missing or unsafe")
         if cid not in SRC_DIRS:
             errors.append(f"lock: {cid}: unknown component (add it to verify_integration.py)")
     for cid in PACKAGED + INTERNAL_ONLY:
@@ -156,6 +179,13 @@ def check_build() -> list:
     for key, cid in (("zart", "zart"), ("zthermal", "zthermal"), ("afid", "afid-device-candidates"), ("intelligence", "zie-run")):
         if comp.get(key, {}).get("commit") != lock.get(cid, {}).get("commit"):
             errors.append(f"build: components.json {key} commit differs from the lock")
+    module_record = comp.get("zairenkai_module", {})
+    module_lock = lock.get("zairenkai-module", {})
+    if module_record.get("commit") != module_lock.get("commit"):
+        errors.append("build: components.json Zairenkai-Modules source commit differs from the lock")
+    expected_artifact_tag = (module_lock.get("release_artifact") or {}).get("release_tag")
+    if expected_artifact_tag and module_record.get("artifact_release_tag") != expected_artifact_tag:
+        errors.append("build: packaged module artifact tag differs from the App lock")
     files = set(comp.get("files", {}))
     for abi in ABIS:
         for lib in ("libzart.so", "libzthermal.so"):

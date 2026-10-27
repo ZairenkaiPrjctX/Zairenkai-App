@@ -54,6 +54,7 @@ import com.zairenkaiprjctx.integration.systemmodule.RuntimeProbe
 import com.zairenkaiprjctx.integration.systemmodule.adapterFor
 import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsClient
 import com.zairenkaiprjctx.integration.zart.ZartClient
+import com.zairenkaiprjctx.integration.ai.RuntimeCall
 import com.zairenkaiprjctx.integration.ai.AiToolRegistry
 import com.zairenkaiprjctx.integration.ai.DeviceTools
 import com.zairenkaiprjctx.integration.ai.IntelligenceSubsystem
@@ -284,8 +285,11 @@ class AppContainer(private val app: Application, val runner: CommandRunner = Pro
 
         override fun agent(): LocalAgent? {
             val ai = localAiAssets.getOrNull() ?: return null
-            if (zieRunPath == null || !ai.store.installed()) return null
-            return LocalAgent(ai.registry, { prompt -> zieRuntime.generate(ai.store.file, aiGrammar, prompt) }, DeviceTools(core, fas, zthermal))
+            if (zieRunPath == null) return null
+            return LocalAgent(ai.registry, { prompt ->
+                if (!ai.store.installed()) RuntimeCall.Unavailable("model not imported; common device checks do not need the model")
+                else zieRuntime.generate(ai.store.file, aiGrammar, prompt, maxTokens = 160, timeoutMs = 90_000)
+            }, DeviceTools(core, fas, zthermal))
         }
 
         override fun importModel(uri: android.net.Uri, progress: (Long) -> Unit): ModelImport {

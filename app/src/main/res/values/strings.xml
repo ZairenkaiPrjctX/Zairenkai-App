@@ -24,7 +24,7 @@
     <string name="state_network">Network unavailable</string>
     <string name="state_license">Licence required</string>
     <string name="state_failed">Initialization failed</string>
-    <string name="state_not_verified">Not yet verified</string>
+    <string name="state_not_verified">Not validated on this device</string>
     <string name="state_no_upstream">Not implemented upstream</string>
 
     <!-- Common -->
@@ -393,6 +393,19 @@
     <string name="battery_saver_via_core">Changed through Core, after its preview</string>
     <string name="fas_reset_body">Releases every boost zfasd holds</string>
     <string name="fas_reset_action">Reset</string>
+    <string name="tuning_controls">Tuning controls</string>
+    <string name="tuning_controls_note">Changes are enabled only when Core marks this capability read/write for this device. Core checks each choice before you confirm it.</string>
+    <string name="tuning_control_locked">Locked until a matching device-validated Tuning profile and required kernel permissions are available.</string>
+    <string name="tuning_access_writable">Authorized by Core (read/write)</string>
+    <string name="tuning_access_read_only">Read-only; no device-validated write authorization</string>
+    <string name="tuning_access_permission">Permission or component validation restricted</string>
+    <string name="tuning_access_unsupported">Unsupported on this device</string>
+    <string name="tuning_access_unavailable">Temporarily unavailable</string>
+    <string name="tuning_access_unknown">Core has not confirmed this capability</string>
+    <string name="tuning_scheduler_current">Current I/O scheduler</string>
+    <string name="tuning_scheduler_access">I/O scheduler access</string>
+    <string name="tuning_action_io">Preview I/O scheduler: %1$s</string>
+    <string name="tuning_action_gpu">Preview GPU governor: %1$s</string>
     <string name="tuning_title">System load</string>
     <string name="tuning_cpu">CPU load</string>
     <string name="tuning_memory">Memory in use</string>
@@ -419,7 +432,7 @@
     <string name="ai_tagline">Ask about your device in plain words. It answers from what Zairenkai measures.</string>
     <string name="ai_try">Try asking</string>
     <string name="ai_try_note">Until the on-device model is available, each question opens the screen that answers it.</string>
-    <string name="ai_try_note_ready">Tap a question to ask the on-device model. It reads the measurements itself.</string>
+    <string name="ai_try_note_ready">Common checks read live device telemetry. Open-ended questions use the on-device model.</string>
     <string name="ai_prompt_hot">Why is my phone hot?</string>
     <string name="ai_prompt_profile">Which FAS profile is active?</string>
     <string name="ai_prompt_control">What can Zairenkai control here?</string>
@@ -436,7 +449,7 @@
     <string name="ai_model_body">Runs offline with zie-run (llama.cpp). Download it once from Zairenkai\'s own GitHub release, or import the file. It is kept only if its size and SHA-256 match.</string>
     <string name="ai_send">Send</string>
     <string name="ai_placeholder">Ask Zairenkai…</string>
-    <string name="ai_composer_unavailable">Available once the model is downloaded or imported.</string>
+    <string name="ai_composer_unavailable">Free-form questions need the on-device model and runtime. The quick checks above open the relevant system screen.</string>
     <string name="ai_tool_running">Running</string>
     <string name="ai_tool_completed">Done</string>
     <string name="ai_tool_failed">Failed</string>
@@ -778,4 +791,10 @@
     <string name="module_update_releases">Module releases</string>
     <string name="module_update_notify_title">Zairenkai module %1$s is available</string>
     <string name="module_update_notify_body">Update it in your root manager, then reboot.</string>
+    <string name="ai_fact_tuning_soc">SoC and platform</string>
+    <string name="ai_fact_tuning_cpu">CPU telemetry</string>
+    <string name="ai_fact_tuning_gpu">GPU telemetry</string>
+    <string name="ai_fact_tuning_memory">Memory telemetry</string>
+    <string name="ai_fact_tuning_storage">Storage scheduler</string>
+    <string name="ai_try_note_tools_only">Quick device checks work now. Import the on-device model to ask open-ended questions.</string>
 </resources>

@@ -7,13 +7,14 @@ import com.zairenkaiprjctx.integration.core.CoreCall
 import com.zairenkaiprjctx.integration.core.CoreClient
 import com.zairenkaiprjctx.integration.core.CoreOperation
 import com.zairenkaiprjctx.integration.core.FasProfileName
+import com.zairenkaiprjctx.integration.core.TuningReading
 import com.zairenkaiprjctx.integration.fas.FasCall
 import com.zairenkaiprjctx.integration.fas.FasClient
 import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsClient
 import com.zairenkaiprjctx.integration.thermaltools.ThermalToolsResult
 
 /** What a read-only tool found, keyed so the UI can label each value in the user's language. */
-enum class FactKey { STATE, VERSION, REASONS, CAPABILITIES, AVAILABLE, HOTTEST, FRAMEWORK_STATUS, BATTERY, ZONES, RUNNING, ENABLED, PROFILE, FPS }
+enum class FactKey { STATE, VERSION, REASONS, CAPABILITIES, AVAILABLE, HOTTEST, FRAMEWORK_STATUS, BATTERY, ZONES, RUNNING, ENABLED, PROFILE, FPS, TUNING_SOC, TUNING_CPU, TUNING_GPU, TUNING_MEMORY, TUNING_STORAGE }
 
 data class Fact(val key: FactKey, val value: String)
 
@@ -52,13 +53,19 @@ class LocalAgent(
     private val device: AiDevice,
 ) {
     fun handle(utterance: String): AgentReply {
-        val raw = when (val r = generate(AiPrompt.build(registry, utterance))) {
-            is RuntimeCall.Ok -> r.value
-            is RuntimeCall.Unavailable -> return AgentReply.Rejected("local model unavailable: ${r.reason}")
-        }
-        val plan = when (val p = AiPlanParser.parse(registry, raw)) {
-            is PlanResult.Ok -> p.plan
-            is PlanResult.Rejected -> return AgentReply.Rejected(p.reason)
+        // Small on-device models are not reliable routers. For obvious device questions, choose a
+        // read-only tool deterministically so the common prompts answer from live measurements,
+        // even before the optional language model has been imported. Free-form questions still use
+        // the constrained local model below.
+        val plan = DeviceIntentRouter.plan(registry, utterance) ?: run {
+            val raw = when (val r = generate(AiPrompt.build(registry, utterance))) {
+                is RuntimeCall.Ok -> r.value
+                is RuntimeCall.Unavailable -> return AgentReply.Rejected("local model unavailable: ${r.reason}")
+            }
+            when (val p = AiPlanParser.parse(registry, raw)) {
+                is PlanResult.Ok -> p.plan
+                is PlanResult.Rejected -> return AgentReply.Rejected(p.reason)
+            }
         }
         val reads = mutableListOf<Pair<AiCall, ToolOutcome>>()
         val changes = mutableListOf<ProposedChange>()
@@ -111,6 +118,51 @@ class LocalAgent(
     }
 }
 
+/** Deterministic routing for obvious prompts; every route is to a closed, read-only tool. */
+internal object DeviceIntentRouter {
+    fun plan(registry: AiToolRegistry, utterance: String): AiPlan? {
+        val q = utterance.lowercase(java.util.Locale.ROOT)
+            .replace(Regex("[^\\p{L}\\p{N}_]+"), " ")
+            .trim()
+        if (q.isEmpty()) return null
+        fun has(vararg words: String) = words.any { Regex("(^| )" + Regex.escape(it) + "( |$)").containsMatchIn(q) }
+        fun call(id: String) = if (registry.get(id) != null) AiCall(id, emptyMap()) else null
+        val isId = has("kenapa", "mengapa", "saya", "hp", "panas", "cek", "periksa", "profil", "aktif", "perangkat", "apa", "yang", "bisa", "mana", "kesehatan", "integrasi", "kendalikan", "suhu", "memori", "penyimpanan", "sekarang", "tolong", "apakah")
+        val selected: Pair<String, String>? = when {
+            // Only route a real status question. A change request stays on the model -> Core
+            // dry-run -> explicit human confirmation path.
+            has("fas") && has("profile", "profil") &&
+                has("active", "aktif", "current", "currently", "mana", "which", "status", "apa", "what") &&
+                !has("set", "switch", "ubah", "ganti", "aktifkan", "apply", "atur", "enable", "disable") ->
+                "fas.status" to if (isId) "Memeriksa status dan profil FAS aktif" else "Checking the active FAS profile"
+            has("panas", "hot", "overheat", "overheating", "suhu", "temperature", "thermal") ->
+                "thermal.snapshot" to if (isId) "Membaca sensor termal yang tersedia" else "Reading available thermal sensors"
+            has("tuning", "cpu", "gpu", "governor", "scheduler", "ram", "memory", "memori", "frekuensi", "frequency", "performa", "performance", "lag", "lemot") ->
+                "tuning.telemetry" to if (isId) "Membaca telemetri CPU, GPU, memori, dan penyimpanan" else "Reading CPU, GPU, memory and storage telemetry"
+            has("root", "integrasi", "integration", "core", "status", "healthy", "health", "kapabilitas", "capabilities", "kontrol", "control", "kendalikan", "available") ->
+                "core.health" to if (isId) "Memeriksa kesehatan integrasi Zairenkai" else "Checking Zairenkai integration health"
+            else -> null
+        } ?: return null
+        val primary = call(selected.first) ?: return null
+        val ids = when (selected.first) {
+            "core.health" -> listOfNotNull(primary, call("core.capabilities"), call("tuning.telemetry"))
+            else -> listOf(primary)
+        }.take(AiPlanParser.MAX_CALLS)
+        val clarification = when (selected.first) {
+            "thermal.snapshot" -> if (isId) "Data ini menunjukkan sensor yang terbaca, bukan bukti tunggal penyebab perangkat panas." else "These readings show the available sensors; they do not by themselves prove the cause of heat."
+            "tuning.telemetry" -> if (isId) "Hanya nilai yang berhasil dibaca yang ditampilkan. Pembacaan yang dibatasi izin akan tetap ditandai sebagai tidak tersedia; tidak ada pengaturan yang diubah." else "Only successful readings are shown. Permission-restricted values remain unavailable; no settings were changed."
+            else -> if (isId) "Hasil ini berasal dari data perangkat yang benar-benar tersedia." else "This answer comes from the device data available right now."
+        }
+        return AiPlan(
+            language = if (isId) "id" else "en",
+            goal = selected.second,
+            confidencePercent = 100,
+            calls = ids,
+            clarification = clarification,
+        )
+    }
+}
+
 /** The registry's read-only tools on the real clients: Core and zfasd through root, zthermal as the app. */
 class DeviceTools(private val core: CoreClient, private val fas: FasClient, private val zthermal: ThermalToolsClient) : AiDevice {
     override fun read(toolId: String): ToolOutcome = when (toolId) {
@@ -160,8 +212,41 @@ class DeviceTools(private val core: CoreClient, private val fas: FasClient, priv
             }
             is ThermalToolsResult.Failed -> ToolOutcome.Failed(t.detail)
         }
+        "tuning.telemetry" -> when (val t = core.tuning()) {
+            is CoreCall.Ok -> {
+                val v = t.value
+                ToolOutcome.Completed(listOf(
+                    Fact(FactKey.TUNING_SOC, "${v.soc.family}${v.soc.platformId?.let { " · $it" } ?: ""}; ${v.platform.vendor}"),
+                    Fact(FactKey.TUNING_CPU, buildString {
+                        append("load ").append(v.cpu.load.display())
+                        append("; cores ").append(v.cpu.present.ids?.size?.toString() ?: v.cpu.present.display())
+                        v.cpu.cores.firstOrNull()?.let { core ->
+                            append("; core ").append(core.id).append(" ").append(core.curFreq.number?.let { "%.0f MHz".format(java.util.Locale.ROOT, it / 1000.0) } ?: core.curFreq.display())
+                            append("; governor ").append(core.governor.display())
+                        }
+                    }),
+                    Fact(FactKey.TUNING_GPU, "frequency ${v.gpu.curFreq.number?.let { "%.0f MHz".format(java.util.Locale.ROOT, it / 1_000_000.0) } ?: v.gpu.curFreq.display()}; governor ${v.gpu.governor.display()}; GPU thermal ${v.thermal.gpu.display()}"),
+                    Fact(FactKey.TUNING_MEMORY, "used ${v.memory.used.bytesMiB()} MiB / total ${v.memory.total.bytesMiB()} MiB; available ${v.memory.available.bytesMiB()} MiB; swap used ${v.memory.swapUsed.bytesMiB()} MiB"),
+                    Fact(FactKey.TUNING_STORAGE, v.storage.joinToString("; ") { "${it.device}: ${it.scheduler.display()}" }.ifBlank { "No storage scheduler readings were reported" }),
+                ))
+            }
+            else -> ToolOutcome.Failed(LocalAgent.describe(t))
+        }
         else -> ToolOutcome.Failed("no executor for $toolId")
     }
 
     override fun submit(op: CoreOperation, dryRun: Boolean): CoreCall<ActionResult> = core.submit(op, dryRun)
 }
+
+
+/** A failed reading is shown as a status, never as a guessed or stale numeric value. */
+private fun TuningReading.display(): String = if (!ok) {
+    status + detail?.takeIf { it.isNotBlank() }?.let { ": $it" }.orEmpty()
+} else {
+    text ?: number?.let { n -> if (unit == "percent" || unit == "celsius") "%.1f %s".format(java.util.Locale.ROOT, n, if (unit == "celsius") "°C" else "%") else "%.0f %s".format(java.util.Locale.ROOT, n, unit) }
+        ?: long?.let { "$it $unit" } ?: ids?.joinToString(",") ?: "available"
+}
+
+private fun TuningReading.bytesMiB(): String = long?.let { "%.0f".format(java.util.Locale.ROOT, it / 1048576.0) }
+    ?: number?.let { "%.0f".format(java.util.Locale.ROOT, it / 1048576.0) }
+    ?: display()

@@ -34,8 +34,7 @@
   compileSdk 37 and AGP 9.1.
 - Core and FAS are reachable only through root (Core ADR-0005).
   Verified. Evidence: Core `docs/adr/0005-root-only-socket.md`.
-- No Android device or emulator was available: install, launch, root prompts and SELinux
-  behaviour are **Unverified**.
+- No automated device-lab or remote device-control access is available in this audit. The maintainer's screenshot proves that Module v0.3.1 was installed on KernelSU 3.4.1, but end-to-end Core telemetry, AI inference, SELinux behavior and tuning outcomes remain **Unverified** until the repaired build is retested.
 - The app installs one root module, `zairenkai` (Zairenkai-Modules: zcored, zfasd and the GPL-3.0
   ztune with its source, data in `/data/adb/zairenkai/{core,fas,tuning}`), through Magisk, KernelSU/KernelSU-Next or APatch.
   Verified. Evidence: maintainer decision 2026-10-22; `integration/system-modules.json`; catalog
@@ -43,8 +42,7 @@
   2026-10-22). The separate `zairenkai_core` / `zairenkai_fas` modules are superseded. The manager commands were read in each manager's source. Verified. Evidence:
   `docs/integration/system-module.md`, `SystemModuleTest`. Installation on a device is
   **Unverified**: no device has a validation record.
-- No release channel exists, so the module zips are packaged in the APK. Verified. Evidence:
-  `list_releases` empty for Core, FAS and Release, 2026-10-21.
+- The App packages the single Modules ZIP as the user-confirmed root-manager installer payload, and Modules now also publishes its own versioned ZIP release (`v0.3.1`, 2026-10-27). Core and FAS do not have independent stable binary-release assets. Verified. Evidence: App integration lock/catalog flow; Modules release run 40483942101. The App still needs its signing/trusted-catalog release gate before a signed APK can be published.
 - Module installation needs a catalog signed by a key in `integration/module-trust.json`. The
   list holds one maintainer key (`4330305a…`, 2026-10-21) from this change on; builds signed
   without it still refuse to install. Verified. Evidence: `SystemModuleTrustTest`,
@@ -63,11 +61,7 @@
   the `release` environment, which deploys only from `dev`; required reviewers are refused on the
   current plan, HTTP 422). Verified. Evidence: `setup-actions-secrets.sh status` exit 0,
   2026-10-22 (`docs/build/secrets-and-variables.md`). `release.yml` has never run: Unverified.
-- Every locked commit but one is in its repository's `dev`: Core `345fc7f` and FAS `1c453db` (the
-  merge commits of Core #3 and FAS #4); Modules `dec38fa` (the merge of Modules #5, 2026-10-24);
-  ART, ThermalTools and Database-Source on `dev` merge commits. Intelligence-Engine is pinned at
-  `af31fd7` on its PR #3 branch (`"merged": false`) until that PR merges. Zairenkai-Tuning has no `dev`; it is pinned through Modules' `components.lock.json`
-  (`0c226b2`). Verified. Evidence: `verify_integration.py lock`, 2026-10-23.
+- The live App source lock currently pins Core `345fc7f`, FAS `1c453db`, Modules `a3efff6` (the source revision for published module v0.3.1), ART `0d8cd72`, ThermalTools `3bc71fe`, Database-Source `d9c4290`, and Intelligence-Engine `7a05fe5` (merged `dev`). Live Core `dev` is `377ba450`, which fixes Android `/data` ownership validation but is not yet in the published module; the bundled Modules patch prepares v0.3.2. Tuning `0c226b2` is the current `dev` head and remains nested under Modules' `components.lock.json`. Database-Source live `dev` has moved to `9267cec5`; regenerate the AFID asset before repinning it. Evidence: repository lock, live GitHub commit and workflow reads, 2026-10-27.
 - The full-integration CI job passed for the first time on `d0db6b7` (run 39827139485: every
   component built at its locked commit, contracts re-captured, tests, lint, APKs with native
   components required, integration report), fetching the public sources without a token.
@@ -75,16 +69,7 @@
 - The UI was redesigned on 2026-10-23 (Material 3 Expressive wavy indicators, segmented groups,
   five destinations with an AI tab; `docs/design/design-system.md`). Verified. Evidence:
   `RedesignTest`, screenshot gallery, 2026-10-23. **Unverified** on a device.
-- Local AI (2026-10-23, `docs/integration/local-ai.md`): Intelligence-Engine's `zie-run`
-  (`af31fd7`, llama.cpp b11500) is packaged as `libzierun.so` for arm64-v8a and x86_64 with the
-  tool registry, grammar and model manifest. The model file is not packaged: the user downloads it
-  on request from Intelligence-Engine's release `model-<model_id>` (resumable; asks first on
-  mobile data; maintainer decision 2026-10-24) or imports it, and it is kept only if size and
-  SHA-256 match. **Unverified**: no model release is published yet (IE PR #4 adds the workflow). Read-only tools
-  run; `fas.set_profile` becomes a Core dry run the user approves. Verified on the host. Evidence:
-  `AiTest` (prompt identical to the engine's; parser on the real model's captured answers; the
-  real runner and model through the Kotlin agent, 8 s), `AiUiTest`, both APK binaries without
-  networking imports (`llvm-nm`), 2026-10-23. **Unverified** on a device (speed, memory, SELinux).
+- Local AI: Intelligence-Engine `dev` `7a05fe5` (merged) supplies `zie-run` and model-release tooling; the App bundles the native runner, registry, grammar and manifest for arm64-v8a/x86_64. The Qwen2.5-0.5B-Instruct q4_0 model is now published at `model-qwen2_5_0_5b_instruct_q4_0`; the 428,730,208-byte weight file is separate, resumable and downloaded only on user action or imported, then accepted only when the manifest size and SHA-256 match. The AI UI patch surfaces the download action near the status badge when this is the sole missing prerequisite. Read-only tools run; system actions stay as Core dry runs until the user approves. Host tests exist, but on-device speed/memory/SELinux and model-output safety remain **Unverified**; the manifest says `safety_evaluation: not_evaluated`.
 - Settings › Appearance (palettes, custom themes, AMOLED, wallpaper, launcher icon variants,
   background animation, app font, UI scale, experimental glass bar) was added on 2026-10-23,
   modelled on mpvRx's behaviour (AGPL-3.0, no code copied). New dependencies: Haze 1.6.10 and
@@ -120,23 +105,10 @@
 
 - Zairenkai-ART (`0d8cd72`), Zairenkai-ThermalTools (`3bc71fe`) and Zairenkai-Database-Source
   (`d9c4290`), on `dev`, are integrated. Verified. Evidence: `integration/repository-lock.json`, contract tests, 2026-10-21.
-- Zairenkai-Modules is pinned at `dec38fa`, the merge of PR #5 into `dev` (module 0.3.1). Core (`345fc7f`) and FAS (`1c453db`), the `dev` merge commits of
-  Core #3 and FAS #4, are pinned with it. Verified. Evidence: `integration/repository-lock.json`,
-  `verify_integration.py lock`, `build-components.sh`, 2026-10-23.
-- Zairenkai-Tuning (GPL-3.0-only `ztune`, topic branch `0c226b2`, no default branch yet) ships in
-  the module the app packages, with its source, and is run only by Core. The app reads ztune's
-  telemetry through Core's `tuning` method (`core/Tuning.kt`, record `tuning.telemetry`, read
-  only) and shows Core's `tuning.*` capabilities generically. Verified on the host. Evidence:
-  `TuningContractTest` on fixtures from Core's adapter running the real ztune and from the live
-  daemon, 2026-10-23. **Unverified** on a device.
-- Zairenkai-Intelligence-Engine is integrated at `af31fd7` (IE PR #3, topic branch,
-  `"merged": false`; re-pin to the merge commit). Verified. Evidence: `verify_integration.py lock`
-  and `build`, 2026-10-23.
-- The other 7 Zairenkai repositories have no runtime capability for the app. Zairenkai-Sdk
-  (contracts only, `ed44c90`) has code; the registry reports it `NO_UPSTREAM_IMPLEMENTATION` with
-  that reason. anime-extensions is a separate product and is excluded from the ecosystem audit
-  (maintainer, 2026-10-22). Verified. Evidence: `integration/repository-audit.md` (re-audit
-  2026-10-21), `integration/organization-repositories.json` (re-audit 2026-10-23), `RegistryTest`.
+- Zairenkai-Modules is pinned at `a3efff6`, the source revision used to publish module v0.3.1. Its current `components.lock.json` still pins Core `345fc7f` and FAS `1c453db`; the included Modules patch proposes Core `377ba450` and module v0.3.2. App must be re-pinned to the real Modules merge SHA after that change is merged. Verified from live release metadata and the source lock, 2026-10-27.
+- Zairenkai-Tuning (GPL-3.0-only `ztune`, live `dev` `0c226b2`) ships in the module with its licence and Corresponding Source and is run only by Core. The app reads telemetry through Core's `tuning` method and shows `tuning.*` capabilities. No Tier-D exact-device hardware-validated profile is shipped, so writes remain denied. Host tests pass; the user screenshot shows the current v0.3.1/Core path trust-gate problem. Full capability and telemetry behavior must be retested with the repaired module.
+- Zairenkai-Intelligence-Engine is integrated at merged `dev` `7a05fe5`; App source locks track that commit. Verified by lock/build checks and model-release metadata on 2026-10-27.
+- Zairenkai-Sdk (`ed44c90`) supplies contracts only, not a daemon. Zairenkai-Graphics-Platform now has a read-only `zgfx` Vulkan/OpenGL ES probe at live `dev` `32a1c68`, but App does not package or expose it; the inventory keeps the feature not applicable until the adapter and UI are added. The repo README says licence confirmation is pending, so do not distribute it before that is resolved. Database-Source has newer upstream metadata than the App's pinned AFID asset and needs a regenerate/validate/re-pin change. anime-extensions is a separate product and excluded from the device ecosystem. Evidence: live repository trees, current integration inventory and `repository-audit.md`, 2026-10-27.
 
 ## Open questions
 

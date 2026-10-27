@@ -3,6 +3,10 @@
 package com.zairenkaiprjctx.integration
 
 import com.zairenkaiprjctx.integration.ai.AgentReply
+import com.zairenkaiprjctx.integration.ai.DeviceIntentRouter
+import com.zairenkaiprjctx.integration.ai.AiPlan
+import com.zairenkaiprjctx.integration.ai.AiCall
+import com.zairenkaiprjctx.integration.ai.AiAnswerComposer
 import com.zairenkaiprjctx.integration.ai.AiDevice
 import com.zairenkaiprjctx.integration.ai.AiFormatException
 import com.zairenkaiprjctx.integration.ai.AiPlanParser
@@ -58,7 +62,7 @@ class AiTest {
 
     @Test
     fun theEnginesRegistryLoads() {
-        assertEquals(listOf("core.health", "core.capabilities", "thermal.snapshot", "fas.status", "fas.set_profile"), registry.tools.map { it.id })
+        assertEquals(listOf("core.health", "core.capabilities", "thermal.snapshot", "fas.status", "tuning.telemetry", "fas.set_profile"), registry.tools.map { it.id })
         val set = registry.get("fas.set_profile")!!
         assertEquals("system", set.risk)
         assertEquals("fas_set_profile", set.coreOperation)
@@ -287,6 +291,97 @@ class AiTest {
         // Only an explicit apply submits for real.
         assertTrue(agent.apply(change) is ChangeResult.Applied)
         assertEquals(change.op to false, device.submits.last())
+    }
+
+    @Test
+    fun commonDeviceQuestionsUseLiveReadOnlyToolsWithoutCallingTheSmallModel() {
+        val device = Device()
+        val noModel = LocalAgent(registry, { error("the model should not be called for common device questions") }, device)
+        val hot = noModel.handle("Kenapa HP saya panas?") as AgentReply.Planned
+        assertEquals("thermal.snapshot", hot.plan.calls.single().tool)
+        assertEquals(listOf("thermal.snapshot"), device.reads)
+        assertTrue(hot.plan.clarification.contains("sensor", ignoreCase = true))
+
+        device.reads.clear()
+        val profile = noModel.handle("Which FAS profile is active?") as AgentReply.Planned
+        assertEquals("fas.status", profile.plan.calls.single().tool)
+        assertEquals(listOf("fas.status"), device.reads)
+
+        device.reads.clear()
+        val tuning = noModel.handle("Cek CPU GPU dan RAM sekarang") as AgentReply.Planned
+        assertEquals("tuning.telemetry", tuning.plan.calls.single().tool)
+        assertEquals(listOf("tuning.telemetry"), device.reads)
+    }
+
+
+    @Test
+    fun obviousReadOnlyQuestionsWorkWithoutCallingTheSmallModel() {
+        val device = Device()
+        val agent = LocalAgent(registry, { error("model must not be called for a recognized read-only question") }, device)
+
+        val hot = agent.handle("Kenapa HP saya panas?") as AgentReply.Planned
+        assertEquals(listOf("thermal.snapshot"), hot.reads.map { it.first.tool })
+        assertEquals(listOf("thermal.snapshot"), device.reads.toList())
+
+        device.reads.clear()
+        val profile = agent.handle("Which FAS profile is active?") as AgentReply.Planned
+        assertEquals(listOf("fas.status"), profile.reads.map { it.first.tool })
+        assertEquals(listOf("fas.status"), device.reads.toList())
+
+        device.reads.clear()
+        val tuning = agent.handle("Please check CPU GPU and memory telemetry") as AgentReply.Planned
+        assertEquals(listOf("tuning.telemetry"), tuning.reads.map { it.first.tool })
+        assertEquals(listOf("tuning.telemetry"), device.reads.toList())
+    }
+
+    @Test
+    fun deterministicRouterNeverExecutesAProfileWriteByItself() {
+        assertNull(DeviceIntentRouter.plan(registry, "ubah profil FAS ke performance"))
+        assertNull(DeviceIntentRouter.plan(registry, "switch FAS profile to performance"))
+    }
+
+    @Test
+    fun assistantSummaryUsesMeasuredFactsInsteadOfOnlyRepeatingTheModelGoal() {
+        val reply = AgentReply.Planned(
+            AiPlan("id", "Periksa suhu", 100, listOf(AiCall("thermal.snapshot", emptyMap())), ""),
+            listOf(AiCall("thermal.snapshot", emptyMap()) to ToolOutcome.Completed(listOf(
+                Fact(FactKey.HOTTEST, "52.0 °C (cpu-0)"),
+                Fact(FactKey.BATTERY, "38.2 °C"),
+                Fact(FactKey.ZONES, "4/8"),
+            ))),
+            emptyList(), emptyList(),
+        )
+        val answer = AiAnswerComposer.compose("Kenapa HP saya panas?", reply)
+        assertTrue(answer, answer.contains("52.0 °C"))
+        assertTrue(answer, answer.contains("38.2 °C"))
+        assertTrue(answer, answer.contains("4/8"))
+        assertTrue(answer, answer.contains("data yang benar-benar dikembalikan perangkat"))
+    }
+
+    @Test
+    fun answerLanguageFollowsTheQuestionWhenTheSmallModelMislabelsIt() {
+        val reply = AgentReply.Planned(
+            AiPlan("id", "Checking temperature", 100, listOf(AiCall("thermal.snapshot", emptyMap())), ""),
+            listOf(AiCall("thermal.snapshot", emptyMap()) to ToolOutcome.Completed(listOf(Fact(FactKey.HOTTEST, "52.0 °C (cpu-0)")))),
+            emptyList(), emptyList(),
+        )
+        val answer = AiAnswerComposer.compose("Why is my phone hot?", reply)
+        assertTrue(answer, answer.startsWith("Device findings from the data actually returned"))
+        assertTrue(answer, answer.contains("Hottest readable sensor"))
+    }
+
+    @Test
+    fun tuningSummaryExplainsRestrictedPermissionsWithoutInventingReadings() {
+        val reply = AgentReply.Planned(
+            AiPlan("id", "Periksa tuning", 100, listOf(AiCall("tuning.telemetry", emptyMap())), ""),
+            listOf(AiCall("tuning.telemetry", emptyMap()) to ToolOutcome.Completed(listOf(
+                Fact(FactKey.TUNING_GPU, "frequency PermissionRestricted: denied; governor PermissionRestricted"),
+                Fact(FactKey.TUNING_STORAGE, "sda: PermissionRestricted: denied"),
+            ))), emptyList(), emptyList(),
+        )
+        val answer = AiAnswerComposer.compose("Cek GPU dan penyimpanan", reply)
+        assertTrue(answer, answer.contains("dibatasi izin kernel/SELinux"))
+        assertFalse(answer, answer.contains("frekuensi GPU normal"))
     }
 
     @Test

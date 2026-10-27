@@ -20,7 +20,7 @@
     <string name="state_network">Jaringan tidak tersedia</string>
     <string name="state_license">Perlu lisensi</string>
     <string name="state_failed">Inisialisasi gagal</string>
-    <string name="state_not_verified">Belum diverifikasi</string>
+    <string name="state_not_verified">Belum diuji pada perangkat ini</string>
     <string name="state_no_upstream">Belum diimplementasikan di upstream</string>
 
     <string name="loading">Memuat…</string>
@@ -373,6 +373,19 @@
     <string name="battery_saver_via_core">Diubah melalui Core, setelah pratinjaunya</string>
     <string name="fas_reset_body">Melepas semua boost yang ditahan zfasd</string>
     <string name="fas_reset_action">Atur ulang</string>
+    <string name="tuning_controls">Kontrol Tuning</string>
+    <string name="tuning_controls_note">Perubahan hanya diaktifkan saat Core menandai kemampuan sebagai read/write untuk perangkat ini. Core akan memeriksa pilihan sebelum kamu mengonfirmasinya.</string>
+    <string name="tuning_control_locked">Terkunci sampai tersedia profil Tuning tervalidasi untuk perangkat ini dan izin kernel yang diperlukan.</string>
+    <string name="tuning_access_writable">Diizinkan Core (read/write)</string>
+    <string name="tuning_access_read_only">Hanya baca; belum ada otorisasi penulisan yang tervalidasi untuk perangkat ini</string>
+    <string name="tuning_access_permission">Dibatasi izin atau validasi komponen</string>
+    <string name="tuning_access_unsupported">Tidak didukung pada perangkat ini</string>
+    <string name="tuning_access_unavailable">Sementara tidak tersedia</string>
+    <string name="tuning_access_unknown">Core belum mengonfirmasi kemampuan ini</string>
+    <string name="tuning_scheduler_current">I/O scheduler saat ini</string>
+    <string name="tuning_scheduler_access">Akses I/O scheduler</string>
+    <string name="tuning_action_io">Pratinjau I/O scheduler: %1$s</string>
+    <string name="tuning_action_gpu">Pratinjau governor GPU: %1$s</string>
     <string name="tuning_title">Beban sistem</string>
     <string name="tuning_cpu">Beban CPU</string>
     <string name="tuning_memory">Memori terpakai</string>
@@ -399,7 +412,7 @@
     <string name="ai_tagline">Tanyakan tentang perangkat Anda dengan kata-kata biasa. Jawabannya dari apa yang diukur Zairenkai.</string>
     <string name="ai_try">Coba tanyakan</string>
     <string name="ai_try_note">Sampai model di perangkat tersedia, setiap pertanyaan membuka layar yang menjawabnya.</string>
-    <string name="ai_try_note_ready">Ketuk pertanyaan untuk bertanya ke model di perangkat. Model membaca pengukurannya sendiri.</string>
+    <string name="ai_try_note_ready">Pemeriksaan umum membaca telemetri perangkat langsung. Pertanyaan bebas menggunakan model di perangkat.</string>
     <string name="ai_prompt_hot">Kenapa HP saya panas?</string>
     <string name="ai_prompt_profile">Profil FAS mana yang aktif?</string>
     <string name="ai_prompt_control">Apa yang bisa dikendalikan Zairenkai di sini?</string>
@@ -416,7 +429,7 @@
     <string name="ai_model_body">Berjalan offline dengan zie-run (llama.cpp). Unduh sekali dari rilis GitHub milik Zairenkai, atau impor filenya. File hanya disimpan jika ukuran dan SHA-256-nya cocok.</string>
     <string name="ai_send">Kirim</string>
     <string name="ai_placeholder">Tanya Zairenkai…</string>
-    <string name="ai_composer_unavailable">Tersedia setelah model diunduh atau diimpor.</string>
+    <string name="ai_composer_unavailable">Pertanyaan bebas memerlukan model dan runtime di perangkat. Kartu pemeriksaan cepat membuka layar sistem terkait.</string>
     <string name="ai_tool_running">Berjalan</string>
     <string name="ai_tool_completed">Selesai</string>
     <string name="ai_tool_failed">Gagal</string>
@@ -754,4 +767,10 @@
     <string name="module_update_releases">Rilis modul</string>
     <string name="module_update_notify_title">Modul Zairenkai %1$s tersedia</string>
     <string name="module_update_notify_body">Perbarui di root manager Anda, lalu reboot.</string>
+    <string name="ai_fact_tuning_soc">SoC dan platform</string>
+    <string name="ai_fact_tuning_cpu">Telemetri CPU</string>
+    <string name="ai_fact_tuning_gpu">Telemetri GPU</string>
+    <string name="ai_fact_tuning_memory">Telemetri memori</string>
+    <string name="ai_fact_tuning_storage">Scheduler penyimpanan</string>
+    <string name="ai_try_note_tools_only">Pemeriksaan cepat perangkat sudah dapat digunakan. Impor model untuk pertanyaan bebas.</string>
 </resources>

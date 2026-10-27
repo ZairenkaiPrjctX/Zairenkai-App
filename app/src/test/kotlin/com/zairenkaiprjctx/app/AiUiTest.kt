@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -121,8 +122,9 @@ class AiUiTest {
         val vm = AiViewModel(host = host, io = Dispatchers.Unconfined)
         show(vm, AvailabilityState.MODEL_NOT_IMPORTED)
         assertEquals("nothing is downloaded until the user asks", 0, host.downloads)
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download model", substring = true))
-        compose.onNodeWithText("Download model", substring = true).performSemanticsAction(SemanticsActions.OnClick)
+        // First-run setup must be visible near the AI status, not buried below the suggestion grid.
+        compose.onNodeWithText("Download model", substring = true).assertExists()
+        compose.onAllNodesWithText("Download model", substring = true).onFirst().performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(1, host.downloads)
         assertEquals(ModelImportUi.NotAvailable(404), vm.importState.value)
@@ -134,8 +136,9 @@ class AiUiTest {
         val host = host(CapturedAnswers.FAS).apply { metered = true; downloadResult = ModelImport.Verified }
         val vm = AiViewModel(host = host, io = Dispatchers.Unconfined)
         show(vm, AvailabilityState.MODEL_NOT_IMPORTED)
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Download model", substring = true))
-        compose.onNodeWithText("Download model", substring = true).performSemanticsAction(SemanticsActions.OnClick)
+        // First-run setup must be visible near the AI status, not buried below the suggestion grid.
+        compose.onNodeWithText("Download model", substring = true).assertExists()
+        compose.onAllNodesWithText("Download model", substring = true).onFirst().performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         compose.onNodeWithText("Download over mobile data?").assertExists()
         assertEquals(0, host.downloads)

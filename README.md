@@ -7,17 +7,26 @@ The Android app for the Zairenkai ecosystem. One APK reaches the components that
 |---|---|---|
 | Control plane | Zairenkai-Core | root: `zcored ctl` (protocol v1). Health, telemetry, module inventory, and policy-checked actions with a dry-run preview |
 | Frame-aware scheduling | Zairenkai-FAS | root: `zfasd ctl`. Status (frame statistics, decision, thermal cap) and control when Core is not running |
+| Tuning telemetry | Zairenkai-Tuning, shipped by Modules and invoked by Core | Read-only CPU/GPU/memory/storage/SoC telemetry. Scheduler/governor writes stay blocked unless an exact-device hardware-validated profile authorizes them |
+| Local AI | Zairenkai-Intelligence-Engine | Packaged `zie-run` for arm64-v8a/x86_64; model download/import is user-triggered and SHA-256 verified |
+| Schema contracts | Zairenkai-Sdk | Canonical schemas and compatibility contracts; not a privileged runtime or a binary to install |
 | ART inspection | Zairenkai-ART | packaged `zart` executable. ART module, ART/dexopt properties, ISA config vs CPU; dexopt status via root |
 | Thermal diagnostics | Zairenkai-ThermalTools | packaged `zthermal` executable, read only: thermal zones, trip points, cooling devices; framework thermal status via root on request. No thermal controls exist |
 | Device database | Zairenkai-Database-Source | packaged offline asset: 354 unverified community device candidates (CC BY-SA 3.0) |
 | Android platform | – | public APIs: identity, thermal status and headroom, battery saver, ART APEX version |
 
-The other Zairenkai repositories contain no implementation yet (anime-extensions, also in the
-organization, is a separate product). The app says so, citing each one's
-audited commit, instead of showing placeholders. Details: `integration/repository-audit.md`.
+The integration is deliberately explicit rather than copying every repository into the APK or root
+module. The on-device AI runtime comes from Zairenkai-Intelligence-Engine; its model weights are a
+separate, user-triggered download/import and are verified by manifest size and SHA-256.
+Zairenkai-Sdk is the canonical schema/contract source, not a device daemon. Zairenkai-Graphics-Platform
+contains the read-only `zgfx` Vulkan/OpenGL ES probe, but is **not yet packaged or exposed in this app**.
+Other repositories are tracked in `integration/organization-repositories.json`; no feature is claimed
+merely because a repository exists. See `integration/repository-audit.md` for exact revisions, build
+provenance, and gaps.
 
-- **No device validation yet.** Nothing has run on an Android device
-  (`docs/testing/verification-report.md`).
+- **End-to-end device validation is incomplete.** A v0.3.1 install has been observed on KernelSU 3.4.1,
+  but Core's Tuning capabilities were degraded; v0.3.2 must be installed and re-tested before Tuning
+  can be called validated. See `docs/testing/verification-report.md`.
 - **Root is opt-in.** The app works without root; root features stay off until enabled in
   System › Root access.
 - **System module.** With root, the app can install the Zairenkai Core module (FAS only in

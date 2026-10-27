@@ -1,0 +1,84 @@
+name: Sync published Zairenkai artifacts
+
+on:
+  schedule:
+    - cron: '45 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+env:
+  PYTHONUTF8: '1'
+
+concurrency:
+  group: sync-published-artifacts
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    name: refresh exact source pins and consume a published module release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: dev
+          persist-credentials: true
+      - name: Validate helper scripts and JSON
+        run: |
+          python3 -m py_compile integration/scripts/sync_source_pins.py integration/scripts/sync_published_artifacts.py integration/scripts/sync_runtime_artifacts.py integration/scripts/fetch_module_artifact.py integration/scripts/fetch_runtime_artifact.py
+          python3 -m unittest discover -s integration/scripts/tests -v
+          python3 -c "import json; [json.load(open(f)) for f in ('integration/repository-lock.json', 'integration/organization-repositories.json')]"
+      - name: Refresh directly packaged source pins
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 integration/scripts/sync_source_pins.py
+      - name: Pin newest published Modules artifact, only if its manifest is valid
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 integration/scripts/sync_published_artifacts.py
+      - name: Pin published native and data artifacts after validating all hashes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 integration/scripts/sync_runtime_artifacts.py --mode app --repo-root .
+      - name: Create or update the review PR (never push to dev)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: automation/sync-published-zairenkai-artifacts
+        run: |
+          if git diff --quiet -- integration/repository-lock.json integration/organization-repositories.json; then
+            echo 'No published release or direct source pin changed; no PR needed.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B "$BRANCH"
+          git add integration/repository-lock.json integration/organization-repositories.json
+          git commit -m 'build: sync published module and source artifacts'
+          git push --force origin "HEAD:refs/heads/$BRANCH"
+          if gh pr view "$BRANCH" --repo "$GH_REPO" >/dev/null 2>&1; then
+            gh pr edit "$BRANCH" --repo "$GH_REPO" --title 'build: sync published Zairenkai artifacts' \
+              --body 'Automated candidate: refreshes immutable source revisions and pins each published Modules/native/data artifact only after verifying source commit, manifest, archive size and SHA-256. This PR never updates dev directly. Full-integration CI must pass before merge.'
+          else
+            gh pr create --repo "$GH_REPO" --base dev --head "$BRANCH" \
+              --title 'build: sync published Zairenkai artifacts' \
+              --body 'Automated candidate: refreshes immutable source revisions and pins each published Modules/native/data artifact only after verifying source commit, manifest, archive size and SHA-256. This PR never updates dev directly. Full-integration CI must pass before merge.'
+          fi
+          # A push made with GITHUB_TOKEN does not reliably trigger another workflow. Explicitly
+          # dispatch CI against this candidate branch so the full native + integration path runs.
+          gh workflow run ci.yml --repo "$GH_REPO" --ref "$BRANCH"
+          run_id=""
+          for _ in $(seq 1 30); do
+            run_id=$(gh run list --repo "$GH_REPO" --workflow ci.yml --branch "$BRANCH" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)
+            [ -n "$run_id" ] && [ "$run_id" != null ] && break
+            sleep 2
+          done
+          if [ -z "$run_id" ] || [ "$run_id" = null ]; then
+            echo 'Unable to locate the dispatched CI run; inspect Actions manually.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          gh run watch "$run_id" --repo "$GH_REPO" --exit-status
