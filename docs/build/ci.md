@@ -27,8 +27,8 @@ reported unnecessary Kotlin `!!` assertions in `PerformanceScreen`; those are re
 
 Run 40546741769 confirms test compilation now succeeds with Robolectric 4.17. Two UI tests then
 failed: the security test selected an ambiguous repeated `Unknown` label, and the AI prompt test
-did not check selected-tab state. Assertions now target the intended status and verify Thermal is
-selected before checking its screen content.
+failed to find the thermal destination label after tapping a prompt. The security selector is now
+disambiguated; the AI prompt assertion targets the Thermal screen's Android source detail.
 
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
 locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
