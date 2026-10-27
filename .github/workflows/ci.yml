@@ -16,6 +16,7 @@ concurrency:
 env:
   NDK_VERSION: r27d
   NDK_SHA256: 601246087a682d1944e1e16dd85bc6e49560fe8b6d61255be2829178c8ed15d9
+  RUST_STABLE: "1.97.0"
 
 jobs:
   # REDUCED BUILD. Does not fetch the other repositories, so no native components: zart, zthermal,
@@ -65,14 +66,28 @@ jobs:
           persist-credentials: false
       - name: Validate the source lock
         run: python3 integration/scripts/verify_integration.py lock
+      # Cache only build checkouts/tool outputs for the exact locked commits. build-components.sh
+      # still fetches and verifies every pinned SHA before using the checkout.
+      - name: Prepare component cache directory
+        run: mkdir -p integration/out/src
+      - name: Cache pinned sources and native build outputs
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.2.0
+        with:
+          path: |
+            integration/out/src
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: zairenkai-app-build-${{ runner.os }}-rust-${{ env.RUST_STABLE }}-ndk-${{ env.NDK_VERSION }}-${{ hashFiles('integration/repository-lock.json', 'integration/system-modules.json', 'integration/module-trust.json', 'integration/scripts/**', 'gradle/**', '*.gradle.kts', 'app/*.gradle.kts', 'integration-core/*.gradle.kts') }}
       - name: Every locked repository can be fetched anonymously
         run: python3 integration/scripts/verify_integration.py access
       - name: Rust, Android targets, NDK (checksum verified) and Ninja (zie-run)
         run: |
           sudo apt-get install -y -q ninja-build
-          rustup toolchain install stable --profile minimal -t aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
-          rustup default stable
-          curl -fsSL -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip"
+          rustup toolchain install "$RUST_STABLE" --profile minimal -t aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+          rustup default "$RUST_STABLE"
+          curl --fail --show-error --location --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 20 --max-time 1200 -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip"
           echo "${NDK_SHA256}  /tmp/ndk.zip" | sha256sum -c -
           unzip -q /tmp/ndk.zip -d /tmp
           rm /tmp/ndk.zip
@@ -99,6 +114,9 @@ jobs:
             app/build/outputs/apk/debug/app-debug.apk
             app/build/outputs/apk/release/app-release-unsigned.apk
             integration/out/components.json
+            integration/out/assets/components.json
+            integration/repository-lock.json
+            integration/organization-repositories.json
             integration/out/integration-report.json
             integration/out/integration-report.md
           if-no-files-found: error
