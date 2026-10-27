@@ -2,43 +2,15 @@
 
 Versions, channels, draft releases and in-app updates: `docs/build/releases.md`.
 
-**Status (2026-10-22): no release has been produced, and none is ready.** The licences are
-settled: App, ART, Core, FAS and ThermalTools are Apache-2.0, Zairenkai-Tuning (not yet in the
-app's lock) GPL-3.0-only (`docs/integration/license-inventory.md`).
+The integrated release pipeline lives in `Zairenkai-Release`; see `docs/build/releases.md` for
+its matrix and publication behavior. The APK release gate requires the single `zairenkai` module,
+a signed catalog whose public key is in `integration/module-trust.json`, a signed APK, and the
+license/provenance checks. The first live integrated build has not yet passed, and device
+validation remains separate from a successful host build.
 
-On 2026-10-21 the release gate (`verify_integration.py report <apk> --release`) listed three
-blockers. One is resolved: `integration/module-trust.json` now holds the maintainer's
-module-signing public key (`4330305a…`, added 2026-10-21), and the gate fails on the trust list
-only while it is empty (`verify_integration.py`, `check_apk`). Its last local run, at the
-component merge commits (2026-10-21, `docs/testing/verification-report.md`), failed on the two
-remaining blockers only. It has not been re-run since the single-module re-pin of 2026-10-22:
-
-| Blocker | What resolves it |
-|---|---|
-| The APK is unsigned | A signed build from `release.yml` with the keystore in the `release` environment (below) |
-| The module catalog is unsigned | A catalog signed in `release.yml` with `ZAIRENKAI_MODULE_SIGNING_KEY` |
-
-The secrets are reported set (`setup-actions-secrets.sh status`, 2026-10-22, names only); whether
-the stored key matches the trusted public key is checked only when `release.yml` runs, and it has
-never run.
-
-The gate also fails on any APK carrying a module other than the single `zairenkai` module
-(Zairenkai-Modules, with zcored, zfasd and the GPL-3.0 ztune with its source:
-`docs/integration/fas-provenance.md`, `docs/integration/license-inventory.md`).
-
-The gate is not the whole readiness question. Release readiness also needs:
-- the full-integration CI job green on the release commit (`docs/build/ci.md`; it no longer needs
-  a GitHub App since 2026-10-22, and has not passed on GitHub yet);
-- the Core-only hardware validation record (`docs/testing/device-validation.md`; no device has
-  run it);
-- the Core, ThermalTools, ART and FAS topic branches merged and the lock re-pinned to the merge
-  commits: **done** 2026-10-21 (`11e9742`, `3bc71fe`, `0d8cd72`, `be08b2d`).
-
-Until all of this holds, builds are **engineering artifacts, not for distribution**:
-- debug APK: signed with the Android debug key;
-- release APK: unsigned.
-
-The app refuses to install modules from them, because their catalog has no trusted signature.
+The App `release` environment does not grant its secrets to the central workflow. Configure the
+same five named secrets in the Release repository's `release` environment. The workflow checks
+that the module key matches the App's trusted public key and that the APK keystore opens.
 
 ## Two signing identities
 
@@ -73,8 +45,8 @@ Then:
    `openssl pkey -pubin -in module-signing.pub.pem -outform DER | sha256sum`.
    Add the printed entry (public key, `key_id`, owner, date) to `integration/module-trust.json`
    in a reviewed pull request. Only the public half goes into Git.
-2. Store the private PEM as the secret `ZAIRENKAI_MODULE_SIGNING_KEY` in the `release`
-   environment, with required reviewers. Keep an offline backup, then delete every other copy.
+2. Store the private PEM as `ZAIRENKAI_MODULE_SIGNING_KEY` in the `Zairenkai-Release` repository's
+   `release` environment. Keep an offline backup, then delete every other copy.
 3. `sign-module-catalog.sh` refuses any key whose public half is not in the trust list.
 4. This key is separate from the APK keystore. Never reuse one for the other.
 
@@ -83,7 +55,7 @@ To rotate, add the new key, release, then remove the old key in a later release.
 ## APK signing key
 
 Generate a keystore with `keytool -genkeypair -keyalg EC` (or RSA 3072+) outside the
-repository. Store in the `release` environment:
+repository. Store in `Zairenkai-Release`'s `release` environment:
 - `ZAIRENKAI_RELEASE_KEYSTORE_BASE64` (the keystore, base64);
 - `ZAIRENKAI_RELEASE_KEYSTORE_PASSWORD`;
 - `ZAIRENKAI_RELEASE_KEY_ALIAS`;
@@ -94,28 +66,16 @@ repository. Store in the `release` environment:
 
 ## Installing the secrets
 
-`integration/scripts/setup-actions-secrets.sh` creates the `release` environment and stores
-these secrets (`docs/build/secrets-and-variables.md`).
+`integration/scripts/setup-actions-secrets.sh` manages the App repository's environment. For the
+central workflow, configure the existing key material separately in `Zairenkai-Release` →
+Settings → Environments → `release`. Keep secret values in GitHub's secret UI; never print or
+commit them.
 
-## Running a release
+## Automated central release
 
-`.github/workflows/release.yml`, run manually from `dev` in the `release` environment:
-1. Lock check. Then, before any build, the job fails if it runs on another branch, if any of the
-   five signing secrets is missing, if the module key is not in the committed trust list, or if the
-   keystore does not open with the stored alias and password.
-2. The keys are written to `$RUNNER_TEMP` (mode 600); the locked repositories are checked to be
-   fetchable without credentials (`docs/build/ci.md`).
-3. `build-components.sh` signs the catalog.
-4. Tests, lint and a signed `assembleRelease`.
-5. The keys are removed.
-6. `apksigner verify --verbose --print-certs`; the scheme lines, certificate DN and SHA-256
-   digest go into the job summary.
-7. The release gate: `verify_integration.py report --release`. It runs `apksigner verify` again,
-   requires a signed catalog and a trusted key, and requires a licence file for every
-   distributed component.
-
-Nothing is published. The signed APK and the report are uploaded as the `release` workflow
-artifact only when every step passed. On a failure, the job summary says so and the integration
-report, if one was written, is uploaded as `release-failure-report`.
-
-The job fails while any blocker remains. No release has been run.
+`.github/workflows/unified-release.yml` in `Zairenkai-Release` checks the 15 configured source
+revisions every six hours, after builder changes, or through `workflow_dispatch`. If sources
+changed, it runs Modules and Engine host suites, validates signing secrets, builds the module and
+App, verifies the catalog and APK, records SHA-256/provenance, and publishes immutable module and
+App releases. Only the publish job has `contents: write`. The first live run remains unverified;
+central repository visibility and Release-environment secrets are rollout prerequisites.

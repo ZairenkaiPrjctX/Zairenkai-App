@@ -150,11 +150,13 @@ install -m 0644 "$ZIE_DIST/licenses/llama.cpp/LICENSE" "$OUT/assets/licenses/lla
 MOD_COMMIT=$(field zairenkai-module commit)
 MOD_DIR="$OUT/src/zairenkai-module"
 fetch "$MOD_DIR" "$(field zairenkai-module url)" "$MOD_COMMIT"
+MODULE_LOCK="${ZAIRENKAI_MODULE_COMPONENTS_LOCK:-$MOD_DIR/components.lock.json}"
+[[ -f "$MODULE_LOCK" ]] || { echo "module component lock is missing: $MODULE_LOCK" >&2; exit 1; }
 pinned() { # pinned <component name in the Modules lock> <key>
   python3 -c 'import json,sys
 c=[c for c in json.load(open(sys.argv[1]))["components"] if c["name"]==sys.argv[2]]
 print(c[0][sys.argv[3]]) if c else sys.exit("components.lock.json has no "+sys.argv[2])' \
-    "$MOD_DIR/components.lock.json" "$1" "$2"
+    "$MODULE_LOCK" "$1" "$2"
 }
 # The ctl contracts the app speaks must be the daemons the module packages.
 for pair in zcored-ctl-contract:zairenkai-core zfasd-ctl-contract:zairenkai-fas; do
@@ -199,7 +201,26 @@ for spec in zairenkai-core:zcored zairenkai-fas:zfasd zairenkai-tuning:ztune; do
 done
 if [ "$MODULE_ARTIFACT_MODE" = source ]; then
   rm -rf "$MOD_DIR/dist"
-  python3 "$MOD_DIR/scripts/assemble.py" --lock "$MOD_DIR/components.lock.json" "${components[@]}" --out "$MOD_DIR/dist"
+  assemble_args=(--lock "$MODULE_LOCK" "${components[@]}" --out "$MOD_DIR/dist")
+  if [[ -n "${ZAIRENKAI_MODULE_VERSION:-}" ]]; then
+    [[ -n "${ZAIRENKAI_MODULE_RELEASE_NOTES_FILE:-}" && -f "$ZAIRENKAI_MODULE_RELEASE_NOTES_FILE" ]] || {
+      echo "ZAIRENKAI_MODULE_RELEASE_NOTES_FILE is required with ZAIRENKAI_MODULE_VERSION" >&2; exit 1;
+    }
+    assemble_args+=(--version "$ZAIRENKAI_MODULE_VERSION" --release-notes-file "$ZAIRENKAI_MODULE_RELEASE_NOTES_FILE")
+    python3 - "$MOD_DIR/CHANGELOG.md" "$ZAIRENKAI_MODULE_VERSION" "$ZAIRENKAI_MODULE_RELEASE_NOTES_FILE" <<'PYNOTES'
+import pathlib, sys
+path, version, notes_file = pathlib.Path(sys.argv[1]), sys.argv[2], pathlib.Path(sys.argv[3])
+text = path.read_text(encoding="utf-8")
+notes = pathlib.Path(notes_file).read_text(encoding="utf-8").strip()
+marker = f"## [{version}] - automated build"
+if marker not in text:
+    lines = text.splitlines(keepends=True)
+    pos = next((i + 1 for i, line in enumerate(lines) if line.startswith("# ")), 0)
+    lines[pos:pos] = ["\n", marker + "\n", "\n", notes + "\n\n"]
+    path.write_text("".join(lines), encoding="utf-8")
+PYNOTES
+  fi
+  python3 "$MOD_DIR/scripts/assemble.py" "${assemble_args[@]}"
   zip=$(ls "$MOD_DIR"/dist/zairenkai-v*.zip)
   (cd "$MOD_DIR/dist" && sha256sum -c --quiet "$(basename "$zip").sha256")
 else

@@ -128,12 +128,13 @@ internal object DeviceIntentRouter {
         fun has(vararg words: String) = words.any { Regex("(^| )" + Regex.escape(it) + "( |$)").containsMatchIn(q) }
         fun call(id: String) = if (registry.get(id) != null) AiCall(id, emptyMap()) else null
         val isId = has("kenapa", "mengapa", "saya", "hp", "panas", "cek", "periksa", "profil", "aktif", "perangkat", "apa", "yang", "bisa", "mana", "kesehatan", "integrasi", "kendalikan", "suhu", "memori", "penyimpanan", "sekarang", "tolong", "apakah")
-        val selected: Pair<String, String>? = when {
+        // Every write request stays on the model -> Core dry-run -> explicit approval path.
+        if (has("set", "switch", "ubah", "ganti", "aktifkan", "apply", "atur", "enable", "disable", "change")) return null
+        val route = when {
             // Only route a real status question. A change request stays on the model -> Core
             // dry-run -> explicit human confirmation path.
             has("fas") && has("profile", "profil") &&
-                has("active", "aktif", "current", "currently", "mana", "which", "status", "apa", "what") &&
-                !has("set", "switch", "ubah", "ganti", "aktifkan", "apply", "atur", "enable", "disable") ->
+                has("active", "aktif", "current", "currently", "mana", "which", "status", "apa", "what") ->
                 "fas.status" to if (isId) "Memeriksa status dan profil FAS aktif" else "Checking the active FAS profile"
             has("panas", "hot", "overheat", "overheating", "suhu", "temperature", "thermal") ->
                 "thermal.snapshot" to if (isId) "Membaca sensor termal yang tersedia" else "Reading available thermal sensors"
@@ -142,7 +143,8 @@ internal object DeviceIntentRouter {
             has("root", "integrasi", "integration", "core", "status", "healthy", "health", "kapabilitas", "capabilities", "kontrol", "control", "kendalikan", "available") ->
                 "core.health" to if (isId) "Memeriksa kesehatan integrasi Zairenkai" else "Checking Zairenkai integration health"
             else -> null
-        } ?: return null
+        }
+        val selected = route ?: return null
         val primary = call(selected.first) ?: return null
         val ids = when (selected.first) {
             "core.health" -> listOfNotNull(primary, call("core.capabilities"), call("tuning.telemetry"))
