@@ -29,7 +29,8 @@ Run 40546741769 confirms test compilation now succeeds with Robolectric 4.17. Tw
 failed: the security test selected an ambiguous repeated `Unknown` label, and the AI prompt test
 failed to find the thermal destination label after tapping a prompt. The security selector is now
 disambiguated; the AI prompt assertion waits for the Thermal screen's Android source detail to
-appear after navigation.
+appear after invoking the prompt card's semantics action (the nested-list touch hit-test was
+not reliably reaching the clickable card in Robolectric).
 
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
 locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built

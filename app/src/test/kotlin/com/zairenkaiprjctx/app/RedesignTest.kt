@@ -140,7 +140,9 @@ class RedesignTest {
         compose.onNodeWithText("Until the on-device model is available, each question opens the screen that answers it.").assertExists()
         compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Why is my phone hot?"))
-        compose.onNodeWithText("Why is my phone hot?").performClick()
+        // Invoke the card's semantic click directly: Compose 1.11/Robolectric touch hit-testing
+        // can miss the clickable parent after scrolling a nested LazyColumn.
+        compose.onNodeWithText("Why is my phone hot?").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitUntil(10_000) {
             compose.onAllNodesWithText("PowerManager thermal status listener", substring = true)
                 .fetchSemanticsNodes().isNotEmpty()
