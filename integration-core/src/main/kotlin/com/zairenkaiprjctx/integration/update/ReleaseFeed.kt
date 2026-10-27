@@ -6,9 +6,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-/** Where the app's releases are published (GitHub Releases of the app's public repository). */
+/** The central repository that publishes verified App and Modules release assets. */
 object ReleaseSource {
-    const val REPOSITORY = "ZairenkaiPrjctX/Zairenkai-App"
+    const val REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Release"
     const val API = "https://api.github.com/repos/$REPOSITORY/releases?per_page=30"
     const val PAGE = "https://github.com/$REPOSITORY/releases"
 
@@ -16,8 +16,8 @@ object ReleaseSource {
     fun apkName(v: AppVersion) = "zairenkai-$v.apk"
     fun checksumName(v: AppVersion) = "zairenkai-$v.apk.sha256"
 
-    /** Zairenkai-Modules releases: the root module (docs/RELEASING.md there). */
-    const val MODULES_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Modules"
+    /** Module releases are published beside App releases in the central Release repository. */
+    const val MODULES_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Release"
     const val MODULES_API = "https://api.github.com/repos/$MODULES_REPOSITORY/releases?per_page=30"
     const val MODULES_PAGE = "https://github.com/$MODULES_REPOSITORY/releases"
     fun moduleZipName(v: AppVersion) = "zairenkai-v$v.zip"
@@ -139,13 +139,14 @@ object ReleaseFeed {
     }
 
     /**
-     * Module releases: published, not pre-release, tag `vMAJOR.MINOR.PATCH`, with the zip under
+     * Module releases: published, not pre-release, tag `module-vMAJOR.MINOR.PATCH`, with the zip under
      * the name the module's release workflow uses. Newest first.
      */
     fun parseModules(text: String): List<ModuleRelease> =
         json.decodeFromString<List<GhRelease>>(text).mapNotNull { r ->
             if (r.draft || r.prerelease || r.publishedAt == null) return@mapNotNull null
-            val v = AppVersion.parse(r.tag)?.takeIf { !it.isBeta && r.tag.startsWith("v") } ?: return@mapNotNull null
+            val moduleTag = r.tag.removePrefix("module-")
+            val v = AppVersion.parse(moduleTag)?.takeIf { !it.isBeta && moduleTag.startsWith("v") } ?: return@mapNotNull null
             val zip = r.assets.firstOrNull { it.state == "uploaded" && it.name == ReleaseSource.moduleZipName(v) } ?: return@mapNotNull null
             if (!zip.url.startsWith("https://")) return@mapNotNull null
             ModuleRelease(v, r.tag, r.body.orEmpty(), r.publishedAt, r.page, ReleaseAsset(zip.name, zip.url, zip.size))

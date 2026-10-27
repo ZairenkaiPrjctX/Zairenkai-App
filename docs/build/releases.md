@@ -15,25 +15,26 @@ update. MINOR and PATCH stay below 100. The app parses the same format
 (`integration-core/.../update/AppVersion.kt`); `UpdateTest` and `UpdateUiTest` check that the
 build file, the parser and the built APK agree. The first build was 0.1.0 with code 1.
 
-`CHANGELOG.md` has one `## [version] - date` entry per version (Keep a Changelog). The app shows
-its own entry in Settings › About; the release workflow uses it as the release notes.
-`integration/scripts/app_release.py` reads both (tested in `integration/scripts/tests`).
+`CHANGELOG.md` has one `## [version] - date` entry per source version (Keep a Changelog). The
+central integrated builder allocates the next stable release version and adds generated build
+notes in its temporary checkout; it does not rewrite this repository's source history.
 
 Settings › About shows the full version, "0.2.0-beta.1 (20001)", the source commit and its date
 (`BuildConfig.GIT_COMMIT`, `GIT_DATE`, from git at build time; "unknown" from a source archive),
 and the SHA-256 of the signing certificate, so a user can compare it with the release's.
 
-## Cutting a release (maintainer)
+## Integrated release pipeline
 
-1. Set `appVersion` (a beta: `X.Y.Z-beta.N`; a release: `X.Y.Z`) and write its `CHANGELOG.md`
-   entry, in a reviewed pull request merged into `dev`.
-2. Run the **Release** workflow on `dev` with **draft_release** checked. It builds and signs as
-   before (`docs/build/release.md`), runs the release gate, names the APK
-   `zairenkai-<version>.apk` with a `zairenkai-<version>.apk.sha256`, and a second job (the only
-   one with `contents: write`) creates a **draft** release `v<version>`: marked pre-release for a
-   beta, notes from the changelog. It refuses a version that already has a release.
-3. Review the draft on GitHub and **publish** it. Only published releases reach users. Agents
-   never publish (`CLAUDE.md`).
+`Zairenkai-Release` resolves all 15 repositories configured in its `build/repositories.json` to
+immutable `dev` SHAs, verifies each checkout in a matrix, and builds the App and root module from
+the same source snapshot. A schedule checks for changed source revisions every six hours; a
+successful full build publishes immutable stable App (`vX.Y.Z`) and module (`module-vX.Y.Z`)
+releases in `Zairenkai-Release`. Each release carries SHA-256 checksums and the shared
+`build-manifest.json`, including source commits and the builder commit. The workflow is configured
+to stop if its release-environment signing secrets are unavailable or any validation fails.
+
+The first live workflow run and signed output remain **unverified**. Repository visibility and
+required Actions environment secrets also need checking before the products can reach users.
 
 ## How the app updates itself
 
@@ -41,7 +42,7 @@ Settings › Updates; code in `app/.../update/Updates.kt` and `integration-core/
 
 | Step | What happens | Checked |
 |---|---|---|
-| Check | `GET https://api.github.com/repos/ZairenkaiPrjctX/Zairenkai-App/releases` (no token, no device data; User-Agent with the app version) — daily through JobScheduler when online (on by default, can be turned off), or on request | HTTPS on GitHub's hosts only; drafts, tags that are not versions, a pre-release flag that disagrees with the version, and releases without both assets are ignored |
+| Check | `GET https://api.github.com/repos/ZairenkaiPrjctX/Zairenkai-Release/releases` (no token, no device data; User-Agent with the app version) — daily through JobScheduler when online (on by default, can be turned off), or on request | HTTPS on GitHub's hosts only; drafts, tags that are not versions, a pre-release flag that disagrees with the version, and releases without both assets are ignored |
 | Channel | Release: newest release. Beta: newest release or pre-release | Only versions newer than the installed one |
 | Notify | One notification per version, if notifications are allowed (Android 13+ asks) | Tapping it opens Settings › Updates |
 | Download | Only after the user taps "Download and install"; to the app's cache | Size bounded by the release record (and 300 MB); SHA-256 must equal the `.sha256` asset |
@@ -53,9 +54,10 @@ Android enforces the same rule when it installs. A debug-signed or locally built
 cannot be updated from a release (the app says so), and a release can never be replaced by an
 APK signed by anyone else.
 
-**Unverified:** no release exists yet (the releases API returns `[]`, captured in
-`integration-core/src/test/resources/contracts/github/`), so no check, download or install has
-run against a real release or on a device.
+**Unverified:** the central Release repository has not published the integrated products yet, so
+no check, download or install has run against a real central release or on a device. The updater
+uses unauthenticated GitHub requests; the central repository and its releases must be public for
+ordinary installations to receive updates.
 
 ## Permissions this needs
 

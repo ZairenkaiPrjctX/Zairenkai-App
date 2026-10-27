@@ -14,6 +14,7 @@ import com.zairenkaiprjctx.integration.ai.ModelImport
 import com.zairenkaiprjctx.integration.ai.ModelManifest
 import com.zairenkaiprjctx.integration.ai.ProposedChange
 import com.zairenkaiprjctx.integration.ai.ToolOutcome
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -165,7 +166,12 @@ class AiViewModel(
                         }
                     }
                 } catch (e: Exception) {
-                    listOf(AiTurn.Refusal(nextId("x"), e.message ?: e.javaClass.simpleName))
+                    if (e is CancellationException) throw e
+                    val indonesian = listOf("saya", "tolong", "hp", "suhu", "panas", "cek", "periksa", "ubah", "bisa", "kenapa", "berapa", "gimana")
+                            .any { Regex("\\b$it\\b", RegexOption.IGNORE_CASE).containsMatchIn(question) }
+                    val message = if (indonesian) "AI lokal mengalami kendala saat memproses permintaan. Coba lagi; tidak ada perubahan yang diterapkan."
+                                  else "The local AI could not complete this request. Please try again; no change was applied."
+                    listOf(AiTurn.Refusal(nextId("x"), message))
                 }
                 turns.update { it + added }
             } finally {
@@ -182,7 +188,13 @@ class AiViewModel(
         val (agent, change) = changes.remove(id) ?: return
         if (!approve) return
         viewModelScope.launch(io) {
-            val r = agent.apply(change)
+            val r = try {
+                agent.apply(change)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                ChangeResult.Failed("Core could not verify this change. No success is reported; try again.")
+            }
             setApproval(id) {
                 when (r) {
                     is ChangeResult.Applied -> it.copy(state = ApprovalState.APPLIED, result = r.message)

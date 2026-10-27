@@ -8,10 +8,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// The app version: MAJOR.MINOR.PATCH for a release, MAJOR.MINOR.PATCH-beta.N for a beta (a GitHub
-// pre-release). The versionCode grows with it (integration-core update/AppVersion.kt):
-// 0.2.0-beta.1 -> 20001, 0.2.0 -> 20099. CHANGELOG.md has an entry for every version.
+// The checked-in version is the local/default build. The central matrix release workflow supplies
+// zairenkai.appVersion after resolving the next monotonic release version. Both pass this same
+// versionCode validator, so the APK and the release tag cannot silently disagree.
 val appVersion = "0.2.0-beta.1"
+val packagedAppVersion = providers.gradleProperty("zairenkai.appVersion").orElse(appVersion).get()
 fun versionCodeOf(name: String): Int {
     val m = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$""").matchEntire(name) ?: throw GradleException("bad app version $name")
     val (major, minor, patch) = m.groupValues.drop(1).take(3).map { it.toInt() }
@@ -140,8 +141,8 @@ android {
         applicationId = "com.zairenkaiprjctx.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = versionCodeOf(appVersion)
-        versionName = appVersion
+        versionCode = versionCodeOf(packagedAppVersion)
+        versionName = packagedAppVersion
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
         buildConfigField("String", "GIT_DATE", "\"$gitDate\"")
         ndk {

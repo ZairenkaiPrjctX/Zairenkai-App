@@ -68,19 +68,18 @@ answers:
 | Core health `degraded` (for example FAS absent) | `DEGRADED` |
 | No answer | `INSTALLED_NOT_INITIALIZED` |
 
-## Acquisition: decision
+## Acquisition and updates
 
-| | A. Packaged in the APK (chosen) | B. Separately distributed release |
+| | App installation payload | Central module release |
 |---|---|---|
-| APK size | +0.74 MB (the Core zip; FAS only in internal builds) | none |
-| Update independence | a module update needs an app update | modules can update alone |
-| Offline | works offline | needs the network at install time |
-| Network permission | none needed for modules (the app's INTERNET permission serves app updates only) | INTERNET permission required |
-| Infrastructure | none beyond the signed catalog | a release host, a version index, rollout and revocation |
-| Exists today | yes | no: no release exists in Core, FAS or Zairenkai-Release (`list_releases`, 2026-10-21) |
+| Contents | Signed App embeds the installable module and verified catalog | `Zairenkai-Release` publishes versioned ZIP, `update.json`, changelog, SHA-256 and source manifest |
+| Update path | App update check uses the central App release | Magisk, KernelSU and APatch read `module.prop`'s `updateJson`; the App checks the shared Releases feed |
+| Independent updates | App installation remains tied to a signed App update | Root managers can update the module independently |
+| Integrity | App verifies trusted catalog signature and ZIP digests | ZIP carries `SHA256SUMS`; release assets include SHA-256 and provenance |
+| Status | Implemented | Builder and release feed configured; first central product release unverified |
 
-A is the simplest safe choice: modules need no network, and no release host to secure. B can be
-added when a module release pipeline exists. It would reuse the same signed catalog format.
+The integrated builder creates both products from one immutable source matrix. The central
+Release repository must be public for anonymous App and root-manager clients to read its releases.
 
 ## Trust: a signed catalog
 

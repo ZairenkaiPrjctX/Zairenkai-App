@@ -67,7 +67,7 @@ class UpdateTest {
 
     private fun release(tag: String, prerelease: Boolean, draft: Boolean = false, assets: List<String>? = null, url: String = "https://github.com/x") =
         """{"tag_name":"$tag","name":"Zairenkai $tag","body":"## Added\n- thing","draft":$draft,"prerelease":$prerelease,
-           "published_at":${if (draft) "null" else "\"2026-10-23T10:00:00Z\""},"html_url":"https://github.com/ZairenkaiPrjctX/Zairenkai-App/releases/tag/$tag",
+           "published_at":${if (draft) "null" else "\"2026-10-23T10:00:00Z\""},"html_url":"https://github.com/ZairenkaiPrjctX/Zairenkai-Release/releases/tag/$tag",
            "assets":[${(assets ?: listOf("zairenkai-${tag.removePrefix("v")}.apk", "zairenkai-${tag.removePrefix("v")}.apk.sha256"))
             .joinToString { """{"name":"$it","browser_download_url":"$url/$it","size":10,"state":"uploaded"}""" }}]}"""
 
@@ -120,15 +120,15 @@ class UpdateTest {
     fun moduleReleasesAreReadFromTheirOwnFeed() {
         assertEquals(emptyList<Any>(), ReleaseFeed.parseModules(contract("github/releases-zairenkai-modules-2026-10-23.json")))
         // Synthetic (contracts/github/README.md): the module workflow's asset names.
-        fun rel(tag: String, pre: Boolean = false, draft: Boolean = false, zip: String = "zairenkai-$tag.zip") =
+        fun rel(tag: String, pre: Boolean = false, draft: Boolean = false, zip: String = "zairenkai-${tag.removePrefix("module-")}.zip") =
             """{"tag_name":"$tag","body":"### Added\n- x","draft":$draft,"prerelease":$pre,"published_at":${if (draft) "null" else "\"2026-10-30T00:00:00Z\""},
-               "html_url":"https://github.com/ZairenkaiPrjctX/Zairenkai-Modules/releases/tag/$tag",
+               "html_url":"https://github.com/ZairenkaiPrjctX/Zairenkai-Release/releases/tag/$tag",
                "assets":[{"name":"$zip","browser_download_url":"https://github.com/x/$zip","size":5},{"name":"update.json","browser_download_url":"https://github.com/x/u","size":1}]}"""
         val feed = ReleaseFeed.parseModules("[" + listOf(
-            rel("v0.3.0"), rel("v0.4.0"), rel("v0.5.0", pre = true), rel("v0.6.0", draft = true),
+            rel("module-v0.3.0"), rel("module-v0.4.0"), rel("module-v0.5.0", pre = true), rel("module-v0.6.0", draft = true),
             rel("0.7.0"), rel("v0.8.0", zip = "module.zip"), rel("v0.9.0-beta.1"),
         ).joinToString(",") + "]")
-        assertEquals(listOf("v0.4.0", "v0.3.0"), feed.map { it.tag })
+        assertEquals(listOf("module-v0.4.0", "module-v0.3.0"), feed.map { it.tag })
         assertEquals(400L, feed.first().versionCode)
         assertEquals("zairenkai-v0.4.0.zip", feed.first().zip.name)
     }
@@ -196,14 +196,14 @@ class UpdateTest {
     @Test
     fun downloadKeepsOnlyAMatchingFile() {
         val apk = "PK fake apk bytes".toByteArray()
-        val base = "https://github.com/ZairenkaiPrjctX/Zairenkai-App/releases/download/v0.2.0/"
+        val base = "https://github.com/ZairenkaiPrjctX/Zairenkai-Release/releases/download/v0.2.0/"
         fun feed(size: Int) = "[" + """{"tag_name":"v0.2.0","draft":false,"prerelease":false,"published_at":"2026-10-23T10:00:00Z","html_url":"https://github.com/x",
             "assets":[{"name":"zairenkai-0.2.0.apk","browser_download_url":"${base}zairenkai-0.2.0.apk","size":$size},
             {"name":"zairenkai-0.2.0.apk.sha256","browser_download_url":"${base}zairenkai-0.2.0.apk.sha256","size":90}]}""" + "]"
         val dir = Files.createTempDirectory("upd").toFile()
 
         val good = FakeTransport(mapOf(
-            "https://api.github.com/repos/ZairenkaiPrjctX/Zairenkai-App/releases?per_page=30" to feed(apk.size).toByteArray(),
+            "https://api.github.com/repos/ZairenkaiPrjctX/Zairenkai-Release/releases?per_page=30" to feed(apk.size).toByteArray(),
             "${base}zairenkai-0.2.0.apk" to apk,
             "${base}zairenkai-0.2.0.apk.sha256" to "${sha(apk)}  zairenkai-0.2.0.apk\n".toByteArray(),
         ))
