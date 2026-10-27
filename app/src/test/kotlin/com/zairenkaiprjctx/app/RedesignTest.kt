@@ -137,7 +137,8 @@ class RedesignTest {
         // Robolectric extracts no native libraries, so zie-run is absent here: the probe says so.
         assertEquals(AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE, c.registry.snapshot.value.availability(AI_CAPABILITY).state)
         compose.onNodeWithText("Native component unavailable").assertExists() // above the fold on this 470 dp screen
-        compose.onNodeWithText("Available once the model is downloaded or imported.").assertIsDisplayed()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Until the on-device model is available"))
+        compose.onNodeWithText("Until the on-device model is available, each question opens the screen that answers it.").assertIsDisplayed()
         compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Why is my phone hot?"))
         compose.onNodeWithText("Why is my phone hot?").performClick()

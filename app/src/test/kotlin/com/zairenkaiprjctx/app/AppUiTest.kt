@@ -130,7 +130,7 @@ class AppUiTest {
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Zairenkai Security Center"))
-        compose.onAllNodesWithText("Zairenkai Security Center").onFirst().performSemanticsAction(SemanticsActions.OnClick)
+        compose.onAllNodesWithText("Zairenkai Security Center")[1].performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Vulnerability findings"))
         compose.onNodeWithText("Vulnerability findings").assertIsDisplayed()
