@@ -138,6 +138,7 @@ enum class Overlay(@StringRes val title: Int, @StringRes val subtitle: Int?, val
     UPDATES(R.string.update_title, R.string.update_subtitle, "SETTINGS"),
     ABOUT(R.string.about_title, null, "SETTINGS"),
     SYSTEM_MODULE(R.string.module_title, null),
+    SECURITY_CENTER(R.string.security_center_title, R.string.security_center_subtitle, "SETTINGS"),
     RUNTIME(R.string.nav_runtime, R.string.subtitle_runtime),
     ;
 
@@ -348,6 +349,7 @@ private fun App(c: AppContainer) {
                         Overlay.UPDATES -> UpdatesScreen(c.updates, padding)
                         Overlay.ABOUT -> AboutScreen(c, padding) { overlay = Overlay.UPDATES }
                         Overlay.SYSTEM_MODULE -> SystemModuleScreen(modulesVm, main, snapshot, padding)
+                        Overlay.SECURITY_CENTER -> com.zairenkaiprjctx.app.ui.SecurityCenterScreen(padding, modulesVm)
                         Overlay.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
                         Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule, select)
                         Tab.PERFORMANCE -> PerformanceScreen(perf, snapshot, padding, goToRoot)

@@ -5,7 +5,7 @@ package com.zairenkaiprjctx.app.screenshots
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +18,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -106,7 +105,7 @@ class ScreenshotGallery {
         // Pages opened from System and the app bar.
         val runtime = app.getString(R.string.nav_runtime)
         compose.onNode(hasScrollAction()).performScrollToNode(hasText(runtime))
-        compose.onAllNodesWithText(runtime).onFirst().performClick()
+        compose.onAllNodesWithText(runtime)[0].performClick()
         shoot("$prefix-6-runtime")
         back()
         compose.onNodeWithContentDescription(app.getString(R.string.action_open_settings)).performClick()
@@ -193,7 +192,7 @@ class ScreenshotGallery {
         compose.onNode(page).performScrollToNode(hasText(app.getString(R.string.app_theme)))
         compose.onNode(hasScrollAction() and androidx.compose.ui.test.SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.HorizontalScrollAxisRange))
             .performScrollToNode(hasText(app.getString(R.string.theme_new)))
-        compose.onAllNodesWithText(app.getString(R.string.theme_new)).onFirst().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        compose.onAllNodesWithText(app.getString(R.string.theme_new))[0].performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         compose.waitForIdle()
         shoot("settings-7-theme-editor")
         back()

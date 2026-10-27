@@ -1,12 +1,10 @@
 [versions]
-agp = "8.9.1"
-kotlin = "2.1.20"
+agp = "9.4.1"
+kotlin = "2.4.10"
 coroutines = "1.10.1"
 serialization = "1.8.0"
-# Stable Compose BOM (UI 1.11.4). Material 3 is pinned separately to 1.5.0-alpha18: in stable
-# 1.4.0, MaterialExpressiveTheme, MotionScheme and the expressive components are internal
-# (compile error "it is internal"); 1.5.0-alpha18 is the newest pre-release whose AAR still
-# accepts compileSdk 35 / AGP 8.6+ (alpha19+ require compileSdk 37 and AGP 9.1).
+# Stable Compose BOM (UI 1.11.4). Material 3 stays pinned separately to 1.5.0-alpha18 because
+# the app uses its expressive APIs; upgrading that UI dependency is a separate UI migration.
 compose-bom = "2026.06.01"
 # Backdrop blur for the experimental glass bar (Apache-2.0). 1.6.x is the newest line built for
 # Compose UI 1.8+ and Kotlin 2.1; 2.x needs Compose 1.12 and Kotlin 2.4.
@@ -16,7 +14,7 @@ activity-compose = "1.10.0"
 lifecycle = "2.8.7"
 core-ktx = "1.15.0"
 junit = "4.13.2"
-robolectric = "4.14.1"
+robolectric = "4.17"
 androidx-annotation = "1.9.1"
 jetbrains-annotations = "26.0.1"
 
@@ -48,7 +46,6 @@ compose-animation = { module = "androidx.compose.animation:animation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

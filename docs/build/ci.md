@@ -10,6 +10,28 @@
 
 A green `reduced` job says nothing about the integrated app. Only `full-integration` does.
 
+Both Android build jobs install platforms 36 and 37.0 plus Build Tools 36.0.0 explicitly. Google
+publishes API 37 as `platforms;android-37.0`; AGP looks for `platforms/android-37` when
+`compileSdk = 37`, so each job creates that directory alias after installation.
+
+**Status, 2026-10-27:** run 40545060428 failed before Gradle because it requested the nonexistent
+package name `platforms;android-37`. GitHub's Ubuntu 24.04 runner images list the actual package as
+`android-37.0`; workflows now install that package and alias its directory for AGP. The local
+container has no Android SDK, so Android tests, lint, and APK builds cannot be verified locally;
+rerun Actions to verify the fix on a hosted runner.
+
+The first run with that SDK fix (40545926500) installed API 37 successfully, then failed while
+compiling Java tests because Robolectric 4.14.1 references `FingerprintManager`, absent from the
+API 37 compile stubs. Robolectric is now updated to 4.17, which supports API 37. That run also
+reported unnecessary Kotlin `!!` assertions in `PerformanceScreen`; those are removed.
+
+Run 40546741769 confirms test compilation now succeeds with Robolectric 4.17. Two UI tests then
+failed: the security test selected an ambiguous repeated `Unknown` label, and the AI prompt test
+failed to find the thermal destination label after tapping a prompt. The security selector is now
+disambiguated; the AI prompt assertion waits for the Thermal screen's Android source detail to
+appear after invoking the prompt card's semantics action (the nested-list touch hit-test was
+not reliably reaching the clickable card in Robolectric).
+
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
 locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
 with its own `scripts/build-android.sh`, and Modules' `scripts/assemble.py` packages them

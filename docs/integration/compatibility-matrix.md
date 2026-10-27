@@ -2,7 +2,7 @@
 
 | Item | Supported | Evidence | Verified on device |
 |---|---|---|---|
-| Android version | minSdk 29 (Android 10) to targetSdk 35 | `app/build.gradle.kts`; `MATCH_APEX` and the thermal listener need API 29 | No |
+| Android version | minSdk 29 (Android 10) to targetSdk 36 (Android 16) | `app/build.gradle.kts`; `MATCH_APEX` and the thermal listener need API 29 | No |
 | Thermal headroom | API 30+ (`UNSUPPORTED_DEVICE` below) | `PlatformSubsystem` | No |
 | SoC fields, dynamic colour | API 31+ | `AndroidPlatformInfo`, `ZairenkaiTheme` | No |
 | App language (English default, Indonesian on request) | API 29–32: in-app choice stored in preferences; API 33+: per-app language via `LocaleManager` (generated `localeConfig`: en, in) | `AppLanguage`, `LanguageTest` (SDK 32 and 35) | No |

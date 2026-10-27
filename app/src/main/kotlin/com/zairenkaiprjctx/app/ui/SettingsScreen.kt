@@ -71,6 +71,7 @@ private val SETTING_ENTRIES = listOf(
     SettingEntry(R.string.glass_title, R.string.nav_settings, Overlay.GLASS, "glass blur frost liquid kaca"),
     SettingEntry(R.string.settings_language, R.string.nav_settings, Overlay.SETTINGS, "language english indonesia bahasa"),
     SettingEntry(R.string.module_title, R.string.nav_settings, Overlay.SYSTEM_MODULE, "module root magisk kernelsu apatch modul"),
+    SettingEntry(R.string.security_center_title, R.string.nav_settings, Overlay.SECURITY_CENTER, "security vulnerability cve integrity keamanan kerentanan"),
     SettingEntry(R.string.update_title, R.string.nav_settings, Overlay.UPDATES, "update upgrade release beta version download install pembaruan perbarui rilis versi unduh pasang"),
     SettingEntry(R.string.about_title, R.string.nav_settings, Overlay.ABOUT, "about version build licence license changelog tentang versi lisensi perubahan"),
 )
@@ -195,6 +196,19 @@ fun SettingsScreen(vm: SettingsViewModel, modules: SystemModuleViewModel, paddin
                             if (declined) OutlinedButton(onClick = modules::reconsider) { Text(stringResource(R.string.module_settings_reoffer)) }
                         }
                     }
+                }
+            }
+        }
+        item {
+            SegmentedGroup(title = stringResource(R.string.security_center_title), icon = ZairenkaiGlyphs.lock) {
+                row {
+                    GroupRow(
+                        stringResource(R.string.security_center_title),
+                        supporting = stringResource(R.string.security_center_description),
+                        icon = ZairenkaiGlyphs.lock,
+                        onClick = { open(Overlay.SECURITY_CENTER) },
+                        chevron = true,
+                    )
                 }
             }
         }

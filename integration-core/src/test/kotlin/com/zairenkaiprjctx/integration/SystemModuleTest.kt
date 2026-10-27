@@ -492,8 +492,9 @@ class SystemModuleTest {
         c.prepare(); c.requestConfirmation()
         val r = c.confirm(true)
         assertEquals(InstallPhase.HANDOFF_READY, r.phase)
-        assertEquals(listOf("com.topjohnwu.magisk"), r.handoff!!.packages)
-        assertTrue(r.handoff!!.file.exists())
+        val handoff = requireNotNull(r.handoff)
+        assertEquals(listOf("com.topjohnwu.magisk"), handoff.packages)
+        assertTrue(handoff.file.exists())
         assertTrue("a handoff is not an automated install", su.mutating.isEmpty())
     }
 

@@ -797,4 +797,23 @@
     <string name="ai_fact_tuning_memory">Memory telemetry</string>
     <string name="ai_fact_tuning_storage">Storage scheduler</string>
     <string name="ai_try_note_tools_only">Quick device checks work now. Import the on-device model to ask open-ended questions.</string>
+    <string name="security_center_title">Zairenkai Security Center</string>
+    <string name="security_center_subtitle">Security overview</string>
+    <string name="security_center_description">Review system security status, known vulnerabilities, and Zairenkai module integrity.</string>
+    <string name="security_device_title">Device information</string>
+    <string name="security_android_release">Android %1$s (API %2$d)</string>
+    <string name="security_patch_level">Android security patch: %1$s</string>
+    <string name="security_kernel">Kernel: %1$s</string>
+    <string name="security_app_version">App version: %1$s</string>
+    <string name="security_findings_title">Vulnerability findings</string>
+    <string name="security_not_scanned">Not scanned</string>
+    <string name="security_feed_unavailable">No verified ZSI security report is connected to this app build. Vulnerability status is unknown; no clean or safe result is inferred.</string>
+    <string name="security_integrity_title">Module integrity</string>
+    <string name="security_integrity_unavailable">A verified installed-module integrity report is not available here. Open System Module to review the packaged catalogue and installation status.</string>
+    <string name="security_unknown">Unknown</string>
+    <string name="security_catalog_title">Packaged module catalogue signature</string>
+    <string name="security_catalog_verified">Verified signer: %1$s</string>
+    <string name="security_catalog_unverified">Catalogue signature not verified</string>
+    <string name="security_catalog_scope">This verifies the packaged catalogue only; installed files and runtime state have not been scanned.</string>
+    <string name="security_catalog_not_packaged">No module catalogue is packaged in this build.</string>
 </resources>

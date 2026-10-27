@@ -55,9 +55,10 @@ class CoreClientTest {
         runner.on(su("$base 'submit' '$params'"), 0, contract("core/submit-dry-run.json"))
         val r = (CoreClient(root).submit(CoreOperation.FasSetProfile(FasProfileName.PERFORMANCE), dryRun = true) as CoreCall.Ok).value
         assertEquals("rejected", r.outcome)
-        assertEquals("deny", r.decision!!.verdict)
-        assertEquals(4, r.decision!!.rules.size)
-        assertTrue(r.decision!!.rules.any { it.rule == "builtin.thermal" && it.verdict == "deny" })
+        val decision = requireNotNull(r.decision)
+        assertEquals("deny", decision.verdict)
+        assertEquals(4, decision.rules.size)
+        assertTrue(decision.rules.any { it.rule == "builtin.thermal" && it.verdict == "deny" })
     }
 
     @Test

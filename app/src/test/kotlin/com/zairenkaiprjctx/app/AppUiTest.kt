@@ -5,12 +5,11 @@ package com.zairenkaiprjctx.app
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -58,7 +57,7 @@ class AppUiTest {
         compose.onNodeWithText("This device").assertIsDisplayed()
         // The health list is further down the LazyColumn: scroll to it, then check what it says.
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Root required"))
-        compose.onAllNodesWithText("Root required").onFirst().assertIsDisplayed()
+        compose.onAllNodesWithText("Root required")[0].assertIsDisplayed()
     }
 
     @Test
@@ -114,7 +113,7 @@ class AppUiTest {
         // The button can sit under the bottom bar on this 320 dp screen: invoke its click action.
         compose.onNodeWithText("Open").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
-        compose.onAllNodesWithText("Zairenkai System Module").onFirst().assertIsDisplayed() // the app-bar title
+        compose.onAllNodesWithText("Zairenkai System Module")[0].assertIsDisplayed() // the app-bar title
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Enable root integration"))
         compose.onNodeWithText("Enable root integration").assertIsDisplayed()
         compose.onAllNodesWithText("Install Zairenkai System Module").assertCountEquals(0)
@@ -122,6 +121,25 @@ class AppUiTest {
             val p = s.state.value.phase
             assertTrue(p.name, p == InstallPhase.ROOT_PERMISSION_REQUIRED || p == InstallPhase.MANAGER_DETECTION)
         }
+    }
+
+    @Test
+    fun securityCenterFollowsSystemModuleAndDoesNotAssumeSecure() {
+        launch()
+        compose.onNodeWithContentDescription("Open settings").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Zairenkai Security Center"))
+        compose.onAllNodesWithText("Zairenkai Security Center")[1].performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Vulnerability findings"))
+        compose.onNodeWithText("Vulnerability findings").assertIsDisplayed()
+        compose.onNodeWithText("Not scanned").assertIsDisplayed()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Module integrity"))
+        compose.waitForIdle()
+        // The catalogue section also reports Unknown when no signature verdict is available.
+        compose.onAllNodesWithText("Unknown")[0].assertIsDisplayed()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Packaged module catalogue signature", substring = true))
+        compose.onNodeWithText("Packaged module catalogue signature", substring = true).assertExists()
     }
 
     @Test
