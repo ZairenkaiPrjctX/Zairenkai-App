@@ -787,4 +787,9 @@
     <string name="security_integrity_title">Integritas modul</string>
     <string name="security_integrity_unavailable">Laporan integritas modul terpasang yang terverifikasi belum tersedia di sini. Buka Modul Sistem untuk meninjau katalog terpaket dan status instalasi.</string>
     <string name="security_unknown">Tidak diketahui</string>
+    <string name="security_catalog_title">Tanda tangan katalog modul terpaket</string>
+    <string name="security_catalog_verified">Penanda tangan terverifikasi: %1$s</string>
+    <string name="security_catalog_unverified">Tanda tangan katalog belum terverifikasi</string>
+    <string name="security_catalog_scope">Ini hanya memverifikasi katalog terpaket; berkas terpasang dan status saat berjalan belum dipindai.</string>
+    <string name="security_catalog_not_packaged">Build ini tidak menyertakan katalog modul.</string>
 </resources>

@@ -19,10 +19,11 @@ import com.zairenkaiprjctx.app.design.GroupContent
 import com.zairenkaiprjctx.app.design.SegmentedGroup
 import com.zairenkaiprjctx.app.design.ZairenkaiGlyphs
 import com.zairenkaiprjctx.app.design.ZairenkaiSpacing
+import com.zairenkaiprjctx.integration.systemmodule.SignatureVerdict
 
 /** Local, read-only security facts. No scan or remote report is implied by opening this screen. */
 @Composable
-fun SecurityCenterScreen(padding: PaddingValues) {
+fun SecurityCenterScreen(padding: PaddingValues, modules: SystemModuleViewModel) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = padding,
@@ -63,6 +64,28 @@ fun SecurityCenterScreen(padding: PaddingValues) {
                     GroupContent {
                         Text(stringResource(R.string.security_unknown), style = MaterialTheme.typography.titleMedium)
                         Detail(stringResource(R.string.security_integrity_unavailable))
+                    }
+                }
+            }
+        }
+        item {
+            SegmentedGroup(title = stringResource(R.string.security_catalog_title), icon = ZairenkaiGlyphs.lock) {
+                row {
+                    GroupContent {
+                        val verdict = modules.signature
+                        val status = when (verdict) {
+                            is SignatureVerdict.Verified -> stringResource(R.string.security_catalog_verified, verdict.owner)
+                            SignatureVerdict.Unsigned, SignatureVerdict.NoTrustedKey,
+                            is SignatureVerdict.UnknownKey, is SignatureVerdict.Invalid -> stringResource(R.string.security_catalog_unverified)
+                            null -> stringResource(R.string.security_unknown)
+                        }
+                        Text(status, style = MaterialTheme.typography.titleMedium)
+                        Detail(
+                            stringResource(
+                                if (modules.packaged) R.string.security_catalog_scope
+                                else R.string.security_catalog_not_packaged,
+                            ),
+                        )
                     }
                 }
             }

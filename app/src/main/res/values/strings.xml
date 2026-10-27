@@ -811,4 +811,9 @@
     <string name="security_integrity_title">Module integrity</string>
     <string name="security_integrity_unavailable">A verified installed-module integrity report is not available here. Open System Module to review the packaged catalogue and installation status.</string>
     <string name="security_unknown">Unknown</string>
+    <string name="security_catalog_title">Packaged module catalogue signature</string>
+    <string name="security_catalog_verified">Verified signer: %1$s</string>
+    <string name="security_catalog_unverified">Catalogue signature not verified</string>
+    <string name="security_catalog_scope">This verifies the packaged catalogue only; installed files and runtime state have not been scanned.</string>
+    <string name="security_catalog_not_packaged">No module catalogue is packaged in this build.</string>
 </resources>

@@ -349,7 +349,7 @@ private fun App(c: AppContainer) {
                         Overlay.UPDATES -> UpdatesScreen(c.updates, padding)
                         Overlay.ABOUT -> AboutScreen(c, padding) { overlay = Overlay.UPDATES }
                         Overlay.SYSTEM_MODULE -> SystemModuleScreen(modulesVm, main, snapshot, padding)
-                        Overlay.SECURITY_CENTER -> com.zairenkaiprjctx.app.ui.SecurityCenterScreen(padding)
+                        Overlay.SECURITY_CENTER -> com.zairenkaiprjctx.app.ui.SecurityCenterScreen(padding, modulesVm)
                         Overlay.RUNTIME -> RuntimeScreen(runtime, snapshot, padding, goToRoot)
                         Tab.HOME -> HomeScreen(c, main, modulesVm, padding, openModule, select)
                         Tab.PERFORMANCE -> PerformanceScreen(perf, snapshot, padding, goToRoot)

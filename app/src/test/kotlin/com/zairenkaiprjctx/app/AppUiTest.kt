@@ -132,9 +132,13 @@ class AppUiTest {
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Zairenkai Security Center"))
         compose.onAllNodesWithText("Zairenkai Security Center").onLast().performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Vulnerability findings"))
         compose.onNodeWithText("Vulnerability findings").assertIsDisplayed()
         compose.onNodeWithText("Not scanned").assertIsDisplayed()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Module integrity"))
         compose.onNodeWithText("Unknown").assertIsDisplayed()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Packaged module catalogue signature"))
+        compose.onNodeWithText("Packaged module catalogue signature").assertIsDisplayed()
     }
 
     @Test
