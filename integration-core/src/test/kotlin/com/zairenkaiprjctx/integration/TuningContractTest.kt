@@ -30,6 +30,7 @@ import org.junit.Test
  */
 class TuningContractTest {
     private val base = "'/data/adb/modules/zairenkai/bin/zcored' 'ctl' '--dir' '/data/adb/zairenkai/core'"
+    private val permissiveJson = Json { ignoreUnknownKeys = true }
 
     private fun runner(vararg answers: Pair<String, Pair<Int, String>>) = FakeRunner().apply {
         answers.forEach { (method, r) -> on(su("$base '$method'"), r.first, r.second) }
@@ -86,7 +87,7 @@ class TuningContractTest {
 
     @Test
     fun aValueSentWithAFailedStatusIsNeverShown() {
-        val r = Json { ignoreUnknownKeys = true }.decodeFromString(
+        val r = permissiveJson.decodeFromString(
             TuningReading.serializer(),
             """{"status":"unavailable","value":1804800,"unit":"kHz","detail":"read error"}""",
         )
@@ -97,7 +98,7 @@ class TuningContractTest {
 
     @Test
     fun aReadingOfTheWrongTypeIsNotCoerced() {
-        val json = Json { ignoreUnknownKeys = true }
+        val json = permissiveJson
         val s = json.decodeFromString(TuningReading.serializer(), """{"status":"ok","value":"1804800","unit":"kHz"}""")
         assertNull(s.number)
         assertEquals("1804800", s.text)

@@ -34,6 +34,10 @@ jobs:
         run: |
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
           echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - name: Install Android 16/17 SDK packages
+        run: >-
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install
+          "platforms;android-36" "platforms;android-37" "build-tools;36.0.0"
       - run: ./gradlew --no-daemon :integration-core:test :app:testDebugUnitTest
       - run: ./gradlew --no-daemon lint assembleDebug -Pzairenkai.allowMissingComponents=true
 
@@ -94,6 +98,10 @@ jobs:
           echo "ANDROID_NDK_HOME=/tmp/android-ndk-${NDK_VERSION}" >> "$GITHUB_ENV"
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
           echo "sdk.dir=$ANDROID_HOME" > local.properties
+      - name: Install Android 16/17 SDK packages
+        run: >-
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install
+          "platforms;android-36" "platforms;android-37" "build-tools;36.0.0"
       - name: Build every component at its locked commit
         run: integration/scripts/build-components.sh
       - name: Verify checkouts, artifacts, notices and module catalog

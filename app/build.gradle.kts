@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -135,12 +134,12 @@ val verifyIntegrationComponents = tasks.register("verifyIntegrationComponents") 
 
 android {
     namespace = "com.zairenkaiprjctx.app"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.zairenkaiprjctx.app"
         minSdk = 29
-        targetSdk = 35
+        targetSdk = 36
         versionCode = versionCodeOf(packagedAppVersion)
         versionName = packagedAppVersion
         buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
@@ -207,8 +206,10 @@ android {
     }
 
     sourceSets["main"].apply {
-        jniLibs.srcDir(componentsDir.resolve("jniLibs"))
-        assets.srcDirs(componentsDir.resolve("assets"), integrationMeta, androidNotices)
+        jniLibs.directories.add(componentsDir.resolve("jniLibs").absolutePath)
+        assets.directories.addAll(
+            listOf(componentsDir.resolve("assets").absolutePath, integrationMeta.get().asFile.absolutePath, androidNotices.get().asFile.absolutePath),
+        )
     }
 
     androidResources {
@@ -254,7 +255,10 @@ tasks.named("preBuild") { dependsOn(copyIntegrationMeta, generateAndroidNotices)
 
 androidComponents {
     // Compose UI tests need the debug-only ui-test-manifest activity; run unit tests on debug.
-    beforeVariants(selector().withBuildType("release")) { it.enableUnitTest = false }
+    beforeVariants(selector().withBuildType("release")) {
+        (it as com.android.build.api.variant.HasHostTestsBuilder)
+            .hostTests.get(com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE)?.enable = false
+    }
 }
 tasks.matching { it.name == "packageDebug" || it.name == "packageRelease" }.configureEach {
     dependsOn(verifyIntegrationComponents)

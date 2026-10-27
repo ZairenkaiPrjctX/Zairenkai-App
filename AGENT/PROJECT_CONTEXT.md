@@ -12,24 +12,24 @@
 | Visibility | public | Verified. Evidence: `list_repos`, 2026-10-22 (earlier entries said private) |
 | Default branch | `dev` | Verified. Evidence: `git ls-remote`, 2026-10-19 |
 | Purpose | Unified Android app for the Zairenkai components | Verified. Evidence: `app/`, `integration-core/`, `docs/architecture/overview.md` |
-| Application id | `com.zairenkaiprjctx.app`, minSdk 29, targetSdk 35; version 0.2.0-beta.1 (20001) since 2026-10-23 (0.1.0 (1) before), versionCode derived from the version (`docs/build/releases.md`) | Verified. Evidence: `aapt2 dump badging`, 2026-10-19; `UpdateUiTest`, 2026-10-23 |
+| Application id | `com.zairenkaiprjctx.app`, minSdk 29, targetSdk 36; version 0.2.0-beta.1 (20001) since 2026-10-23, versionCode derived from the version (`docs/build/releases.md`) | Configured. Evidence: `app/build.gradle.kts`; APK validation pending Android SDK |
 | Licence | Apache-2.0 (`LICENSE`, `NOTICE`, SPDX headers); bundled font OFL-1.1, device data CC BY-SA 3.0 | Verified. Evidence: maintainer decision 2026-10-21; repository tree; `docs/integration/license-inventory.md` |
 
 ## Contents
 
 | Area | Location | Status |
 |---|---|---|
-| Gradle build (AGP 8.9.1, Gradle 8.14.3, Kotlin 2.1.20) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Verified. Evidence: build 2026-10-19 |
+| Gradle build (AGP 9.4.1, Gradle 9.6.0, Kotlin 2.4.10) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Gradle project configuration and JVM tests pass. Evidence: `:app:tasks --all`, `:integration-core:test`; Android tasks pending SDK |
 | JVM integration layer (Kotlin + Java), incl. root-manager adapters, the module installer and the update client | `integration-core/` | Verified. Evidence: 107 tests, 2026-10-23 |
-| Android app, design system, Java platform adapters | `app/` | Verified on JVM. Evidence: 51 Robolectric tests (+14 screenshot renders), 2026-10-23. **Unverified** on a device |
+| Android app, design system, Java platform adapters | `app/` | Earlier Robolectric verification: 74 tests passed (2026-10-24); current Actions run 40536572747 found two UI selector failures, addressed in this working tree. Android SDK unavailable locally; fresh CI run pending. **Unverified** on a device |
 | Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
-| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Reduced build and scripts verified on GitHub. Evidence: runs 39622352061 (f34246c), 39623939493 (b9ce39b). full-integration failed there at "Require the CI GitHub App"; since 2026-10-22 it fetches the public locked repositories without a token (`docs/build/ci.md`). **Unverified** on GitHub: no run of that version yet |
+| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Scripts pass in run 40536572747; reduced and full jobs failed in that run on UI test text selectors. The source fixes are in this working tree and await a new Actions run. |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
 
 ## Key facts and limitations
 
 - Material 3 Expressive APIs are internal in stable `material3` 1.4.0. The app pins
-  `1.5.0-alpha18`, the newest version compatible with compileSdk 35 and AGP 8.9.
+  `1.5.0-alpha18`; migration to alpha19+ is now technically supported by compileSdk 37 and AGP 9.4.1, but is kept separate from the build toolchain change.
   Verified. Evidence: compile error against 1.4.0; AAR metadata of alpha19+ requires
   compileSdk 37 and AGP 9.1.
 - Core and FAS are reachable only through root (Core ADR-0005).
@@ -114,5 +114,4 @@
 ## Open questions
 
 - Which device will run the first on-device validation?
-- When should the app move to Material 3 1.5.0 stable (and the compileSdk 37 / AGP 9.1
-  toolchain)?
+- When should the app migrate from Material 3 1.5.0-alpha18 to a stable release?

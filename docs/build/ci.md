@@ -10,6 +10,14 @@
 
 A green `reduced` job says nothing about the integrated app. Only `full-integration` does.
 
+Both Android build jobs install platforms 36 and 37 plus Build Tools 36.0.0 explicitly. This keeps
+the API 36 target and API 37 compile SDK available even when the hosted runner image changes.
+
+**Status, 2026-10-27:** run 40536572747 passed the scripts job but failed both Android jobs on two
+UI test scroll selectors after source changes. This working tree updates those selectors and
+migrates the Compose test rules; the fix still needs a fresh Actions run. The local container has
+no Android SDK, so Robolectric, app lint, and APK builds were not verified locally.
+
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
 locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
 with its own `scripts/build-android.sh`, and Modules' `scripts/assemble.py` packages them

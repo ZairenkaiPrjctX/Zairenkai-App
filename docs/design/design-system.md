@@ -11,7 +11,7 @@ Each claim was checked against the AAR, not taken from documentation.
 |---|---|
 | `material3` **1.4.0** (newest stable) | `MaterialExpressiveTheme`, `MotionScheme` and `ExperimentalMaterial3ExpressiveApi` are **internal**. Compiling against them fails with "it is internal". `ShortNavigationBar` and `WideNavigationRail` are public. |
 | `material3` **1.5.0-alpha18** (used) | Expressive APIs public under `@ExperimentalMaterial3ExpressiveApi`. The AAR requires compileSdk 35 and AGP 8.6+, and pulls Compose 1.11. |
-| `material3` 1.5.0-alpha19 and later | Require compileSdk 37 and AGP 9.1. They would need a toolchain migration, which was not done. |
+| `material3` 1.5.0-alpha19 and later | Require compileSdk 37 and AGP 9.1+. The toolchain supports this now; the app remains pinned to alpha18 to keep this toolchain change separate from the Material API migration. |
 
 The rest of Compose comes from the stable BOM 2026.06.01 (UI 1.11.4). Material 3 is the only
 pre-release dependency, pinned in `gradle/libs.versions.toml` with the reason. Revisit when

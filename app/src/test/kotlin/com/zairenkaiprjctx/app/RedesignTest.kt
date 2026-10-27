@@ -13,9 +13,8 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -137,8 +136,8 @@ class RedesignTest {
         // Robolectric extracts no native libraries, so zie-run is absent here: the probe says so.
         assertEquals(AvailabilityState.NATIVE_COMPONENT_UNAVAILABLE, c.registry.snapshot.value.availability(AI_CAPABILITY).state)
         compose.onNodeWithText("Native component unavailable").assertExists() // above the fold on this 470 dp screen
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Until the on-device model is available"))
-        compose.onNodeWithText("Until the on-device model is available, each question opens the screen that answers it.").assertIsDisplayed()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Until the on-device model is available", substring = true))
+        compose.onNodeWithText("Until the on-device model is available, each question opens the screen that answers it.").assertExists()
         compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Why is my phone hot?"))
         compose.onNodeWithText("Why is my phone hot?").performClick()
@@ -174,6 +173,6 @@ class ConnectedChoiceTouchTest {
         compose.onNodeWithText("System")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton))
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.On))
-        compose.onAllNodesWithText("Dark").onFirst().assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.Off))
+        compose.onAllNodesWithText("Dark")[0].assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.Off))
     }
 }

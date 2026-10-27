@@ -7,8 +7,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
@@ -125,7 +124,7 @@ class AiUiTest {
         assertEquals("nothing is downloaded until the user asks", 0, host.downloads)
         // First-run setup must be visible near the AI status, not buried below the suggestion grid.
         compose.onNodeWithText("Download model", substring = true).assertExists()
-        compose.onAllNodesWithText("Download model", substring = true).onFirst().performSemanticsAction(SemanticsActions.OnClick)
+        compose.onAllNodesWithText("Download model", substring = true)[0].performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(1, host.downloads)
         assertEquals(ModelImportUi.NotAvailable(404), vm.importState.value)
@@ -139,7 +138,7 @@ class AiUiTest {
         show(vm, AvailabilityState.MODEL_NOT_IMPORTED)
         // First-run setup must be visible near the AI status, not buried below the suggestion grid.
         compose.onNodeWithText("Download model", substring = true).assertExists()
-        compose.onAllNodesWithText("Download model", substring = true).onFirst().performSemanticsAction(SemanticsActions.OnClick)
+        compose.onAllNodesWithText("Download model", substring = true)[0].performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         compose.onNodeWithText("Download over mobile data?").assertExists()
         assertEquals(0, host.downloads)
