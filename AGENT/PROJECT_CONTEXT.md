@@ -21,7 +21,7 @@
 |---|---|---|
 | Gradle build (AGP 9.4.1, Gradle 9.6.0, Kotlin 2.4.10) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Gradle project configuration and JVM tests pass. Evidence: `:app:tasks --all`, `:integration-core:test`; Android tasks pending SDK |
 | JVM integration layer (Kotlin + Java), incl. root-manager adapters, the module installer and the update client | `integration-core/` | Verified. Evidence: 107 tests, 2026-10-23 |
-| Android app, design system, Java platform adapters | `app/` | Run 40546741769 confirms Robolectric 4.17 compiles against API 37; one ambiguous security assertion and the AI prompt destination check are refined in this change. Awaiting CI rerun. **Unverified** on a device |
+| Android app, design system, Java platform adapters | `app/` | Run 40546741769 confirms Robolectric 4.17 compiles against API 37; security status matching and AI prompt navigation wait are refined in this change. Awaiting CI rerun. **Unverified** on a device |
 | Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
 | CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Run 40545926500 installed API 37 successfully but Java test compilation failed with Robolectric 4.14.1 (`FingerprintManager` missing from API 37 stubs). Updating Robolectric to 4.17; Kotlin unnecessary assertions also fixed; awaiting CI rerun. |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |

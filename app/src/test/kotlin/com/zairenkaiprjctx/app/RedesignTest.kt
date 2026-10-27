@@ -141,7 +141,10 @@ class RedesignTest {
         compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Why is my phone hot?"))
         compose.onNodeWithText("Why is my phone hot?").performClick()
-        compose.waitForIdle()
+        compose.waitUntil(10_000) {
+            compose.onAllNodesWithText("PowerManager thermal status listener", substring = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         compose.onNodeWithText("PowerManager thermal status listener", substring = true).assertIsDisplayed()
     }
 }
