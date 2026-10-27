@@ -773,4 +773,18 @@
     <string name="ai_fact_tuning_memory">Telemetri memori</string>
     <string name="ai_fact_tuning_storage">Scheduler penyimpanan</string>
     <string name="ai_try_note_tools_only">Pemeriksaan cepat perangkat sudah dapat digunakan. Impor model untuk pertanyaan bebas.</string>
+    <string name="security_center_title">Pusat Keamanan Zairenkai</string>
+    <string name="security_center_subtitle">Ringkasan keamanan</string>
+    <string name="security_center_description">Periksa status keamanan sistem, kerentanan yang diketahui, dan integritas modul Zairenkai.</string>
+    <string name="security_device_title">Informasi perangkat</string>
+    <string name="security_android_release">Android %1$s (API %2$d)</string>
+    <string name="security_patch_level">Patch keamanan Android: %1$s</string>
+    <string name="security_kernel">Kernel: %1$s</string>
+    <string name="security_app_version">Versi aplikasi: %1$s</string>
+    <string name="security_findings_title">Temuan kerentanan</string>
+    <string name="security_not_scanned">Belum dipindai</string>
+    <string name="security_feed_unavailable">Belum ada laporan keamanan ZSI terverifikasi yang terhubung ke build aplikasi ini. Status kerentanan tidak diketahui; tidak ada hasil bersih atau aman yang diasumsikan.</string>
+    <string name="security_integrity_title">Integritas modul</string>
+    <string name="security_integrity_unavailable">Laporan integritas modul terpasang yang terverifikasi belum tersedia di sini. Buka Modul Sistem untuk meninjau katalog terpaket dan status instalasi.</string>
+    <string name="security_unknown">Tidak diketahui</string>
 </resources>

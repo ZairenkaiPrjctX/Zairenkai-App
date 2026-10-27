@@ -125,6 +125,19 @@ class AppUiTest {
     }
 
     @Test
+    fun securityCenterFollowsSystemModuleAndDoesNotAssumeSecure() {
+        launch()
+        compose.onNodeWithContentDescription("Open settings").performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Zairenkai Security Center"))
+        compose.onAllNodesWithText("Zairenkai Security Center").onLast().performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        compose.onNodeWithText("Vulnerability findings").assertIsDisplayed()
+        compose.onNodeWithText("Not scanned").assertIsDisplayed()
+        compose.onNodeWithText("Unknown").assertIsDisplayed()
+    }
+
+    @Test
     fun themeChoiceIsAppliedAndPersisted() {
         launch()
         compose.onNodeWithContentDescription("Open settings").performClick()
