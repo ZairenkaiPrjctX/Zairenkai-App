@@ -25,6 +25,11 @@ compiling Java tests because Robolectric 4.14.1 references `FingerprintManager`,
 API 37 compile stubs. Robolectric is now updated to 4.17, which supports API 37. That run also
 reported unnecessary Kotlin `!!` assertions in `PerformanceScreen`; those are removed.
 
+Run 40546741769 confirms test compilation now succeeds with Robolectric 4.17. Two UI tests then
+failed: the security test selected an ambiguous repeated `Unknown` label, and the AI prompt test
+did not check selected-tab state. Assertions now target the intended status and verify Thermal is
+selected before checking its screen content.
+
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
 locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
 with its own `scripts/build-android.sh`, and Modules' `scripts/assemble.py` packages them

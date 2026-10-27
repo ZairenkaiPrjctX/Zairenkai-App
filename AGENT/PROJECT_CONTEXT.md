@@ -21,7 +21,7 @@
 |---|---|---|
 | Gradle build (AGP 9.4.1, Gradle 9.6.0, Kotlin 2.4.10) | `settings.gradle.kts`, `gradle/libs.versions.toml` | Gradle project configuration and JVM tests pass. Evidence: `:app:tasks --all`, `:integration-core:test`; Android tasks pending SDK |
 | JVM integration layer (Kotlin + Java), incl. root-manager adapters, the module installer and the update client | `integration-core/` | Verified. Evidence: 107 tests, 2026-10-23 |
-| Android app, design system, Java platform adapters | `app/` | Current Actions run 40545926500 confirms API 37 SDK setup succeeds; Robolectric 4.14.1 test compilation then failed on missing API 37 `FingerprintManager`. Updating Robolectric to 4.17, which supports API 37; awaiting CI rerun. **Unverified** on a device |
+| Android app, design system, Java platform adapters | `app/` | Run 40546741769 confirms Robolectric 4.17 compiles against API 37; two UI test assertions failed and are tightened in this change. Awaiting CI rerun. **Unverified** on a device |
 | Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
 | CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Run 40545926500 installed API 37 successfully but Java test compilation failed with Robolectric 4.14.1 (`FingerprintManager` missing from API 37 stubs). Updating Robolectric to 4.17; Kotlin unnecessary assertions also fixed; awaiting CI rerun. |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
@@ -33,7 +33,8 @@
   Verified. Evidence: compile error against 1.4.0; AAR metadata of alpha19+ requires
   compileSdk 37 and AGP 9.1.
 - Robolectric 4.17 is required when compiling test helpers against API 37; Robolectric 4.14.1
-  exposed a missing `FingerprintManager` class during Java test compilation. **Unverified until CI reruns.**
+  exposed a missing `FingerprintManager` class during Java test compilation. **Compilation verified**
+  by run 40546741769; UI tests need a fresh run after assertion fixes.
 - Core and FAS are reachable only through root (Core ADR-0005).
   Verified. Evidence: Core `docs/adr/0005-root-only-socket.md`.
 - No automated device-lab or remote device-control access is available in this audit. The maintainer's screenshot proves that Module v0.3.1 was installed on KernelSU 3.4.1, but end-to-end Core telemetry, AI inference, SELinux behavior and tuning outcomes remain **Unverified** until the repaired build is retested.

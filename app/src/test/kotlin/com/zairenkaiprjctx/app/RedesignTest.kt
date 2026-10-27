@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -142,7 +143,8 @@ class RedesignTest {
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Why is my phone hot?"))
         compose.onNodeWithText("Why is my phone hot?").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Android thermal service").assertIsDisplayed()
+        compose.onNodeWithTag("nav-thermal").assertIsSelected()
+        compose.onNodeWithText("PowerManager thermal status listener", substring = true).assertIsDisplayed()
     }
 }
 

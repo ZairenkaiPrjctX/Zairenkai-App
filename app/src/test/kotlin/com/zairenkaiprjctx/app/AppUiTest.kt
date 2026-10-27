@@ -135,7 +135,9 @@ class AppUiTest {
         compose.onNodeWithText("Vulnerability findings").assertIsDisplayed()
         compose.onNodeWithText("Not scanned").assertIsDisplayed()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Module integrity"))
-        compose.onNodeWithText("Unknown").assertIsDisplayed()
+        compose.waitForIdle()
+        // The catalogue section also reports Unknown when no signature verdict is available.
+        compose.onAllNodesWithText("Unknown")[0].assertIsDisplayed()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Packaged module catalogue signature", substring = true))
         compose.onNodeWithText("Packaged module catalogue signature", substring = true).assertExists()
     }
