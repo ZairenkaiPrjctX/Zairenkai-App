@@ -344,13 +344,13 @@ private fun TuningSection(
                     } else {
                         val used = t.memory.used.long
                         val total = t.memory.total.long
-                        val known = used != null && total != null && total > 0
+                        val memory = if (used != null && total != null && total > 0) used to total else null
                         MetricTile(
                             stringResource(R.string.tuning_memory),
-                            if (known) gib(used!!) else "—",
-                            if (known) stringResource(R.string.tuning_memory_of, gib(total!!)) else readingProblem(t.memory.used),
+                            memory?.let { gib(it.first) } ?: "—",
+                            memory?.let { stringResource(R.string.tuning_memory_of, gib(it.second)) } ?: readingProblem(t.memory.used),
                             m,
-                            meter = if (known) used!!.toFloat() / total!! else null,
+                            meter = memory?.let { it.first.toFloat() / it.second },
                         )
                     }
                 }

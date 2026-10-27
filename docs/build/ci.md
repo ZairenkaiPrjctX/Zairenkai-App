@@ -20,6 +20,11 @@ package name `platforms;android-37`. GitHub's Ubuntu 24.04 runner images list th
 container has no Android SDK, so Android tests, lint, and APK builds cannot be verified locally;
 rerun Actions to verify the fix on a hosted runner.
 
+The first run with that SDK fix (40545926500) installed API 37 successfully, then failed while
+compiling Java tests because Robolectric 4.14.1 references `FingerprintManager`, absent from the
+API 37 compile stubs. Robolectric is now updated to 4.17, which supports API 37. That run also
+reported unnecessary Kotlin `!!` assertions in `PerformanceScreen`; those are removed.
+
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
 locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
 with its own `scripts/build-android.sh`, and Modules' `scripts/assemble.py` packages them

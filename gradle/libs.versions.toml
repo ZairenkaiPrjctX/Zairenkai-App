@@ -14,7 +14,7 @@ activity-compose = "1.10.0"
 lifecycle = "2.8.7"
 core-ktx = "1.15.0"
 junit = "4.13.2"
-robolectric = "4.14.1"
+robolectric = "4.17"
 androidx-annotation = "1.9.1"
 jetbrains-annotations = "26.0.1"
 
