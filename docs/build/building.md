@@ -8,7 +8,7 @@
 | Gradle | 9.6.0 (wrapper, distribution SHA-256 pinned) | `gradle/wrapper/gradle-wrapper.properties` |
 | Android Gradle Plugin | 9.4.1 | `gradle/libs.versions.toml` |
 | Kotlin | 2.4.10 (Compose compiler plugin and JVM module) | same |
-| Android SDK | platforms 36 and 37, build-tools 36.0.0 (installed by CI and release workflows) | `local.properties` `sdk.dir` |
+| Android SDK | platforms 36 and 37.0, build-tools 36.0.0 (CI aliases `android-37.0` as `android-37` for AGP) | `local.properties` `sdk.dir` |
 | For components: Rust stable with `aarch64/armv7/x86_64-linux-android` targets, NDK r27d, python3 ≥ 3.11 | | `integration/scripts/build-components.sh` |
 
 ## Steps
@@ -31,8 +31,8 @@ python3 integration/scripts/verify_integration.py report app/build/outputs/apk/r
 CI: `docs/build/ci.md`. Release and signing: `docs/build/release.md`.
 
 The app targets API 36 (Android 16), the Google Play target required for new apps and updates from
-August 31, 2026. It compiles against API 37 because AGP 9.4 supports through API 37 and Material 3
-Expressive releases after alpha18 require it.
+August 31, 2026. It compiles against API 37 to support the AndroidX dependencies; Google publishes
+that platform as `android-37.0`, so CI creates the `android-37` directory alias required by AGP.
 
 Outputs:
 - `app/build/outputs/apk/debug/app-debug.apk`, signed with the Android debug key;

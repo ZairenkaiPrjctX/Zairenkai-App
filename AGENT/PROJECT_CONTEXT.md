@@ -23,13 +23,13 @@
 | JVM integration layer (Kotlin + Java), incl. root-manager adapters, the module installer and the update client | `integration-core/` | Verified. Evidence: 107 tests, 2026-10-23 |
 | Android app, design system, Java platform adapters | `app/` | Earlier Robolectric verification: 74 tests passed (2026-10-24); current Actions run 40536572747 found two UI selector failures, addressed in this working tree. Android SDK unavailable locally; fresh CI run pending. **Unverified** on a device |
 | Organization inventory (17 repositories: 16 Zairenkai, all public, plus the excluded anime-extensions), lock, scripts | `integration/` | Verified. Evidence: `verify_integration.py lock` ok, `list_repos` 2026-10-22 |
-| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Scripts pass in run 40536572747; reduced and full jobs failed in that run on UI test text selectors. The source fixes are in this working tree and await a new Actions run. |
+| CI | `.github/workflows/ci.yml` (reduced, scripts, full-integration), `release.yml` | Run 40545060428 failed because it requested nonexistent package `platforms;android-37`; GitHub runner images publish `android-37.0`. Workflows now install that package and alias its directory for AGP; awaiting a fresh Actions run. |
 | Docs | `README.md`, `docs/` | Verified. Evidence: files present |
 
 ## Key facts and limitations
 
 - Material 3 Expressive APIs are internal in stable `material3` 1.4.0. The app pins
-  `1.5.0-alpha18`; migration to alpha19+ is now technically supported by compileSdk 37 and AGP 9.4.1, but is kept separate from the build toolchain change.
+  `1.5.0-alpha18`; the newer alpha19+ line requires compileSdk 37 and remains a separate migration.
   Verified. Evidence: compile error against 1.4.0; AAR metadata of alpha19+ requires
   compileSdk 37 and AGP 9.1.
 - Core and FAS are reachable only through root (Core ADR-0005).

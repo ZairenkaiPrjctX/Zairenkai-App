@@ -67,9 +67,12 @@ jobs:
             exit 1
           fi
       - name: Install Android 16/17 SDK packages
-        run: >-
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install
-          "platforms;android-36" "platforms;android-37" "build-tools;36.0.0"
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platforms;android-36" "platforms;android-37.0" "build-tools;36.0.0"
+          if [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
+            ln -s android-37.0 "$ANDROID_HOME/platforms/android-37"
+          fi
       - name: Write the signing keys to the runner's temporary directory and check them
         env:
           MODULE_KEY: ${{ secrets.ZAIRENKAI_MODULE_SIGNING_KEY }}

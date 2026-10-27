@@ -10,13 +10,15 @@
 
 A green `reduced` job says nothing about the integrated app. Only `full-integration` does.
 
-Both Android build jobs install platforms 36 and 37 plus Build Tools 36.0.0 explicitly. This keeps
-the API 36 target and API 37 compile SDK available even when the hosted runner image changes.
+Both Android build jobs install platforms 36 and 37.0 plus Build Tools 36.0.0 explicitly. Google
+publishes API 37 as `platforms;android-37.0`; AGP looks for `platforms/android-37` when
+`compileSdk = 37`, so each job creates that directory alias after installation.
 
-**Status, 2026-10-27:** run 40536572747 passed the scripts job but failed both Android jobs on two
-UI test scroll selectors after source changes. This working tree updates those selectors and
-migrates the Compose test rules; the fix still needs a fresh Actions run. The local container has
-no Android SDK, so Robolectric, app lint, and APK builds were not verified locally.
+**Status, 2026-10-27:** run 40545060428 failed before Gradle because it requested the nonexistent
+package name `platforms;android-37`. GitHub's Ubuntu 24.04 runner images list the actual package as
+`android-37.0`; workflows now install that package and alias its directory for AGP. The local
+container has no Android SDK, so Android tests, lint, and APK builds cannot be verified locally;
+rerun Actions to verify the fix on a hosted runner.
 
 `full-integration` builds the single root module `zairenkai` from Zairenkai-Modules at its
 locked commit: Modules' `components.lock.json` names the Core, FAS and Tuning commits, each is built
