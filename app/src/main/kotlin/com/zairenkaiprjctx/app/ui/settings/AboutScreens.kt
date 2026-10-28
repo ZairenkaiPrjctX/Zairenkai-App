@@ -328,6 +328,9 @@ internal fun ModuleReleaseCard(updates: UpdateController, modifier: Modifier) {
                 stringResource(R.string.module_update_installed, u?.installedCode?.let(::moduleVersionLabel) ?: stringResource(R.string.module_update_unknown)),
                 icon = ZairenkaiGlyphs.phone,
             )
+            if (u?.latest?.prerelease == true) {
+                InfoChip(stringResource(R.string.update_channel_beta), icon = ZairenkaiGlyphs.spark, color = MaterialTheme.colorScheme.tertiaryContainer)
+            }
             u?.packagedCode?.let { InfoChip(stringResource(R.string.module_update_packaged, moduleVersionLabel(it)), icon = ZairenkaiGlyphs.box) }
             u?.latest?.let { InfoChip(stringResource(R.string.module_update_latest, moduleVersionLabel(it.versionCode)), icon = ZairenkaiGlyphs.spark, color = MaterialTheme.colorScheme.tertiaryContainer) }
         }
@@ -337,7 +340,7 @@ internal fun ModuleReleaseCard(updates: UpdateController, modifier: Modifier) {
             u.latest == null -> Detail(stringResource(R.string.module_update_none))
             u.updateAvailable -> {
                 Text(stringResource(R.string.module_update_available, u.latest.tag), style = MaterialTheme.typography.titleSmall)
-                Detail(stringResource(R.string.module_update_how), maxLines = 6)
+                Detail(stringResource(if (u.latest.prerelease) R.string.module_update_beta_how else R.string.module_update_how), maxLines = 6)
                 val blocks = remember(u.latest.notes) { Notes.parse(u.latest.notes) }
                 if (blocks.isNotEmpty()) ReleaseNotes(blocks)
             }

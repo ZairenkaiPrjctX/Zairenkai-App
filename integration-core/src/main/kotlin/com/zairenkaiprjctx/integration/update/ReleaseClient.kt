@@ -84,13 +84,13 @@ class ReleaseClient(private val transport: Transport) {
     }
 
     /** Published releases of the zairenkai root module, newest first. */
-    fun moduleReleases(): List<ModuleRelease> {
+    fun moduleReleases(channel: UpdateChannel = UpdateChannel.STABLE): List<ModuleRelease> {
         transport.get(ReleaseSource.MODULES_API, "application/vnd.github+json").use { r ->
             if (r.status != 200) throw UpdateException("GitHub answered HTTP ${r.status} for module releases")
             val text = r.body.readNBytes(MAX_FEED + 1)
             if (text.size > MAX_FEED) throw UpdateException("module release list is too large")
             return try {
-                ReleaseFeed.parseModules(text.decodeToString())
+                ReleaseFeed.parseModules(text.decodeToString(), channel)
             } catch (e: Exception) {
                 throw UpdateException("module release list is not readable: ${e.message}")
             }

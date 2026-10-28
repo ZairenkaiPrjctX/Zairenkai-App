@@ -15,7 +15,7 @@ closed tool registry. The model's text never authorizes anything:
 | Tool registry (5 tools) | `registry/tools.json` | `assets/intelligence/tools.json` |
 | Grammar the output is sampled under | `registry/output.gbnf` (generated from the registry) | `assets/intelligence/output.gbnf` |
 | Model manifest (Qwen2.5-0.5B-Instruct q4_0: file name, size, SHA-256, source revision, licences, 1 GiB minimum memory) | `models/qwen2.5-0.5b-instruct-q4_0.json` | `assets/intelligence/model.json` |
-| The model file (428,730,208 bytes) | Hugging Face `Qwen/Qwen2.5-0.5B-Instruct-GGUF` at the manifest's revision, republished unchanged as Intelligence-Engine's release `model-<model_id>` | **not packaged**: downloaded on request, or imported |
+| The model file (428,730,208 bytes) | Hugging Face `Qwen/Qwen2.5-0.5B-Instruct-GGUF` at the manifest's revision, republished unchanged by the integrated Release workflow under a tag keyed by the exact Engine matrix commit. Source-only builds without the optional `release` object retain the Engine `model-<model_id>` fallback. | **not packaged**: downloaded on request, or imported |
 | Licences | Engine `LICENSE`/`NOTICE` (Apache-2.0), llama.cpp `LICENSE` (MIT) | `assets/licenses/zie-run/`, `assets/licenses/llama.cpp/` |
 
 `integration/scripts/build-components.sh` builds and packages these at the commit

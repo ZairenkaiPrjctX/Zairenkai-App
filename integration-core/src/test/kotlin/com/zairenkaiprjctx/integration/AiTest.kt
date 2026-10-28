@@ -192,6 +192,20 @@ class AiTest {
         com.zairenkaiprjctx.integration.update.ReleaseClient.requireAllowed(ModelManifest.parse(contract("intelligence/model.json")).releaseUrl)
     }
 
+    @Test
+    fun integratedBuildCanPointAtItsMatrixBoundCentralModelRelease() {
+        val manifest = contract("intelligence/model.json").replace(
+            "\"format\": \"gguf\"",
+            "\"release\": {\"repository\": \"ZairenkaiPrjctX/Zairenkai-Release\", \"tag\": \"model-qwen2_5_0_5b_instruct_q4_0-${"a".repeat(40)}\"},\n  \"format\": \"gguf\"",
+        )
+        val model = ModelManifest.parse(manifest)
+        assertEquals("https://github.com/ZairenkaiPrjctX/Zairenkai-Release/releases/download/model-qwen2_5_0_5b_instruct_q4_0-${"a".repeat(40)}/qwen2.5-0.5b-instruct-q4_0.gguf", model.releaseUrl)
+        com.zairenkaiprjctx.integration.update.ReleaseClient.requireAllowed(model.releaseUrl)
+        assertThrows(AiFormatException::class.java) {
+            ModelManifest.parse(manifest.replace("ZairenkaiPrjctX/Zairenkai-Release", "evil.example/repo"))
+        }
+    }
+
     /** A server that serves [data] from the requested offset, honouring ranges unless [ranges] is false. */
     private class Server(private val data: ByteArray, var ranges: Boolean = true, var status: Int? = null, var cutAt: Int? = null) {
         val offsets = mutableListOf<Long>()

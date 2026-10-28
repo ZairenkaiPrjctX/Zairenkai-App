@@ -82,9 +82,11 @@ data class ModelManifest(
     val sizeBytes: Long,
     val minMemoryBytes: Long,
     val weightsLicense: String,
+    val releaseRepository: String,
+    val releaseTag: String,
 ) {
-    /** The release asset the app downloads (Intelligence-Engine `docs/MODEL_RELEASE.md`: tag `model-<model_id>`). */
-    val releaseUrl: String get() = "https://github.com/$MODEL_RELEASE_REPOSITORY/releases/download/model-$modelId/$fileName"
+    /** The verified release asset; integrated builds point at Zairenkai-Release's matrix-bound tag. */
+    val releaseUrl: String get() = "https://github.com/$releaseRepository/releases/download/$releaseTag/$fileName"
 
     companion object {
         const val MODEL_RELEASE_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Intelligence-Engine"
@@ -102,13 +104,21 @@ data class ModelManifest(
             if (!o.str("model_id").matches(Regex("[a-z0-9_]{1,64}"))) throw AiFormatException("unsafe model id")
             val source = o["source"] as? JsonObject ?: throw AiFormatException("source missing")
             val licenses = o["licenses"] as? JsonObject ?: throw AiFormatException("licenses missing")
+            val modelId = o.str("model_id")
+            val release = o["release"] as? JsonObject
+            val releaseRepository = release?.str("repository") ?: MODEL_RELEASE_REPOSITORY
+            val releaseTag = release?.str("tag") ?: "model-$modelId"
+            if (!releaseRepository.matches(Regex("[A-Za-z0-9-]+/[A-Za-z0-9._-]+"))) throw AiFormatException("unsafe model release repository")
+            if (!releaseTag.matches(Regex("[A-Za-z0-9._-]{1,128}"))) throw AiFormatException("unsafe model release tag")
             return ModelManifest(
-                modelId = o.str("model_id"), displayName = o.str("display_name"),
+                modelId = modelId, displayName = o.str("display_name"),
                 sourceUrl = source.str("url"), revision = source.str("revision"),
                 fileName = name, sha256 = sha,
                 sizeBytes = (f["size_bytes"] as? JsonPrimitive)?.longOrNull?.takeIf { it > 0 } ?: throw AiFormatException("size_bytes missing"),
                 minMemoryBytes = (o["min_memory_bytes"] as? JsonPrimitive)?.longOrNull ?: 0,
                 weightsLicense = licenses.str("weights"),
+                releaseRepository = releaseRepository,
+                releaseTag = releaseTag,
             )
         }
     }

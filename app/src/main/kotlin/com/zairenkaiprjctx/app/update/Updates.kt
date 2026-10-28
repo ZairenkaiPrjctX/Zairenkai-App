@@ -176,8 +176,8 @@ class UpdateController(private val context: Context, val prefs: UpdatePreference
     }
 
     /** Reads the module release list; a failure here never fails the app's own check. */
-    private fun checkModule(): ModuleUpdate = try {
-        ModuleUpdate(client.moduleReleases().firstOrNull(), prefs.knownModuleCode, packagedModuleCode())
+    private fun checkModule(channel: UpdateChannel): ModuleUpdate = try {
+        ModuleUpdate(client.moduleReleases(channel).firstOrNull(), prefs.knownModuleCode, packagedModuleCode())
     } catch (e: Exception) {
         ModuleUpdate(null, prefs.knownModuleCode, packagedModuleCode(), e.message ?: e.javaClass.simpleName)
     }.also { moduleFlow.value = it }
@@ -195,7 +195,7 @@ class UpdateController(private val context: Context, val prefs: UpdatePreference
         flow.value = UpdateState.Checking
         scope.launch {
             val s = prefs.settings.value
-            checkModule()
+            checkModule(s.channel)
             val result = try {
                 val checked = client.checkDetailed(s.channel, v)
                 prefs.update(s.copy(lastCheck = System.currentTimeMillis()))

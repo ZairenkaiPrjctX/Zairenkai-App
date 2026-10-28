@@ -19,6 +19,20 @@ build file, the parser and the built APK agree. The first build was 0.1.0 with c
 central integrated builder allocates the next stable release version and adds generated build
 notes in its temporary checkout; it does not rewrite this repository's source history.
 
+## Integrated beta channel
+
+The central `Zairenkai-Release` workflow has a manual `channel` choice. `beta` resolves, verifies,
+and builds the same immutable 15-repository source matrix as stable, then publishes two separate
+GitHub pre-releases: App `vX.Y.Z-beta.N` and module `module-vX.Y.Z`. The shared manifest records
+`channel: beta` and both exact artifact digests. Module versions advance past every published
+stable or beta module version, so a later stable module can update a beta-installed module.
+
+Settings › Updates on the Beta channel offers published App prereleases as signed APK downloads.
+The matching beta APK packages the module from the same source matrix. The module status card also
+shows a module prerelease on the Beta channel; stable users see only stable App and module releases.
+Root-manager `updateJson` remains on the stable feed, so beta module delivery is through the
+integrated beta APK path.
+
 Settings › About shows the full version, "0.2.0-beta.1 (20001)", the source commit and its date
 (`BuildConfig.GIT_COMMIT`, `GIT_DATE`, from git at build time; "unknown" from a source archive),
 and the SHA-256 of the signing certificate, so a user can compare it with the release's.
