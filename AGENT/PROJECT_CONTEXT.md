@@ -91,6 +91,11 @@
   maintainer publishes it. Verified on the JVM. Evidence: `UpdateTest` (integration-core),
   `UpdateUiTest`, `test_app_release.py`, 2026-10-23. **Unverified**: no release exists yet (the
   releases API returned `[]`), and nothing ran on a device.
+- Integrated beta releases: the App updater accepts APK prereleases only on its Beta channel and
+  parses module prereleases on the same channel; stable channel excludes them. The Release matrix
+  publishes the App APK and matching module ZIP from the same immutable source snapshot. Verified
+  by `UpdateTest` and the central Release workflow contract tests; live download/install remains
+  unverified until a beta is published and tested on a device.
 - Settings › About (version, commit, signing certificate, components, privacy, licences) and a
   redesigned System Module screen (installation journey, programs with digests, security) were
   added on 2026-10-23. Verified. Evidence: `UpdateUiTest`, screenshot gallery, 2026-10-23.

@@ -131,6 +131,12 @@ class UpdateTest {
         assertEquals(listOf("module-v0.4.0", "module-v0.3.0"), feed.map { it.tag })
         assertEquals(400L, feed.first().versionCode)
         assertEquals("zairenkai-v0.4.0.zip", feed.first().zip.name)
+        val betaFeed = ReleaseFeed.parseModules("[" + listOf(
+            rel("module-v0.3.0"), rel("module-v0.4.0", pre = true), rel("module-v0.5.0", draft = true),
+        ).joinToString(",") + "]", UpdateChannel.BETA)
+        assertEquals(listOf("module-v0.4.0", "module-v0.3.0"), betaFeed.map { it.tag })
+        assertTrue(betaFeed.first().prerelease)
+        assertFalse(feed.first().prerelease)
     }
 
     @Test
@@ -203,7 +209,7 @@ class UpdateTest {
         val dir = Files.createTempDirectory("upd").toFile()
 
         val good = FakeTransport(mapOf(
-            "https://api.github.com/repos/ZairenkaiPrjctX/Zairenkai-Release/releases?per_page=30" to feed(apk.size).toByteArray(),
+            "https://api.github.com/repos/ZairenkaiPrjctX/Zairenkai-Release/releases?per_page=100" to feed(apk.size).toByteArray(),
             "${base}zairenkai-0.2.0.apk" to apk,
             "${base}zairenkai-0.2.0.apk.sha256" to "${sha(apk)}  zairenkai-0.2.0.apk\n".toByteArray(),
         ))

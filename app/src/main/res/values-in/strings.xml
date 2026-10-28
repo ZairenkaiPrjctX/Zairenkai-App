@@ -762,6 +762,7 @@
     <string name="module_update_none">Belum ada rilis modul yang diterbitkan.</string>
     <string name="module_update_available">Modul %1$s tersedia</string>
     <string name="module_update_how">Perbarui di root manager Anda (Modul, lalu Perbarui), yang mengambil rilis dari GitHub, atau pasang versi aplikasi yang membawanya. Reboot untuk mengaktifkan.</string>
+    <string name="module_update_beta_how">Modul beta ini disertakan di aplikasi beta yang cocok. Perbarui aplikasi lewat Setelan › Pembaruan, lalu pasang modul bawaannya dari System Module. Reboot untuk mengaktifkan.</string>
     <string name="module_update_not_installed">%1$s adalah rilis terbaru. Modul belum terpasang (atau aplikasi ini belum membacanya: buka System Module).</string>
     <string name="module_update_current">Modul yang terpasang sudah terbaru.</string>
     <string name="module_update_releases">Rilis modul</string>

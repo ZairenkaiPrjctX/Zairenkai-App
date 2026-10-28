@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
 /** The central repository that publishes verified App and Modules release assets. */
 object ReleaseSource {
     const val REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Release"
-    const val API = "https://api.github.com/repos/$REPOSITORY/releases?per_page=30"
+    const val API = "https://api.github.com/repos/$REPOSITORY/releases?per_page=100"
     const val PAGE = "https://github.com/$REPOSITORY/releases"
 
     /** The APK and its checksum file, as the release workflow names them. */
@@ -18,7 +18,7 @@ object ReleaseSource {
 
     /** Module releases are published beside App releases in the central Release repository. */
     const val MODULES_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Release"
-    const val MODULES_API = "https://api.github.com/repos/$MODULES_REPOSITORY/releases?per_page=30"
+    const val MODULES_API = "https://api.github.com/repos/$MODULES_REPOSITORY/releases?per_page=100"
     const val MODULES_PAGE = "https://github.com/$MODULES_REPOSITORY/releases"
     fun moduleZipName(v: AppVersion) = "zairenkai-v$v.zip"
 }
@@ -35,6 +35,7 @@ data class ModuleRelease(
     val publishedAt: String,
     val page: String,
     val zip: ReleaseAsset,
+    val prerelease: Boolean = false,
 ) {
     val versionCode: Long get() = version.major * 10_000L + version.minor * 100L + version.patch
 }
@@ -139,17 +140,16 @@ object ReleaseFeed {
     }
 
     /**
-     * Module releases: published, not pre-release, tag `module-vMAJOR.MINOR.PATCH`, with the zip under
-     * the name the module's release workflow uses. Newest first.
+     * Module releases use `module-vMAJOR.MINOR.PATCH`; beta builds are GitHub pre-releases. Newest first.
      */
-    fun parseModules(text: String): List<ModuleRelease> =
+    fun parseModules(text: String, channel: UpdateChannel = UpdateChannel.STABLE): List<ModuleRelease> =
         json.decodeFromString<List<GhRelease>>(text).mapNotNull { r ->
-            if (r.draft || r.prerelease || r.publishedAt == null) return@mapNotNull null
+            if (r.draft || r.publishedAt == null || (r.prerelease && channel != UpdateChannel.BETA)) return@mapNotNull null
             val moduleTag = r.tag.removePrefix("module-")
             val v = AppVersion.parse(moduleTag)?.takeIf { !it.isBeta && moduleTag.startsWith("v") } ?: return@mapNotNull null
             val zip = r.assets.firstOrNull { it.state == "uploaded" && it.name == ReleaseSource.moduleZipName(v) } ?: return@mapNotNull null
             if (!zip.url.startsWith("https://")) return@mapNotNull null
-            ModuleRelease(v, r.tag, r.body.orEmpty(), r.publishedAt, r.page, ReleaseAsset(zip.name, zip.url, zip.size))
+            ModuleRelease(v, r.tag, r.body.orEmpty(), r.publishedAt, r.page, ReleaseAsset(zip.name, zip.url, zip.size), r.prerelease)
         }.sortedByDescending { it.version }
 
     /**
