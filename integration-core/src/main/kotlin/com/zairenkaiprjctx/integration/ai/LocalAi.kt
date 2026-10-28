@@ -90,6 +90,7 @@ data class ModelManifest(
 
     companion object {
         const val MODEL_RELEASE_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Intelligence-Engine"
+        const val CENTRAL_MODEL_RELEASE_REPOSITORY = "ZairenkaiPrjctX/Zairenkai-Release"
 
         fun parse(text: String): ModelManifest {
             val o = runCatching { Json.parseToJsonElement(text) as JsonObject }.getOrElse { throw AiFormatException("model manifest is not a JSON object") }
@@ -108,7 +109,7 @@ data class ModelManifest(
             val release = o["release"] as? JsonObject
             val releaseRepository = release?.str("repository") ?: MODEL_RELEASE_REPOSITORY
             val releaseTag = release?.str("tag") ?: "model-$modelId"
-            if (!releaseRepository.matches(Regex("[A-Za-z0-9-]+/[A-Za-z0-9._-]+"))) throw AiFormatException("unsafe model release repository")
+            if (releaseRepository !in setOf(MODEL_RELEASE_REPOSITORY, CENTRAL_MODEL_RELEASE_REPOSITORY)) throw AiFormatException("untrusted model release repository")
             if (!releaseTag.matches(Regex("[A-Za-z0-9._-]{1,128}"))) throw AiFormatException("unsafe model release tag")
             return ModelManifest(
                 modelId = modelId, displayName = o.str("display_name"),
