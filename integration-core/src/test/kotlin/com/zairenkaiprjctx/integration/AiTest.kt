@@ -204,6 +204,9 @@ class AiTest {
         assertThrows(AiFormatException::class.java) {
             ModelManifest.parse(manifest.replace("ZairenkaiPrjctX/Zairenkai-Release", "evil.example/repo"))
         }
+        assertThrows(AiFormatException::class.java) {
+            ModelManifest.parse(manifest.replace("ZairenkaiPrjctX/Zairenkai-Release", "OtherOwner/untrusted-models"))
+        }
     }
 
     /** A server that serves [data] from the requested offset, honouring ranges unless [ranges] is false. */
